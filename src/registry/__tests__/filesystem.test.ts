@@ -31,8 +31,18 @@ describe("FileSystemCapabilityRegistry", () => {
       "skill://landing-page/SKILL.md",
       "skill://landing-page/README.md",
       "skill://landing-page/agents/designer.md",
+      "skill://landing-page/references/source.md",
       "skill://landing-page/shared/rules.md",
     ]);
+  });
+
+  it("classifies reference markdown files explicitly", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+
+    expect(registry.readResource("skill://landing-page/references/source.md")).toMatchObject({
+      type: "reference",
+      mimeType: "text/markdown",
+    });
   });
 
   it("reads a resource by skill URI", async () => {

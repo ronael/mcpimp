@@ -59,6 +59,7 @@ function detectFileType(path: string): CapabilityFileType {
   if (path === "BUNDLE.md") return "bundle";
   if (path.startsWith("agents/") && path.endsWith(".md")) return "agent";
   if (path.startsWith("shared/") && path.endsWith(".md")) return "shared";
+  if (path.startsWith("references/") && path.endsWith(".md")) return "reference";
   if (path.startsWith("scripts/")) return "script";
   if (path.startsWith("assets/")) return "asset";
   return "other";

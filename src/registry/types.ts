@@ -2,6 +2,7 @@ export type CapabilityFileType =
   | "skill"
   | "agent"
   | "shared"
+  | "reference"
   | "readme"
   | "bundle"
   | "asset"
