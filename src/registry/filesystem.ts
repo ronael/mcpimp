@@ -18,6 +18,14 @@ interface Frontmatter {
   description?: string;
 }
 
+interface RawMcpConfig {
+  type?: "mcp" | "mcp-remote";
+  transport?: "streamable-http";
+  url?: string;
+  enabled?: boolean;
+  headers?: Record<string, string>;
+}
+
 function normalizePath(path: string): string {
   return path.split(sep).join("/");
 }
@@ -64,9 +72,13 @@ function mimeTypeFor(path: string): string {
 }
 
 function parseMcpConfig(text: string): CapabilityMcpConfig | undefined {
-  const parsed = JSON.parse(text) as Partial<CapabilityMcpConfig>;
-  if (parsed.type !== "mcp") throw new Error("mcp.json requires type \"mcp\"");
-  if (parsed.transport !== "streamable-http") {
+  const parsed = JSON.parse(text) as RawMcpConfig;
+  if (parsed.type !== "mcp" && parsed.type !== "mcp-remote") {
+    throw new Error("mcp.json requires type \"mcp\" or \"mcp-remote\"");
+  }
+
+  const transport = parsed.transport || (parsed.type === "mcp-remote" ? "streamable-http" : undefined);
+  if (transport !== "streamable-http") {
     throw new Error("mcp.json only supports transport \"streamable-http\" in v1");
   }
   if (typeof parsed.url !== "string" || parsed.url.trim() === "") {

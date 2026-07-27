@@ -49,14 +49,17 @@ Une capacité peut déclarer un MCP upstream avec un fichier `mcp.json`.
 
 ```json
 {
-  "type": "mcp",
-  "transport": "streamable-http",
+  "type": "mcp-remote",
   "url": "env:NOCO_MCP_URL",
   "headers": {
     "xc-mcp-token": "env:NOCO_MCP_TOKEN"
   }
 }
 ```
+
+`mcp-remote` est accepté comme forme pratique parce que beaucoup d'outils
+fournissent ce format. Le registry le normalise en interne vers le transport
+MCP standard `streamable-http`.
 
 Avec ton exemple `mcp-remote`, ça correspond à :
 

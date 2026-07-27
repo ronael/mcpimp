@@ -221,8 +221,8 @@ export const CAPABILITY_SNAPSHOT = [
         "name": "nocodb/mcp.json",
         "type": "other",
         "mimeType": "application/json",
-        "text": "{\n  \"type\": \"mcp\",\n  \"transport\": \"streamable-http\",\n  \"url\": \"env:NOCO_MCP_URL\",\n  \"headers\": {\n    \"xc-mcp-token\": \"env:NOCO_MCP_TOKEN\"\n  }\n}\n",
-        "lines": 9
+        "text": "{\n  \"type\": \"mcp-remote\",\n  \"url\": \"env:NOCO_MCP_URL\",\n  \"headers\": {\n    \"xc-mcp-token\": \"env:NOCO_MCP_TOKEN\"\n  }\n}\n",
+        "lines": 8
       }
     ],
     "mcp": {
