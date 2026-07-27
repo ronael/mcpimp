@@ -140,5 +140,34 @@ describe("MCP handler", () => {
 
     expect(call.result.content[0].text).toBe("tables: contacts");
     expect(requests[0].init.headers["xc-mcp-token"]).toBe("secret-token");
+    expect(requests[0].init.headers.accept).toBe("application/json, text/event-stream");
+  });
+
+  it("parses event-stream responses from an upstream HTTP MCP server", async () => {
+    process.env.TEST_NOCO_MCP_URL = "https://nocodb-mcp.test/message";
+    process.env.TEST_NOCO_MCP_TOKEN = "secret-token";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url, init: any) => {
+        const body = JSON.parse(init.body);
+        const result = { content: [{ type: "text", text: "base: KRT" }] };
+
+        return new Response(`event: message\ndata: ${JSON.stringify({ jsonrpc: "2.0", id: body.id, result })}\n\n`, {
+          headers: { "content-type": "text/event-stream" },
+        });
+      }),
+    );
+
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+    const handle = createMcpHandler(registry);
+    const call: any = await handle({
+      jsonrpc: "2.0",
+      id: 10,
+      method: "tools/call",
+      params: { name: "nocodb.getBaseInfo", arguments: {} },
+    });
+
+    expect(call.result.content[0].text).toBe("base: KRT");
   });
 });

@@ -29,7 +29,8 @@ export interface Capability {
 }
 
 export interface CapabilityMcpConfig {
-  type: "http";
+  type: "mcp";
+  transport: "streamable-http";
   url: string;
   enabled?: boolean;
   headers?: Record<string, string>;

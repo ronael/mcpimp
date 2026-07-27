@@ -49,7 +49,8 @@ Une capacité peut déclarer un MCP upstream avec un fichier `mcp.json`.
 
 ```json
 {
-  "type": "http",
+  "type": "mcp",
+  "transport": "streamable-http",
   "url": "env:NOCO_MCP_URL",
   "headers": {
     "xc-mcp-token": "env:NOCO_MCP_TOKEN"

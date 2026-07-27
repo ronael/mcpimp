@@ -64,7 +64,8 @@ describe("FileSystemCapabilityRegistry", () => {
       {
         capabilityId: "nocodb",
         config: {
-          type: "http",
+          type: "mcp",
+          transport: "streamable-http",
           url: "env:TEST_NOCO_MCP_URL",
         },
       },

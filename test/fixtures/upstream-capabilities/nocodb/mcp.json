@@ -1,5 +1,6 @@
 {
-  "type": "http",
+  "type": "mcp",
+  "transport": "streamable-http",
   "url": "env:TEST_NOCO_MCP_URL",
   "headers": {
     "xc-mcp-token": "env:TEST_NOCO_MCP_TOKEN"

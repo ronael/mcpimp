@@ -65,13 +65,17 @@ function mimeTypeFor(path: string): string {
 
 function parseMcpConfig(text: string): CapabilityMcpConfig | undefined {
   const parsed = JSON.parse(text) as Partial<CapabilityMcpConfig>;
-  if (parsed.type !== "http") throw new Error("mcp.json only supports type \"http\" in v1");
+  if (parsed.type !== "mcp") throw new Error("mcp.json requires type \"mcp\"");
+  if (parsed.transport !== "streamable-http") {
+    throw new Error("mcp.json only supports transport \"streamable-http\" in v1");
+  }
   if (typeof parsed.url !== "string" || parsed.url.trim() === "") {
     throw new Error("mcp.json requires a non-empty url");
   }
 
   return {
-    type: "http",
+    type: "mcp",
+    transport: "streamable-http",
     url: parsed.url,
     enabled: parsed.enabled,
     headers: parsed.headers,

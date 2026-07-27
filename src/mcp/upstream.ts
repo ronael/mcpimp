@@ -58,7 +58,7 @@ async function postJsonRpc(url: string, headers: Record<string, string>, method:
     method: "POST",
     headers: {
       "content-type": "application/json",
-      accept: "application/json",
+      accept: "application/json, text/event-stream",
       ...headers,
     },
     body: JSON.stringify({
@@ -73,12 +73,28 @@ async function postJsonRpc(url: string, headers: Record<string, string>, method:
     throw new Error(`Upstream MCP returned HTTP ${response.status}`);
   }
 
-  const payload = (await response.json()) as any;
+  const text = await response.text();
+  const payload = parseJsonRpcResponse(text, response.headers.get("content-type") || "");
   if (payload.error) {
     throw new Error(payload.error.message || "Upstream MCP error");
   }
 
   return payload.result;
+}
+
+function parseJsonRpcResponse(text: string, contentType: string) {
+  if (contentType.includes("text/event-stream") || text.startsWith("event:")) {
+    const data = text
+      .split("\n")
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.slice("data:".length).trim())
+      .join("\n");
+
+    if (!data) throw new Error("Upstream MCP returned an empty event stream");
+    return JSON.parse(data);
+  }
+
+  return JSON.parse(text);
 }
 
 export class UpstreamMcpGateway {
@@ -92,6 +108,7 @@ export class UpstreamMcpGateway {
         capabilityId: upstream.capabilityId,
         capabilityName: upstream.capabilityName,
         type: upstream.config.type,
+        transport: upstream.config.transport,
         enabled: upstream.config.enabled !== false,
         url: upstream.config.url,
         status:

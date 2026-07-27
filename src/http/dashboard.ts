@@ -81,7 +81,7 @@ function renderUpstreamRows(registry: CapabilityRegistry): string {
     .map(
       (upstream) => `<tr>
         <td><code>${escapeHtml(upstream.capabilityId)}</code></td>
-        <td>${escapeHtml(upstream.type)}</td>
+        <td>${escapeHtml(upstream.transport)}</td>
         <td>${escapeHtml(upstream.status)}</td>
         <td><code>${escapeHtml(upstream.url)}</code></td>
         <td>${upstream.missingEnv.map((name) => `<code>${escapeHtml(name)}</code>`).join(", ") || "n/a"}</td>
@@ -217,7 +217,7 @@ export function renderDashboard(registry: CapabilityRegistry): string {
     <section class="panel">
       <h3>MCP upstream</h3>
       <table>
-        <thead><tr><th>Capacité</th><th>Type</th><th>Status</th><th>URL</th><th>Env manquantes</th></tr></thead>
+        <thead><tr><th>Capacité</th><th>Transport</th><th>Status</th><th>URL</th><th>Env manquantes</th></tr></thead>
         <tbody>${renderUpstreamRows(registry)}</tbody>
       </table>
     </section>

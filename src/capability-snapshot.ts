@@ -221,12 +221,13 @@ export const CAPABILITY_SNAPSHOT = [
         "name": "nocodb/mcp.json",
         "type": "other",
         "mimeType": "application/json",
-        "text": "{\n  \"type\": \"http\",\n  \"url\": \"env:NOCO_MCP_URL\",\n  \"headers\": {\n    \"xc-mcp-token\": \"env:NOCO_MCP_TOKEN\"\n  }\n}\n",
-        "lines": 8
+        "text": "{\n  \"type\": \"mcp\",\n  \"transport\": \"streamable-http\",\n  \"url\": \"env:NOCO_MCP_URL\",\n  \"headers\": {\n    \"xc-mcp-token\": \"env:NOCO_MCP_TOKEN\"\n  }\n}\n",
+        "lines": 9
       }
     ],
     "mcp": {
-      "type": "http",
+      "type": "mcp",
+      "transport": "streamable-http",
       "url": "env:NOCO_MCP_URL",
       "headers": {
         "xc-mcp-token": "env:NOCO_MCP_TOKEN"
