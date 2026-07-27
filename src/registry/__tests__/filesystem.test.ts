@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolve } from "node:path";
-import { FileSystemCapabilityRegistry } from "../src/registry/filesystem";
+import { FileSystemCapabilityRegistry } from "../filesystem";
 
 const fixturesRoot = resolve("test/fixtures/capabilities");
 
