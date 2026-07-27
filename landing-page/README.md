@@ -26,6 +26,8 @@ landing-page/
     responsive-motion.md
     scoring-rubric.md
     examples.md
+  references/
+    design-sources.md
   BUNDLE.md
 ```
 
@@ -61,3 +63,9 @@ ne savent pas charger plusieurs fichiers progressivement.
 ```bash
 ./scripts/build-bundle.sh
 ```
+
+## Sources et veille
+
+Les sources externes et pistes de veille vivent dans
+`references/design-sources.md`. Ce dossier sert à ajouter de nouvelles idées
+ou checklists sans les transformer automatiquement en règles obligatoires.

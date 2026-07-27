@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 {
   echo "<!-- BUNDLE auto-généré — source de vérité : les fichiers individuels de ce repo. Régénérer via scripts/build-bundle.sh -->"
   echo
-  for f in SKILL.md agents/*.md shared/*.md; do
+  for f in SKILL.md agents/*.md shared/*.md references/*.md; do
     echo "<!-- ══════════ FICHIER : $f ══════════ -->"
     echo
     cat "$f"
