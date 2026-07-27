@@ -139,6 +139,6 @@ describe("MCP handler", () => {
     });
 
     expect(call.result.content[0].text).toBe("tables: contacts");
-    expect(requests[0].init.headers.authorization).toBe("Bearer secret-token");
+    expect(requests[0].init.headers["xc-mcp-token"]).toBe("secret-token");
   });
 });

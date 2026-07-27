@@ -2,6 +2,6 @@
   "type": "http",
   "url": "env:NOCO_MCP_URL",
   "headers": {
-    "authorization": "Bearer env:NOCO_MCP_TOKEN"
+    "xc-mcp-token": "env:NOCO_MCP_TOKEN"
   }
 }

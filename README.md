@@ -52,10 +52,34 @@ Une capacité peut déclarer un MCP upstream avec un fichier `mcp.json`.
   "type": "http",
   "url": "env:NOCO_MCP_URL",
   "headers": {
-    "authorization": "Bearer env:NOCO_MCP_TOKEN"
+    "xc-mcp-token": "env:NOCO_MCP_TOKEN"
   }
 }
 ```
+
+Avec ton exemple `mcp-remote`, ça correspond à :
+
+```json
+{
+  "command": "npx",
+  "args": [
+    "mcp-remote",
+    "NOCO_MCP_URL",
+    "--header",
+    "xc-mcp-token: NOCO_MCP_TOKEN"
+  ]
+}
+```
+
+Dans ce projet, tu mets seulement les vraies valeurs dans `.env` :
+
+```env
+NOCO_MCP_URL=https://url-reelle-de-ton-mcp-nocodb
+NOCO_MCP_TOKEN=token-reel-sans-prefixe
+```
+
+Le fichier `.env` est chargé automatiquement par `pnpm run dev` et reste ignoré
+par Git.
 
 Le registry global appelle `tools/list` sur cet upstream et expose ses tools
 avec un préfixe stable :

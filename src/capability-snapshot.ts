@@ -221,7 +221,7 @@ export const CAPABILITY_SNAPSHOT = [
         "name": "nocodb/mcp.json",
         "type": "other",
         "mimeType": "application/json",
-        "text": "{\n  \"type\": \"http\",\n  \"url\": \"env:NOCO_MCP_URL\",\n  \"headers\": {\n    \"authorization\": \"Bearer env:NOCO_MCP_TOKEN\"\n  }\n}\n",
+        "text": "{\n  \"type\": \"http\",\n  \"url\": \"env:NOCO_MCP_URL\",\n  \"headers\": {\n    \"xc-mcp-token\": \"env:NOCO_MCP_TOKEN\"\n  }\n}\n",
         "lines": 8
       }
     ],
@@ -229,7 +229,7 @@ export const CAPABILITY_SNAPSHOT = [
       "type": "http",
       "url": "env:NOCO_MCP_URL",
       "headers": {
-        "authorization": "Bearer env:NOCO_MCP_TOKEN"
+        "xc-mcp-token": "env:NOCO_MCP_TOKEN"
       }
     }
   }
