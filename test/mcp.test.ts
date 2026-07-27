@@ -28,9 +28,9 @@ describe("MCP handler", () => {
 
   it("lists the v1 registry tools", async () => {
     const handle = await createHandler();
-    const response = await handle({ jsonrpc: "2.0", id: 2, method: "tools/list" });
+    const response: any = await handle({ jsonrpc: "2.0", id: 2, method: "tools/list" });
 
-    expect(response.result.tools.map((tool) => tool.name)).toEqual([
+    expect(response.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
       "list-capabilities",
       "capability-info",
       "load-capability",
@@ -40,7 +40,7 @@ describe("MCP handler", () => {
 
   it("calls list-capabilities", async () => {
     const handle = await createHandler();
-    const response = await handle({
+    const response: any = await handle({
       jsonrpc: "2.0",
       id: 3,
       method: "tools/call",
@@ -53,10 +53,10 @@ describe("MCP handler", () => {
   it("lists and reads resources", async () => {
     const handle = await createHandler();
 
-    const list = await handle({ jsonrpc: "2.0", id: 4, method: "resources/list" });
+    const list: any = await handle({ jsonrpc: "2.0", id: 4, method: "resources/list" });
     expect(list.result.resources[0].uri).toBe("skill://landing-page/SKILL.md");
 
-    const read = await handle({
+    const read: any = await handle({
       jsonrpc: "2.0",
       id: 5,
       method: "resources/read",
@@ -67,7 +67,7 @@ describe("MCP handler", () => {
 
   it("returns a JSON-RPC error for missing resources", async () => {
     const handle = await createHandler();
-    const response = await handle({
+    const response: any = await handle({
       jsonrpc: "2.0",
       id: 6,
       method: "resources/read",

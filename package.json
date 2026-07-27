@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/local.ts",
-    "build": "npm run typecheck && tsx scripts/build-worker.ts",
+    "build": "tsx scripts/build-worker.ts && npm run typecheck",
     "cf:dev": "wrangler dev",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260722.1",
+    "@types/node": "^26.1.1",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",

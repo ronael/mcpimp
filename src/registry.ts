@@ -5,6 +5,7 @@ import type {
   CapabilityFile,
   CapabilityFileType,
   CapabilityResource,
+  CapabilityRegistry,
   CapabilitySearchResult,
 } from "./types";
 
@@ -93,7 +94,7 @@ function sortCapabilityFiles(files: CapabilityFile[]): CapabilityFile[] {
   });
 }
 
-export class FileSystemCapabilityRegistry {
+export class FileSystemCapabilityRegistry implements CapabilityRegistry {
   private constructor(private readonly capabilities: Capability[]) {}
 
   static async scan(root: string): Promise<FileSystemCapabilityRegistry> {

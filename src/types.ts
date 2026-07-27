@@ -42,3 +42,11 @@ export interface CapabilitySearchResult {
   title: string;
   snippet: string;
 }
+
+export interface CapabilityRegistry {
+  listCapabilities(): Capability[];
+  getCapability(id: string): Capability | undefined;
+  listResources(): CapabilityResource[];
+  readResource(uri: string): CapabilityFile;
+  search(query: string): CapabilitySearchResult[];
+}

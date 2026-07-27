@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import type { FileSystemCapabilityRegistry } from "./registry";
+import type { CapabilityRegistry } from "./types";
 import { createMcpHandler } from "./mcp";
 
-export function createServer(registry: FileSystemCapabilityRegistry) {
+export function createServer(registry: CapabilityRegistry) {
   const app = new Hono();
   const handleMcpMessage = createMcpHandler(registry);
 

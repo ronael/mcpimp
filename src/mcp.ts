@@ -1,4 +1,4 @@
-import type { FileSystemCapabilityRegistry } from "./registry";
+import type { CapabilityRegistry } from "./types";
 
 type JsonRpcId = string | number | null;
 
@@ -108,7 +108,7 @@ function requireString(args: Record<string, unknown>, key: string): string {
   return value;
 }
 
-function summarizeCapability(registry: FileSystemCapabilityRegistry, id: string) {
+function summarizeCapability(registry: CapabilityRegistry, id: string) {
   const capability = registry.getCapability(id);
   if (!capability) throw new Error(`Capability not found: ${id}`);
 
@@ -125,7 +125,7 @@ function summarizeCapability(registry: FileSystemCapabilityRegistry, id: string)
   };
 }
 
-function loadCapability(registry: FileSystemCapabilityRegistry, args: Record<string, unknown>) {
+function loadCapability(registry: CapabilityRegistry, args: Record<string, unknown>) {
   const id = requireString(args, "id");
   const section = typeof args.section === "string" ? args.section : "full";
   const capability = registry.getCapability(id);
@@ -142,7 +142,7 @@ function loadCapability(registry: FileSystemCapabilityRegistry, args: Record<str
   return files.map((file) => `<!-- ${file.path} -->\n\n${file.text}`).join("\n\n");
 }
 
-function callTool(registry: FileSystemCapabilityRegistry, name: string, args: Record<string, unknown> = {}) {
+function callTool(registry: CapabilityRegistry, name: string, args: Record<string, unknown> = {}) {
   switch (name) {
     case "list-capabilities":
       return textContent(
@@ -164,7 +164,7 @@ function callTool(registry: FileSystemCapabilityRegistry, name: string, args: Re
   }
 }
 
-export function createMcpHandler(registry: FileSystemCapabilityRegistry) {
+export function createMcpHandler(registry: CapabilityRegistry) {
   return async function handleMcpMessage(request: JsonRpcRequest): Promise<JsonRpcResponse> {
     const id = request.id ?? null;
 
