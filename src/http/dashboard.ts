@@ -1,4 +1,5 @@
 import { MCP_TOOLS } from "../mcp/tools";
+import { UpstreamMcpGateway } from "../mcp/upstream";
 import type { CapabilityRegistry } from "../registry/types";
 
 const ENDPOINTS = [
@@ -66,6 +67,27 @@ function renderToolRows(): string {
       <td>${tool.description}</td>
     </tr>`,
   ).join("");
+}
+
+function renderUpstreamRows(registry: CapabilityRegistry): string {
+  const gateway = new UpstreamMcpGateway(registry);
+  const upstreams = gateway.listUpstreams();
+
+  if (upstreams.length === 0) {
+    return `<tr><td colspan="5">Aucun MCP upstream configuré.</td></tr>`;
+  }
+
+  return upstreams
+    .map(
+      (upstream) => `<tr>
+        <td><code>${escapeHtml(upstream.capabilityId)}</code></td>
+        <td>${escapeHtml(upstream.type)}</td>
+        <td>${escapeHtml(upstream.status)}</td>
+        <td><code>${escapeHtml(upstream.url)}</code></td>
+        <td>${upstream.missingEnv.map((name) => `<code>${escapeHtml(name)}</code>`).join(", ") || "n/a"}</td>
+      </tr>`,
+    )
+    .join("");
 }
 
 export function renderDashboard(registry: CapabilityRegistry): string {
@@ -191,6 +213,14 @@ export function renderDashboard(registry: CapabilityRegistry): string {
         <table><tbody>${renderToolRows()}</tbody></table>
       </section>
     </div>
+
+    <section class="panel">
+      <h3>MCP upstream</h3>
+      <table>
+        <thead><tr><th>Capacité</th><th>Type</th><th>Status</th><th>URL</th><th>Env manquantes</th></tr></thead>
+        <tbody>${renderUpstreamRows(registry)}</tbody>
+      </table>
+    </section>
 
     <section class="panel">
       <h3>Test rapide</h3>

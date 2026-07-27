@@ -4,6 +4,8 @@ import type {
   Capability,
   CapabilityFile,
   CapabilityFileType,
+  CapabilityMcpConfig,
+  CapabilityUpstreamMcp,
   CapabilityResource,
   CapabilityRegistry,
   CapabilitySearchResult,
@@ -59,6 +61,21 @@ function mimeTypeFor(path: string): string {
   if (path.endsWith(".json")) return "application/json";
   if (path.endsWith(".txt")) return "text/plain";
   return "text/plain";
+}
+
+function parseMcpConfig(text: string): CapabilityMcpConfig | undefined {
+  const parsed = JSON.parse(text) as Partial<CapabilityMcpConfig>;
+  if (parsed.type !== "http") throw new Error("mcp.json only supports type \"http\" in v1");
+  if (typeof parsed.url !== "string" || parsed.url.trim() === "") {
+    throw new Error("mcp.json requires a non-empty url");
+  }
+
+  return {
+    type: "http",
+    url: parsed.url,
+    enabled: parsed.enabled,
+    headers: parsed.headers,
+  };
 }
 
 async function walkFiles(root: string): Promise<string[]> {
@@ -148,6 +165,9 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
       description: frontmatter.description || "",
       rootPath: root,
       files: sortCapabilityFiles(files),
+      mcp: files.find((file) => file.path === "mcp.json")?.text
+        ? parseMcpConfig(files.find((file) => file.path === "mcp.json")!.text)
+        : undefined,
     };
   }
 
@@ -162,6 +182,16 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
     const capability = this.capabilities.find((item) => item.id === id);
     if (!capability) return undefined;
     return { ...capability, files: [...capability.files] };
+  }
+
+  listUpstreamMcpServers(): CapabilityUpstreamMcp[] {
+    return this.capabilities
+      .filter((capability) => capability.mcp)
+      .map((capability) => ({
+        capabilityId: capability.id,
+        capabilityName: capability.name,
+        config: capability.mcp!,
+      }));
   }
 
   listResources(): CapabilityResource[] {

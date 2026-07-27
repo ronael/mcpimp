@@ -25,6 +25,14 @@ export interface Capability {
   description: string;
   rootPath?: string;
   files: CapabilityFile[];
+  mcp?: CapabilityMcpConfig;
+}
+
+export interface CapabilityMcpConfig {
+  type: "http";
+  url: string;
+  enabled?: boolean;
+  headers?: Record<string, string>;
 }
 
 export interface CapabilityResource {
@@ -46,7 +54,14 @@ export interface CapabilitySearchResult {
 export interface CapabilityRegistry {
   listCapabilities(): Capability[];
   getCapability(id: string): Capability | undefined;
+  listUpstreamMcpServers(): CapabilityUpstreamMcp[];
   listResources(): CapabilityResource[];
   readResource(uri: string): CapabilityFile;
   search(query: string): CapabilitySearchResult[];
+}
+
+export interface CapabilityUpstreamMcp {
+  capabilityId: string;
+  capabilityName: string;
+  config: CapabilityMcpConfig;
 }

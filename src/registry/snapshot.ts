@@ -1,6 +1,7 @@
 import type {
   Capability,
   CapabilityFile,
+  CapabilityUpstreamMcp,
   CapabilityRegistry,
   CapabilityResource,
   CapabilitySearchResult,
@@ -20,6 +21,16 @@ export class SnapshotCapabilityRegistry implements CapabilityRegistry {
     const capability = this.capabilities.find((item) => item.id === id);
     if (!capability) return undefined;
     return { ...capability, files: [...capability.files] };
+  }
+
+  listUpstreamMcpServers(): CapabilityUpstreamMcp[] {
+    return this.capabilities
+      .filter((capability) => capability.mcp)
+      .map((capability) => ({
+        capabilityId: capability.id,
+        capabilityName: capability.name,
+        config: capability.mcp!,
+      }));
   }
 
   listResources(): CapabilityResource[] {

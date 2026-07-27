@@ -198,5 +198,39 @@ export const CAPABILITY_SNAPSHOT = [
         "lines": 66
       }
     ]
+  },
+  {
+    "id": "nocodb",
+    "name": "nocodb",
+    "description": "Utiliser un MCP NocoDB personnel via le registry global, sans reconfigurer chaque client IA.",
+    "files": [
+      {
+        "capabilityId": "nocodb",
+        "path": "SKILL.md",
+        "uri": "skill://nocodb/SKILL.md",
+        "name": "nocodb/SKILL.md",
+        "type": "skill",
+        "mimeType": "text/markdown",
+        "text": "---\nname: nocodb\ndescription: Utiliser un MCP NocoDB personnel via le registry global, sans reconfigurer chaque client IA.\n---\n\n# NocoDB\n\nCette capacité sert de point d'entrée pour ton MCP NocoDB personnel.\n\nLe serveur global lit `mcp.json`, résout les variables d'environnement, puis\nexpose les tools du MCP upstream avec le préfixe `nocodb.`.\n\n## Variables attendues\n\n- `NOCO_MCP_URL` : endpoint HTTP JSON-RPC du MCP NocoDB.\n- `NOCO_MCP_TOKEN` : token optionnel si ton MCP NocoDB attend un bearer token.\n\n## Utilisation\n\nUne fois configuré, les tools upstream apparaissent dans `tools/list` sous une\nforme namespacée, par exemple :\n\n```txt\nnocodb.list-tables\nnocodb.get-records\nnocodb.create-record\n```\n\nLe tool local `list-upstreams` permet de vérifier si les variables d'env sont\nprésentes avant d'appeler NocoDB.\n",
+        "lines": 31
+      },
+      {
+        "capabilityId": "nocodb",
+        "path": "mcp.json",
+        "uri": "skill://nocodb/mcp.json",
+        "name": "nocodb/mcp.json",
+        "type": "other",
+        "mimeType": "application/json",
+        "text": "{\n  \"type\": \"http\",\n  \"url\": \"env:NOCO_MCP_URL\",\n  \"headers\": {\n    \"authorization\": \"Bearer env:NOCO_MCP_TOKEN\"\n  }\n}\n",
+        "lines": 8
+      }
+    ],
+    "mcp": {
+      "type": "http",
+      "url": "env:NOCO_MCP_URL",
+      "headers": {
+        "authorization": "Bearer env:NOCO_MCP_TOKEN"
+      }
+    }
   }
 ] satisfies Capability[];

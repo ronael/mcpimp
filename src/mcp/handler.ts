@@ -1,13 +1,14 @@
 import type { CapabilityRegistry } from "../registry/types";
 import { jsonRpcFailure, jsonRpcSuccess, type JsonRpcRequest, type JsonRpcResponse } from "./protocol";
 import { callMcpTool, MCP_TOOLS } from "./tools";
+import { UpstreamMcpGateway } from "./upstream";
 
 const SERVER_INFO = {
   name: "personal-capability-registry",
   version: "1.0.0",
 };
 
-export function createMcpHandler(registry: CapabilityRegistry) {
+export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway = new UpstreamMcpGateway(registry)) {
   return async function handleMcpMessage(request: JsonRpcRequest): Promise<JsonRpcResponse> {
     const id = request.id ?? null;
 
@@ -25,13 +26,23 @@ export function createMcpHandler(registry: CapabilityRegistry) {
         case "notifications/initialized":
           return jsonRpcSuccess(id, null);
         case "tools/list":
-          return jsonRpcSuccess(id, { tools: MCP_TOOLS });
+          return jsonRpcSuccess(id, { tools: [...MCP_TOOLS, ...(await upstreamGateway.listTools())] });
         case "tools/call": {
           const params = request.params || {};
           const toolName = params.name;
           if (typeof toolName !== "string") throw new Error("Missing tool name");
 
-          return jsonRpcSuccess(id, callMcpTool(registry, toolName, (params.arguments as Record<string, unknown>) || {}));
+          if (upstreamGateway.canHandleTool(toolName)) {
+            return jsonRpcSuccess(
+              id,
+              await upstreamGateway.callTool(toolName, (params.arguments as Record<string, unknown>) || {}),
+            );
+          }
+
+          return jsonRpcSuccess(
+            id,
+            callMcpTool(registry, upstreamGateway, toolName, (params.arguments as Record<string, unknown>) || {}),
+          );
         }
         case "resources/list":
           return jsonRpcSuccess(id, { resources: registry.listResources() });

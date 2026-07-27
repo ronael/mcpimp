@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
 
 const fixturesRoot = resolve("test/fixtures/capabilities");
+const upstreamFixturesRoot = resolve("test/fixtures/upstream-capabilities");
 
 describe("FileSystemCapabilityRegistry", () => {
   it("discovers folders that contain a SKILL.md", async () => {
@@ -52,6 +53,20 @@ describe("FileSystemCapabilityRegistry", () => {
         capabilityId: "landing-page",
         path: "shared/rules.md",
         uri: "skill://landing-page/shared/rules.md",
+      },
+    ]);
+  });
+
+  it("loads optional mcp.json upstream config for active capabilities", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+
+    expect(registry.listUpstreamMcpServers()).toMatchObject([
+      {
+        capabilityId: "nocodb",
+        config: {
+          type: "http",
+          url: "env:TEST_NOCO_MCP_URL",
+        },
       },
     ]);
   });

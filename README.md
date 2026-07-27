@@ -19,6 +19,9 @@ skills/
     agents/
     shared/
     BUNDLE.md
+  nocodb/                 # capacité proxy vers un MCP personnel
+    SKILL.md
+    mcp.json
 ```
 
 La v1 découvre automatiquement les dossiers racine qui contiennent un
@@ -38,6 +41,42 @@ skill://landing-page/shared/content-rules.md
 | `capability-info` | Donne les métadonnées et fichiers d'une capacité |
 | `load-capability` | Charge tout ou partie d'une capacité |
 | `search-capabilities` | Recherche dans les fichiers indexés |
+| `list-upstreams` | Vérifie les MCP upstream configurés par capacité |
+
+## Proxy MCP
+
+Une capacité peut déclarer un MCP upstream avec un fichier `mcp.json`.
+
+```json
+{
+  "type": "http",
+  "url": "env:NOCO_MCP_URL",
+  "headers": {
+    "authorization": "Bearer env:NOCO_MCP_TOKEN"
+  }
+}
+```
+
+Le registry global appelle `tools/list` sur cet upstream et expose ses tools
+avec un préfixe stable :
+
+```txt
+nocodb.list-tables
+nocodb.get-records
+nocodb.create-record
+```
+
+Pour tester la configuration sans appeler NocoDB :
+
+```bash
+curl -sS http://localhost:3901/message \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list-upstreams","arguments":{}}}'
+```
+
+Si une variable d'environnement manque, le status affiché sera
+`missing-env`. Les tools upstream sont listés seulement quand l'URL et les
+headers nécessaires sont résolus.
 
 ## Développement
 

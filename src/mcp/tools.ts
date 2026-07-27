@@ -1,4 +1,5 @@
 import type { CapabilityRegistry } from "../registry/types";
+import type { UpstreamMcpGateway } from "./upstream";
 
 export const MCP_TOOLS = [
   {
@@ -46,6 +47,15 @@ export const MCP_TOOLS = [
         query: { type: "string", description: "Search query." },
       },
       required: ["query"],
+    },
+  },
+  {
+    name: "list-upstreams",
+    description: "List configured upstream MCP servers and their readiness status.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
     },
   },
 ];
@@ -103,7 +113,12 @@ function loadCapability(registry: CapabilityRegistry, args: Record<string, unkno
   return files.map((file) => `<!-- ${file.path} -->\n\n${file.text}`).join("\n\n");
 }
 
-export function callMcpTool(registry: CapabilityRegistry, name: string, args: Record<string, unknown> = {}) {
+export function callMcpTool(
+  registry: CapabilityRegistry,
+  upstreamGateway: UpstreamMcpGateway,
+  name: string,
+  args: Record<string, unknown> = {},
+) {
   switch (name) {
     case "list-capabilities":
       return textContent(
@@ -120,6 +135,8 @@ export function callMcpTool(registry: CapabilityRegistry, name: string, args: Re
       return textContent(loadCapability(registry, args));
     case "search-capabilities":
       return textContent(registry.search(requireString(args, "query")));
+    case "list-upstreams":
+      return textContent(upstreamGateway.listUpstreams());
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
