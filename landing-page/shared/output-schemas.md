@@ -45,6 +45,8 @@ lit la précédente.
 ```markdown
 # Creative Direction
 ## Résumé du brief
+## Refus des réflexes IA
+<!-- 5 patterns génériques probables pour CE brief + décision de remplacement -->
 ## Piste 1
 ### Nom | Concept | Émotion | Métaphore | Composition | Typographie | Couleurs | Signature | Risques
 ## Piste 2
@@ -62,6 +64,8 @@ lit la précédente.
 
 ```markdown
 # UI Specification
+## Design harness
+<!-- tokens, shell/layout, patterns interdits, références, assets -->
 ## Layout global
 ## Grille
 ## Hero

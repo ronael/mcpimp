@@ -54,22 +54,27 @@ suivante — ne saute pas d'étape, ne fusionne pas les rôles dans un seul bloc
 de texte.
 
 1. **Analyse du contexte** — lis la demande, le dépôt (tokens, composants,
-   polices, pages voisines, conventions, dépendances), les captures et le
-   contenu disponible. Si un projet existe : `shared/implementation-rules.md`
-   § Projet existant, et choisis continuité / évolution / rupture assumée.
+   polices, pages voisines, conventions, dépendances, éventuels `DESIGN.md`,
+   `PRODUCT.md`, brand guidelines), les captures et le contenu disponible. Si
+   un projet existe : `shared/implementation-rules.md` § Projet existant, et
+   choisis continuité / évolution / rupture assumée.
 2. **Hypothèses** — uniquement celles qui ont un impact réel sur le résultat.
 3. **Brief reformulé** — rôle : `agents/product-strategist.md`.
 4. **Stratégie de landing** — rôle : `agents/landing-strategist.md`.
 5. **Concepts créatifs** — rôle : `agents/creative-director.md` : trois pistes
    réellement différentes, puis sélection justifiée (la plus pertinente, pas
-   la plus spectaculaire).
+   la plus spectaculaire). Avant de proposer les pistes, produis un bloc
+   `Refus des réflexes IA` : liste 5 patterns génériques probables pour CE
+   brief, puis la décision précise qui les remplace.
 6. **Sélection** — présente la direction retenue ; si l'utilisateur est
    joignable et la demande ambitieuse (niveau 3-4), propose-lui le choix entre
    les pistes AVANT d'implémenter ; sinon décide et assume.
 7. **Spécification design** — rôle : `agents/ui-designer.md`, appuyé sur
-   `shared/design-principles.md`. Puis revue rapide de la spec par
-   `agents/ux-conversion-reviewer.md` : ses corrections bloquantes sont
-   intégrées AVANT de coder (corriger une spec coûte 10× moins qu'un rendu).
+   `shared/design-principles.md`. La spec commence par un `Design harness` :
+   tokens, shell/layout, patterns interdits, références et assets. Puis revue
+   rapide de la spec par `agents/ux-conversion-reviewer.md` : ses corrections
+   bloquantes sont intégrées AVANT de coder (corriger une spec coûte 10× moins
+   qu'un rendu).
 8. **Implémentation** — rôle : `agents/frontend-craftsman.md`, appuyé sur
    `shared/implementation-rules.md`. Première version complète.
 9. **Critique** — rôles : `agents/ux-conversion-reviewer.md` (parcours,
@@ -85,6 +90,14 @@ de texte.
 - Charge `shared/anti-generic.md` avant les étapes 5 et 9 : chaque landing
   doit porter **une idée forte identifiable** et zéro pattern générique non
   justifié.
+- Avant toute génération visuelle, pose un mini système de design vérifiable :
+  rôles de couleurs, rôles typo, logique de layout, iconographie, usages des
+  images, et 3-7 patterns explicitement refusés. Une page sans système retombe
+  dans les défauts statistiques des agents.
+- Si le projet contient un `DESIGN.md`, `PRODUCT.md`, une charte, des tokens ou
+  des composants existants, ils ont priorité sur les goûts génériques du
+  modèle. Si rien n'existe et que la demande est ambitieuse, propose un
+  `DESIGN.md` ou un court bloc de design memory réutilisable.
 - Charge `shared/content-rules.md` avant d'écrire le moindre texte : pas de
   copywriting creux, pas de preuves inventées — jamais.
 - Charge `shared/responsive-motion.md` avant l'étape 7 : le mobile est une

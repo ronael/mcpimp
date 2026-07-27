@@ -26,6 +26,10 @@ Meilleur : Conservez les photos, factures et garanties de vos biens dans un
 Test : un concurrent peut-il coller ta phrase sur son site sans la changer ?
 Si oui, réécris.
 
+Les emojis ne sont pas une voix de marque par défaut. Supprime-les des titres,
+CTA, listes, badges, preuves et microcopy sauf si le projet existant les
+utilise déjà intentionnellement comme langage de marque.
+
 ### Registres à distinguer (ne les mélange pas dans un même bloc)
 
 - **Titre de marque** (identité, ton) vs **titre de conversion** (promesse,
@@ -73,3 +77,15 @@ ne doit jamais « habiller » un placeholder au point qu'il passe pour vrai.
 S'il n'existe AUCUNE preuve réelle : la stratégie doit l'assumer (produit en
 lancement → jouer la transparence, la démonstration, la garantie de
 réversibilité) plutôt que simuler une traction inexistante.
+
+## Preuves et détails visuels
+
+N'invente jamais de notes, nombres de sessions, délais, garanties, prix,
+clients, avis, badges, labels, certifications, partenariats ou noms de
+personnes. Même une donnée « plausible » devient une fausse preuve si elle est
+présentée comme réelle.
+
+Les images générées sont autorisées pour une direction artistique, un mockup
+ou un placeholder visuel, à condition de ne pas prétendre montrer des locaux,
+produits, équipes, clients ou résultats réels. Marque-les comme placeholders
+quand cette ambiguïté pourrait exister.

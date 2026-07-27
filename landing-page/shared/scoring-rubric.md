@@ -60,6 +60,10 @@ révision AVANT notation finale.
 
 - Le biais par défaut est « générique jusqu'à preuve du contraire ».
 - Un rendu impeccable techniquement mais sans idée = plafond à ~75.
+- Un rendu fondé sur les défauts IA courants (gradient/glow/cartes/icônes/
+  badges, hero centré + trois cartes) = Direction artistique plafonnée à
+  12/20 et révision obligatoire.
+- Une spec sans Design harness vérifiable = Qualité UI plafonnée à 6/10.
 - Une idée forte mal exécutée = retour en implémentation, pas en direction.
 - Fausses preuves détectées = échec automatique de la catégorie
   « Narration & conversion » + correction obligatoire, quel que soit le reste.

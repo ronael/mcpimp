@@ -58,22 +58,27 @@ suivante — ne saute pas d'étape, ne fusionne pas les rôles dans un seul bloc
 de texte.
 
 1. **Analyse du contexte** — lis la demande, le dépôt (tokens, composants,
-   polices, pages voisines, conventions, dépendances), les captures et le
-   contenu disponible. Si un projet existe : `shared/implementation-rules.md`
-   § Projet existant, et choisis continuité / évolution / rupture assumée.
+   polices, pages voisines, conventions, dépendances, éventuels `DESIGN.md`,
+   `PRODUCT.md`, brand guidelines), les captures et le contenu disponible. Si
+   un projet existe : `shared/implementation-rules.md` § Projet existant, et
+   choisis continuité / évolution / rupture assumée.
 2. **Hypothèses** — uniquement celles qui ont un impact réel sur le résultat.
 3. **Brief reformulé** — rôle : `agents/product-strategist.md`.
 4. **Stratégie de landing** — rôle : `agents/landing-strategist.md`.
 5. **Concepts créatifs** — rôle : `agents/creative-director.md` : trois pistes
    réellement différentes, puis sélection justifiée (la plus pertinente, pas
-   la plus spectaculaire).
+   la plus spectaculaire). Avant de proposer les pistes, produis un bloc
+   `Refus des réflexes IA` : liste 5 patterns génériques probables pour CE
+   brief, puis la décision précise qui les remplace.
 6. **Sélection** — présente la direction retenue ; si l'utilisateur est
    joignable et la demande ambitieuse (niveau 3-4), propose-lui le choix entre
    les pistes AVANT d'implémenter ; sinon décide et assume.
 7. **Spécification design** — rôle : `agents/ui-designer.md`, appuyé sur
-   `shared/design-principles.md`. Puis revue rapide de la spec par
-   `agents/ux-conversion-reviewer.md` : ses corrections bloquantes sont
-   intégrées AVANT de coder (corriger une spec coûte 10× moins qu'un rendu).
+   `shared/design-principles.md`. La spec commence par un `Design harness` :
+   tokens, shell/layout, patterns interdits, références et assets. Puis revue
+   rapide de la spec par `agents/ux-conversion-reviewer.md` : ses corrections
+   bloquantes sont intégrées AVANT de coder (corriger une spec coûte 10× moins
+   qu'un rendu).
 8. **Implémentation** — rôle : `agents/frontend-craftsman.md`, appuyé sur
    `shared/implementation-rules.md`. Première version complète.
 9. **Critique** — rôles : `agents/ux-conversion-reviewer.md` (parcours,
@@ -89,6 +94,14 @@ de texte.
 - Charge `shared/anti-generic.md` avant les étapes 5 et 9 : chaque landing
   doit porter **une idée forte identifiable** et zéro pattern générique non
   justifié.
+- Avant toute génération visuelle, pose un mini système de design vérifiable :
+  rôles de couleurs, rôles typo, logique de layout, iconographie, usages des
+  images, et 3-7 patterns explicitement refusés. Une page sans système retombe
+  dans les défauts statistiques des agents.
+- Si le projet contient un `DESIGN.md`, `PRODUCT.md`, une charte, des tokens ou
+  des composants existants, ils ont priorité sur les goûts génériques du
+  modèle. Si rien n'existe et que la demande est ambitieuse, propose un
+  `DESIGN.md` ou un court bloc de design memory réutilisable.
 - Charge `shared/content-rules.md` avant d'écrire le moindre texte : pas de
   copywriting creux, pas de preuves inventées — jamais.
 - Charge `shared/responsive-motion.md` avant l'étape 7 : le mobile est une
@@ -213,10 +226,17 @@ défaut : le résultat est générique jusqu'à preuve du contraire. Charge
    d'anti-patterns. Chaque pattern suspect trouvé doit être soit justifié par
    la direction artistique retenue (cite la ligne de la Creative Direction),
    soit listé en correction obligatoire.
-5. **Compare au brief enrichi** : la page sert-elle la cible, la conversion et
+5. **Vérifie le Design harness** : les tokens, le shell/layout, les patterns
+   interdits, les références et les assets sont-ils présents et réellement
+   respectés ? S'ils manquent, la spec est incomplète.
+6. **Filtre anti-slop** : si le rendu repose surtout sur gradient/glow/cartes/
+   icônes/badges, ou sur la séquence hero centré → trois cartes → CTA, limite
+   la Direction artistique à 12/20 et le score global à 75 tant qu'une
+   contrainte formelle issue du produit réel n'apparaît pas.
+7. **Compare au brief enrichi** : la page sert-elle la cible, la conversion et
    le niveau de gamme définis par le Product Strategist — ou juste
    l'esthétique ?
-6. **Rends un verdict** selon les seuils ci-dessous, et si le score l'exige,
+8. **Rends un verdict** selon les seuils ci-dessous, et si le score l'exige,
    REFUSE la livraison. Tu en as le pouvoir et le devoir.
 
 ## Seuils (rappel — détail dans scoring-rubric.md)
@@ -579,6 +599,9 @@ n'est pas une justification. Le Design Critic traque cette liste.
 
 ## Layout et composition suspects
 
+- Combo « rendu IA premium » : fond sombre + glow bleu/violet + texte en
+  gradient + badge pillule + cartes glassmorphism + icônes partout. Un seul de
+  ces choix peut être pertinent ; le combo complet est suspect par défaut.
 - Hero parfaitement centré : grand titre + paragraphe + deux boutons.
 - Fond blanc/noir avec simple halo radial derrière le titre.
 - Grille de trois cartes identiques (le « triptyque réflexe »).
@@ -600,6 +623,9 @@ n'est pas une justification. Le Design Critic traque cette liste.
 - Section FAQ ou pricing ajoutée par automatisme.
 - Titres du type « Révolutionnez votre façon de travailler ».
 - Texte en gradient pour créer du « premium » artificiel.
+- Emoji utilisé comme icône, badge, puce, bouton, preuve ou élément de ton par
+  défaut. Les emojis sont interdits comme système UI sauf si la marque les
+  utilise déjà explicitement.
 - Icônes Lucide/Heroicons dans chaque carte comme substitut de design.
 - Photos de banque d'images génériques (poignées de main, bureaux lumineux).
 - Illustrations sans relation avec le produit.
@@ -639,6 +665,28 @@ présentation originale des preuves, tension entre deux états.
   ce dispositif du hero (le dossier se constitue) aux preuves (pièces à
   l'appui) jusqu'au CTA (« Constituez votre dossier »).
 
+## Refus des réflexes IA
+
+Avant la Creative Direction, écris un bloc court qui refuse les automatismes
+les plus probables pour le brief en cours. Il ne suffit pas de dire « éviter
+le générique » : nomme le piège et la décision de remplacement.
+
+Exemple pour un studio vidéo :
+
+- Refusé : hero néon noir/violet avec gros slogan centré.
+  Remplacé par : première vue construite comme un cadre de plateau ou une
+  timeline de production, selon la réalité du studio.
+- Refusé : trois cartes « Stratégie / Production / Diffusion ».
+  Remplacé par : une séquence éditoriale qui suit un vrai parcours client ou
+  un vrai objet métier.
+- Refusé : stats inventées, note 4.9/5, nombre de sessions, logos clients.
+  Remplacé par : preuves fournies, exemples réels, ou placeholders assumés.
+- Refusé : emojis dans les titres, boutons, listes et badges.
+  Remplacé par : icônes cohérentes, typographie, micro-interactions ou absence
+  volontaire d'icône.
+- Refusé : modal/simulateur interactif ajouté pour faire riche.
+  Remplacé par : interaction seulement si elle sert une action réelle.
+
 <!-- ══════════ FICHIER : shared/content-rules.md ══════════ -->
 
 # Règles de contenu — copywriting et honnêteté des preuves
@@ -668,6 +716,10 @@ Meilleur : Conservez les photos, factures et garanties de vos biens dans un
 
 Test : un concurrent peut-il coller ta phrase sur son site sans la changer ?
 Si oui, réécris.
+
+Les emojis ne sont pas une voix de marque par défaut. Supprime-les des titres,
+CTA, listes, badges, preuves et microcopy sauf si le projet existant les
+utilise déjà intentionnellement comme langage de marque.
 
 ### Registres à distinguer (ne les mélange pas dans un même bloc)
 
@@ -716,6 +768,18 @@ ne doit jamais « habiller » un placeholder au point qu'il passe pour vrai.
 S'il n'existe AUCUNE preuve réelle : la stratégie doit l'assumer (produit en
 lancement → jouer la transparence, la démonstration, la garantie de
 réversibilité) plutôt que simuler une traction inexistante.
+
+## Preuves et détails visuels
+
+N'invente jamais de notes, nombres de sessions, délais, garanties, prix,
+clients, avis, badges, labels, certifications, partenariats ou noms de
+personnes. Même une donnée « plausible » devient une fausse preuve si elle est
+présentée comme réelle.
+
+Les images générées sont autorisées pour une direction artistique, un mockup
+ou un placeholder visuel, à condition de ne pas prétendre montrer des locaux,
+produits, équipes, clients ou résultats réels. Marque-les comme placeholders
+quand cette ambiguïté pourrait exister.
 
 <!-- ══════════ FICHIER : shared/design-principles.md ══════════ -->
 
@@ -796,6 +860,9 @@ tableau, définition, visuel annoté, paragraphe rythmé par la typographie.
   par carte de fonctionnalité, automatiquement.
 - Si une liste de fonctionnalités a besoin d'icônes pour être lisible, le
   problème est la liste, pas l'absence d'icônes.
+- Utilise d'abord l'iconographie du projet. À défaut, une librairie ou un CDN
+  d'icônes est acceptable seulement si le choix est stable et justifié. Les
+  emojis ne sont pas une iconographie UI.
 
 ## 9. Bordures, ombres, profondeur
 
@@ -812,6 +879,28 @@ tableau, définition, visuel annoté, paragraphe rythmé par la typographie.
   et profondeur.
 - Système type : 3 valeurs max (ex. 6 / 12 / 20) + pleine rondeur pour les
   pillules — et une règle d'attribution, pas du cas par cas.
+
+## 11. Design harness avant génération
+
+Avant de coder ou de produire une spec détaillée, définis le cadre qui empêche
+les choix automatiques :
+
+- **Tokens** : rôles de couleurs, typo, espacements, rayons, ombres, surfaces.
+- **Shell/layout** : grille, densité, rythme de sections, largeur de texte,
+  posture mobile.
+- **Patterns interdits** : 3 à 7 réflexes refusés pour ce brief précis.
+- **Références** : ce qu'on retient, ce qu'on ne copie pas, comment on adapte.
+- **Assets** : sources réelles, placeholders assumés, génération éventuelle,
+  contraintes d'alt text et de dimensions.
+
+Une spec sans harness est incomplète : elle laisse trop de décisions aux
+défauts statistiques du modèle.
+
+Quand un projet possède déjà un `DESIGN.md`, un `PRODUCT.md`, une charte, des
+tokens ou des composants, le harness les lit et les résume au lieu d'inventer
+un nouveau langage. Quand rien n'existe et que la page doit servir de base
+réutilisable, propose une design memory minimale : faits de marque, tokens,
+principes, interdits, exemples d'usage.
 
 <!-- ══════════ FICHIER : shared/examples.md ══════════ -->
 
@@ -901,7 +990,8 @@ Motion. La stack est dictée par LE PROJET, jamais par ta préférence.
 
 Quand un projet existe, commence par inventorier : tokens, composants,
 polices, palette, navigation, boutons, formulaires, rayons, ombres, layout,
-conventions de nommage, dépendances, gestion responsive, pages voisines.
+conventions de nommage, dépendances, gestion responsive, pages voisines,
+`DESIGN.md`, `PRODUCT.md`, guidelines de marque, et captures existantes.
 
 Puis choisis EXPLICITEMENT une posture, et écris-la dans ta sortie :
 
@@ -917,6 +1007,16 @@ Puis choisis EXPLICITEMENT une posture, et écris-la dans ta sortie :
 Interdit : injecter une landing esthétiquement étrangère au reste du produit
 sans avoir posé cette décision. La landing promet ce que le produit doit
 tenir : un écart de langage trop grand est un mensonge visuel.
+
+## Création scratch et serveur de preview
+
+- Ne crée pas de projet scratch séparé pour une URL ou un dépôt existant sauf
+  si l'utilisateur demande explicitement un prototype isolé.
+- Ne lance pas arbitrairement un serveur sur `3000` si le projet a déjà son
+  serveur, son port ou sa commande de dev. Détecte et explique l'URL locale
+  utilisée.
+- Si un prototype isolé est vraiment utile, nomme-le comme tel, garde le code
+  séparé, et ne fais pas croire qu'il modifie le site réel.
 
 ## Intégration au design system
 
@@ -947,6 +1047,9 @@ tenir : un écart de langage trop grand est un mensonge visuel.
   dans six mois (nommage clair, sections commentées sobrement si longues).
 - Pas de contenu fictif présenté comme réel (voir `content-rules.md`) — cela
   vaut aussi pour les `alt`, les données de démo et les captures.
+- Pas d'emoji comme icône UI, badge, puce ou bouton. Utilise l'iconographie du
+  projet ; sinon une librairie/CDN d'icônes seulement si le choix est justifié
+  et cohérent.
 
 <!-- ══════════ FICHIER : shared/output-schemas.md ══════════ -->
 
@@ -997,6 +1100,8 @@ lit la précédente.
 ```markdown
 # Creative Direction
 ## Résumé du brief
+## Refus des réflexes IA
+<!-- 5 patterns génériques probables pour CE brief + décision de remplacement -->
 ## Piste 1
 ### Nom | Concept | Émotion | Métaphore | Composition | Typographie | Couleurs | Signature | Risques
 ## Piste 2
@@ -1014,6 +1119,8 @@ lit la précédente.
 
 ```markdown
 # UI Specification
+## Design harness
+<!-- tokens, shell/layout, patterns interdits, références, assets -->
 ## Layout global
 ## Grille
 ## Hero
@@ -1232,6 +1339,10 @@ révision AVANT notation finale.
 
 - Le biais par défaut est « générique jusqu'à preuve du contraire ».
 - Un rendu impeccable techniquement mais sans idée = plafond à ~75.
+- Un rendu fondé sur les défauts IA courants (gradient/glow/cartes/icônes/
+  badges, hero centré + trois cartes) = Direction artistique plafonnée à
+  12/20 et révision obligatoire.
+- Une spec sans Design harness vérifiable = Qualité UI plafonnée à 6/10.
 - Une idée forte mal exécutée = retour en implémentation, pas en direction.
 - Fausses preuves détectées = échec automatique de la catégorie
   « Narration & conversion » + correction obligatoire, quel que soit le reste.

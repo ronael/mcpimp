@@ -75,6 +75,9 @@ tableau, définition, visuel annoté, paragraphe rythmé par la typographie.
   par carte de fonctionnalité, automatiquement.
 - Si une liste de fonctionnalités a besoin d'icônes pour être lisible, le
   problème est la liste, pas l'absence d'icônes.
+- Utilise d'abord l'iconographie du projet. À défaut, une librairie ou un CDN
+  d'icônes est acceptable seulement si le choix est stable et justifié. Les
+  emojis ne sont pas une iconographie UI.
 
 ## 9. Bordures, ombres, profondeur
 
@@ -91,3 +94,25 @@ tableau, définition, visuel annoté, paragraphe rythmé par la typographie.
   et profondeur.
 - Système type : 3 valeurs max (ex. 6 / 12 / 20) + pleine rondeur pour les
   pillules — et une règle d'attribution, pas du cas par cas.
+
+## 11. Design harness avant génération
+
+Avant de coder ou de produire une spec détaillée, définis le cadre qui empêche
+les choix automatiques :
+
+- **Tokens** : rôles de couleurs, typo, espacements, rayons, ombres, surfaces.
+- **Shell/layout** : grille, densité, rythme de sections, largeur de texte,
+  posture mobile.
+- **Patterns interdits** : 3 à 7 réflexes refusés pour ce brief précis.
+- **Références** : ce qu'on retient, ce qu'on ne copie pas, comment on adapte.
+- **Assets** : sources réelles, placeholders assumés, génération éventuelle,
+  contraintes d'alt text et de dimensions.
+
+Une spec sans harness est incomplète : elle laisse trop de décisions aux
+défauts statistiques du modèle.
+
+Quand un projet possède déjà un `DESIGN.md`, un `PRODUCT.md`, une charte, des
+tokens ou des composants, le harness les lit et les résume au lieu d'inventer
+un nouveau langage. Quand rien n'existe et que la page doit servir de base
+réutilisable, propose une design memory minimale : faits de marque, tokens,
+principes, interdits, exemples d'usage.

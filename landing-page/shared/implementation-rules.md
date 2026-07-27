@@ -17,7 +17,8 @@ Motion. La stack est dictée par LE PROJET, jamais par ta préférence.
 
 Quand un projet existe, commence par inventorier : tokens, composants,
 polices, palette, navigation, boutons, formulaires, rayons, ombres, layout,
-conventions de nommage, dépendances, gestion responsive, pages voisines.
+conventions de nommage, dépendances, gestion responsive, pages voisines,
+`DESIGN.md`, `PRODUCT.md`, guidelines de marque, et captures existantes.
 
 Puis choisis EXPLICITEMENT une posture, et écris-la dans ta sortie :
 
@@ -33,6 +34,16 @@ Puis choisis EXPLICITEMENT une posture, et écris-la dans ta sortie :
 Interdit : injecter une landing esthétiquement étrangère au reste du produit
 sans avoir posé cette décision. La landing promet ce que le produit doit
 tenir : un écart de langage trop grand est un mensonge visuel.
+
+## Création scratch et serveur de preview
+
+- Ne crée pas de projet scratch séparé pour une URL ou un dépôt existant sauf
+  si l'utilisateur demande explicitement un prototype isolé.
+- Ne lance pas arbitrairement un serveur sur `3000` si le projet a déjà son
+  serveur, son port ou sa commande de dev. Détecte et explique l'URL locale
+  utilisée.
+- Si un prototype isolé est vraiment utile, nomme-le comme tel, garde le code
+  séparé, et ne fais pas croire qu'il modifie le site réel.
 
 ## Intégration au design system
 
@@ -63,3 +74,6 @@ tenir : un écart de langage trop grand est un mensonge visuel.
   dans six mois (nommage clair, sections commentées sobrement si longues).
 - Pas de contenu fictif présenté comme réel (voir `content-rules.md`) — cela
   vaut aussi pour les `alt`, les données de démo et les captures.
+- Pas d'emoji comme icône UI, badge, puce ou bouton. Utilise l'iconographie du
+  projet ; sinon une librairie/CDN d'icônes seulement si le choix est justifié
+  et cohérent.

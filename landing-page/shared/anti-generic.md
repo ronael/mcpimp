@@ -7,6 +7,9 @@ n'est pas une justification. Le Design Critic traque cette liste.
 
 ## Layout et composition suspects
 
+- Combo « rendu IA premium » : fond sombre + glow bleu/violet + texte en
+  gradient + badge pillule + cartes glassmorphism + icônes partout. Un seul de
+  ces choix peut être pertinent ; le combo complet est suspect par défaut.
 - Hero parfaitement centré : grand titre + paragraphe + deux boutons.
 - Fond blanc/noir avec simple halo radial derrière le titre.
 - Grille de trois cartes identiques (le « triptyque réflexe »).
@@ -28,6 +31,9 @@ n'est pas une justification. Le Design Critic traque cette liste.
 - Section FAQ ou pricing ajoutée par automatisme.
 - Titres du type « Révolutionnez votre façon de travailler ».
 - Texte en gradient pour créer du « premium » artificiel.
+- Emoji utilisé comme icône, badge, puce, bouton, preuve ou élément de ton par
+  défaut. Les emojis sont interdits comme système UI sauf si la marque les
+  utilise déjà explicitement.
 - Icônes Lucide/Heroicons dans chaque carte comme substitut de design.
 - Photos de banque d'images génériques (poignées de main, bureaux lumineux).
 - Illustrations sans relation avec le produit.
@@ -66,3 +72,25 @@ présentation originale des preuves, tension entre deux états.
   esthétique de document officiel réinterprétée chaleureusement — et dérouler
   ce dispositif du hero (le dossier se constitue) aux preuves (pièces à
   l'appui) jusqu'au CTA (« Constituez votre dossier »).
+
+## Refus des réflexes IA
+
+Avant la Creative Direction, écris un bloc court qui refuse les automatismes
+les plus probables pour le brief en cours. Il ne suffit pas de dire « éviter
+le générique » : nomme le piège et la décision de remplacement.
+
+Exemple pour un studio vidéo :
+
+- Refusé : hero néon noir/violet avec gros slogan centré.
+  Remplacé par : première vue construite comme un cadre de plateau ou une
+  timeline de production, selon la réalité du studio.
+- Refusé : trois cartes « Stratégie / Production / Diffusion ».
+  Remplacé par : une séquence éditoriale qui suit un vrai parcours client ou
+  un vrai objet métier.
+- Refusé : stats inventées, note 4.9/5, nombre de sessions, logos clients.
+  Remplacé par : preuves fournies, exemples réels, ou placeholders assumés.
+- Refusé : emojis dans les titres, boutons, listes et badges.
+  Remplacé par : icônes cohérentes, typographie, micro-interactions ou absence
+  volontaire d'icône.
+- Refusé : modal/simulateur interactif ajouté pour faire riche.
+  Remplacé par : interaction seulement si elle sert une action réelle.

@@ -18,10 +18,17 @@ défaut : le résultat est générique jusqu'à preuve du contraire. Charge
    d'anti-patterns. Chaque pattern suspect trouvé doit être soit justifié par
    la direction artistique retenue (cite la ligne de la Creative Direction),
    soit listé en correction obligatoire.
-5. **Compare au brief enrichi** : la page sert-elle la cible, la conversion et
+5. **Vérifie le Design harness** : les tokens, le shell/layout, les patterns
+   interdits, les références et les assets sont-ils présents et réellement
+   respectés ? S'ils manquent, la spec est incomplète.
+6. **Filtre anti-slop** : si le rendu repose surtout sur gradient/glow/cartes/
+   icônes/badges, ou sur la séquence hero centré → trois cartes → CTA, limite
+   la Direction artistique à 12/20 et le score global à 75 tant qu'une
+   contrainte formelle issue du produit réel n'apparaît pas.
+7. **Compare au brief enrichi** : la page sert-elle la cible, la conversion et
    le niveau de gamme définis par le Product Strategist — ou juste
    l'esthétique ?
-6. **Rends un verdict** selon les seuils ci-dessous, et si le score l'exige,
+8. **Rends un verdict** selon les seuils ci-dessous, et si le score l'exige,
    REFUSE la livraison. Tu en as le pouvoir et le devoir.
 
 ## Seuils (rappel — détail dans scoring-rubric.md)
