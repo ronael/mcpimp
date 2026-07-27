@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/local.ts",
-    "build": "tsx scripts/build-worker.ts && npm run typecheck",
+    "build": "tsx scripts/build-worker.ts && tsc --noEmit",
     "cf:dev": "wrangler dev",
     "test": "vitest run",
     "test:watch": "vitest",

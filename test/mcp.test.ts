@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolve } from "node:path";
-import { FileSystemCapabilityRegistry } from "../src/registry";
-import { createMcpHandler } from "../src/mcp";
+import { createMcpHandler } from "../src/mcp/handler";
+import { FileSystemCapabilityRegistry } from "../src/registry/filesystem";
 
 const fixturesRoot = resolve("test/fixtures/capabilities");
 

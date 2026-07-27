@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolve } from "node:path";
-import { FileSystemCapabilityRegistry } from "../src/registry";
-import { createServer } from "../src/server";
+import { createServer } from "../src/http/server";
+import { FileSystemCapabilityRegistry } from "../src/registry/filesystem";
 
 const fixturesRoot = resolve("test/fixtures/capabilities");
 
@@ -48,5 +48,18 @@ describe("Hono server", () => {
         code: -32601,
       },
     });
+  });
+
+  it("renders a dashboard that explains discovery, endpoints, tools, and resources", async () => {
+    const app = await createApp();
+    const response = await app.request("/dashboard");
+    const html = await response.text();
+
+    expect(html).toContain("Le serveur scanne les dossiers racine");
+    expect(html).toContain("/health");
+    expect(html).toContain("/message");
+    expect(html).toContain("list-capabilities");
+    expect(html).toContain("search-capabilities");
+    expect(html).toContain("skill://landing-page/SKILL.md");
   });
 });

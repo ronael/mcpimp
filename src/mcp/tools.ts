@@ -1,37 +1,6 @@
-import type { CapabilityRegistry } from "./types";
+import type { CapabilityRegistry } from "../registry/types";
 
-type JsonRpcId = string | number | null;
-
-interface JsonRpcRequest {
-  jsonrpc: "2.0";
-  id?: JsonRpcId;
-  method: string;
-  params?: Record<string, unknown>;
-}
-
-interface JsonRpcSuccess {
-  jsonrpc: "2.0";
-  id: JsonRpcId;
-  result: any;
-}
-
-interface JsonRpcFailure {
-  jsonrpc: "2.0";
-  id: JsonRpcId;
-  error: {
-    code: number;
-    message: string;
-  };
-}
-
-type JsonRpcResponse = JsonRpcSuccess | JsonRpcFailure;
-
-const SERVER_INFO = {
-  name: "personal-capability-registry",
-  version: "1.0.0",
-};
-
-const TOOLS = [
+export const MCP_TOOLS = [
   {
     name: "list-capabilities",
     description: "List all capabilities available in the registry.",
@@ -80,14 +49,6 @@ const TOOLS = [
     },
   },
 ];
-
-function success(id: JsonRpcId, result: any): JsonRpcSuccess {
-  return { jsonrpc: "2.0", id, result };
-}
-
-function failure(id: JsonRpcId, code: number, message: string): JsonRpcFailure {
-  return { jsonrpc: "2.0", id, error: { code, message } };
-}
 
 function textContent(value: unknown) {
   return {
@@ -142,7 +103,7 @@ function loadCapability(registry: CapabilityRegistry, args: Record<string, unkno
   return files.map((file) => `<!-- ${file.path} -->\n\n${file.text}`).join("\n\n");
 }
 
-function callTool(registry: CapabilityRegistry, name: string, args: Record<string, unknown> = {}) {
+export function callMcpTool(registry: CapabilityRegistry, name: string, args: Record<string, unknown> = {}) {
   switch (name) {
     case "list-capabilities":
       return textContent(
@@ -162,57 +123,4 @@ function callTool(registry: CapabilityRegistry, name: string, args: Record<strin
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
-}
-
-export function createMcpHandler(registry: CapabilityRegistry) {
-  return async function handleMcpMessage(request: JsonRpcRequest): Promise<JsonRpcResponse> {
-    const id = request.id ?? null;
-
-    try {
-      switch (request.method) {
-        case "initialize":
-          return success(id, {
-            protocolVersion: "2025-03-26",
-            capabilities: {
-              tools: {},
-              resources: {},
-            },
-            serverInfo: SERVER_INFO,
-          });
-        case "notifications/initialized":
-          return success(id, null);
-        case "tools/list":
-          return success(id, { tools: TOOLS });
-        case "tools/call": {
-          const params = request.params || {};
-          const toolName = params.name;
-          if (typeof toolName !== "string") throw new Error("Missing tool name");
-
-          return success(id, callTool(registry, toolName, (params.arguments as Record<string, unknown>) || {}));
-        }
-        case "resources/list":
-          return success(id, { resources: registry.listResources() });
-        case "resources/read": {
-          const params = request.params || {};
-          if (typeof params.uri !== "string") throw new Error("Missing resource uri");
-          const resource = registry.readResource(params.uri);
-
-          return success(id, {
-            contents: [
-              {
-                uri: resource.uri,
-                name: resource.name,
-                mimeType: resource.mimeType,
-                text: resource.text,
-              },
-            ],
-          });
-        }
-        default:
-          return failure(id, -32601, `Unknown method: ${request.method}`);
-      }
-    } catch (error) {
-      return failure(id, -32601, error instanceof Error ? error.message : "Unknown MCP error");
-    }
-  };
 }

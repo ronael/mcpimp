@@ -42,11 +42,11 @@ skill://landing-page/shared/content-rules.md
 ## Développement
 
 ```bash
-npm install
-npm run test
-npm run typecheck
-npm run build
-npm run dev
+pnpm install
+pnpm run test
+pnpm run typecheck
+pnpm run build
+pnpm run dev
 ```
 
 Le serveur local écoute par défaut sur `http://localhost:3901`.
@@ -63,11 +63,11 @@ Le serveur local écoute par défaut sur `http://localhost:3901`.
 
 ## Cloudflare
 
-Le Worker ne lit pas le filesystem au runtime. `npm run build` génère
+Le Worker ne lit pas le filesystem au runtime. `pnpm run build` génère
 `src/capability-snapshot.ts`, puis `worker.ts` sert ce snapshot statique.
 
 ```bash
-npm run build
+pnpm run build
 npx wrangler deploy
 ```
 
@@ -77,7 +77,7 @@ npx wrangler deploy
 2. Ajouter un `SKILL.md` avec un frontmatter `name:` et `description:`.
 3. Ajouter au besoin `agents/`, `shared/`, `references/`, `assets/` ou
    `scripts/`.
-4. Relancer `npm run build` avant un déploiement Cloudflare.
+4. Relancer `pnpm run build` avant un déploiement Cloudflare.
 
 Les plugins Codex restent un format possible plus tard. Dans cette v1, l'unité
 métier est la capacité : elle peut contenir un skill, des ressources, des

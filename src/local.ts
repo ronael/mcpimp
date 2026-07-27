@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
 import { resolve } from "node:path";
-import { FileSystemCapabilityRegistry } from "./registry";
-import { createServer } from "./server";
+import { createServer } from "./http/server";
+import { FileSystemCapabilityRegistry } from "./registry/filesystem";
 
 const port = Number(process.env.PORT || 3901);
 const root = resolve(process.env.CAPABILITIES_ROOT || ".");

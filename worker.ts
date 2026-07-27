@@ -1,6 +1,6 @@
-import { createServer } from "./src/server";
-import { SnapshotCapabilityRegistry } from "./src/snapshot-registry";
+import { createServer } from "./src/http/server";
 import { CAPABILITY_SNAPSHOT } from "./src/capability-snapshot";
+import { SnapshotCapabilityRegistry } from "./src/registry/snapshot";
 
 const registry = new SnapshotCapabilityRegistry(CAPABILITY_SNAPSHOT);
 const app = createServer(registry);
