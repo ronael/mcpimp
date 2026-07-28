@@ -61,5 +61,7 @@ describe("Hono server", () => {
     expect(html).toContain("list-capabilities");
     expect(html).toContain("search-capabilities");
     expect(html).toContain("skill://landing-page/SKILL.md");
+    expect(html).toContain("Sources & références");
+    expect(html).toContain("https://example.com/source");
   });
 });

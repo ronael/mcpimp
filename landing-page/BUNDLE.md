@@ -1446,6 +1446,72 @@ formaliser une mémoire design.
   source d'inspiration pour `shared/design-principles.md` et les futures
   références `DESIGN.md`, pas comme collection de layouts à copier.
 
+### DESIGN.md
+
+- **URL** : https://designmd.ai/
+- **Date de consultation** : 2026-07-28
+- **Idée utile** : bibliothèque de systèmes `DESIGN.md` pour agents de code,
+  avec tags, exemples featured/trending et usage simple : télécharger un
+  `DESIGN.md`, le placer à la racine du projet, demander à l'agent de
+  l'appliquer.
+- **Traduction dans la capacité** :
+  renforce l'idée de design memory stable avant génération et la future piste
+  `references/design-memory-template.md`.
+
+### getdesign.md
+
+- **URL** : https://getdesign.md/
+- **Date de consultation** : 2026-07-28
+- **Idée utile** : analyses de design systems de marques réelles pour donner à
+  l'agent couleurs, typographie, spacing, composants et surtout le raisonnement
+  derrière la direction.
+- **Traduction dans la capacité** :
+  bonne source pour apprendre à transformer une référence existante en langage
+  transmissible sans cloner visuellement la marque.
+
+### DESIGN.md by 02UI
+
+- **URL** : https://designmd.info/
+- **Date de consultation** : 2026-07-28
+- **Idée utile** : fichiers `DESIGN.md` designer-first, ouverts, avec rationale
+  explicite. Rappel important : des tokens sans raison ne suffisent pas à
+  guider un agent.
+- **Traduction dans la capacité** :
+  à utiliser pour enrichir les règles de justification dans le Design harness.
+
+### Landing.Gallery
+
+- **URL** : https://www.landing.gallery/
+- **Date de consultation** : 2026-07-28
+- **Idée utile** : galerie curatée de vraies landing pages avec screenshots,
+  types de pages, technologies et tags. Utile pour étudier des pages livrées,
+  pas seulement des concepts.
+- **Traduction dans la capacité** :
+  source d'audit comparatif pour les références visuelles et la structure des
+  sections, sans copier les pages.
+
+### Land-book
+
+- **URL** : https://land-book.com/
+- **Date de consultation** : 2026-07-28
+- **Idée utile** : galerie quotidienne de sites et sections, avec catégories,
+  motion, headlines, boards et filtres. Intéressant pour comparer plusieurs
+  traitements d'une même section avant de figer un layout.
+- **Traduction dans la capacité** :
+  utile pour nourrir les alternatives de Creative Direction et éviter la
+  première solution automatique.
+
+### VibeUI
+
+- **URL** : https://www.vibeui.org/
+- **Date de consultation** : 2026-07-28
+- **Idée utile** : dépôt de styles/composants conçu pour être recherché par des
+  agents via API. L'approche confirme que les agents ont besoin d'une couche de
+  recherche sémantique design, pas seulement d'un prompt.
+- **Traduction dans la capacité** :
+  inspiration long terme pour une future capacité ou upstream MCP de recherche
+  de styles, en restant vigilant à ne pas injecter des composants hors système.
+
 ## Pistes à explorer ensuite
 
 - Ajouter un `references/examples-reviewed.md` avec de vrais exemples de pages
@@ -1454,4 +1520,6 @@ formaliser une mémoire design.
   un `DESIGN.md` minimal dans un projet client.
 - Ajouter une source dédiée à l'UX writing, pour compléter les règles de
   contenu et éviter le texte générique.
+- Étudier `https://godly.design/sites/` / Recent Design comme galerie plus
+  craft et interaction, avant de l'ajouter officiellement.
 

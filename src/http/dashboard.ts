@@ -1,6 +1,6 @@
 import { MCP_TOOLS } from "../mcp/tools";
 import { UpstreamMcpGateway } from "../mcp/upstream";
-import type { CapabilityRegistry } from "../registry/types";
+import type { Capability, CapabilityFile, CapabilityRegistry } from "../registry/types";
 
 const ENDPOINTS = [
   { method: "GET", path: "/health", description: "Status JSON du serveur et nombre de capacités découvertes." },
@@ -15,6 +15,106 @@ function escapeHtml(value: string): string {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function escapeAttribute(value: string): string {
+  return escapeHtml(value).replaceAll("'", "&#39;");
+}
+
+interface ReferenceLink {
+  title: string;
+  url: string;
+  sourcePath: string;
+}
+
+function titleBefore(text: string, index: number): string | undefined {
+  const before = text.slice(0, index);
+  const headings = [...before.matchAll(/^#{2,3}\s+(.+)$/gm)];
+  return headings.at(-1)?.[1]?.trim();
+}
+
+function uniqueLinks(links: ReferenceLink[]): ReferenceLink[] {
+  const seen = new Set<string>();
+  return links.filter((link) => {
+    const key = `${link.sourcePath}:${link.url}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function extractReferenceLinks(file: CapabilityFile): ReferenceLink[] {
+  const links: ReferenceLink[] = [];
+  const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
+  const bareUrlPattern = /https?:\/\/[^\s)]+/g;
+
+  for (const match of file.text.matchAll(markdownLinkPattern)) {
+    links.push({
+      title: match[1].trim(),
+      url: match[2],
+      sourcePath: file.path,
+    });
+  }
+
+  for (const match of file.text.matchAll(bareUrlPattern)) {
+    const url = match[0].replace(/[.,;:]$/, "");
+    if (links.some((link) => link.url === url)) continue;
+
+    links.push({
+      title: titleBefore(file.text, match.index ?? 0) || url,
+      url,
+      sourcePath: file.path,
+    });
+  }
+
+  return uniqueLinks(links);
+}
+
+function renderReferenceSources(capability: Capability): string {
+  const referenceFiles = capability.files.filter((file) => file.type === "reference");
+  if (referenceFiles.length === 0) return "";
+
+  const links = referenceFiles.flatMap(extractReferenceLinks);
+  const referenceRows = referenceFiles
+    .map(
+      (file) => `<tr>
+        <td><code>${escapeHtml(file.uri)}</code></td>
+        <td>${file.lines}</td>
+      </tr>`,
+    )
+    .join("");
+
+  const linkRows =
+    links.length > 0
+      ? links
+          .map(
+            (link) => `<tr>
+              <td><a href="${escapeAttribute(link.url)}" target="_blank" rel="noreferrer">${escapeHtml(link.title)}</a></td>
+              <td><code>${escapeHtml(link.sourcePath)}</code></td>
+            </tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="2">Aucun lien détecté dans les références.</td></tr>`;
+
+  return `<div class="references">
+    <h3>Sources & références</h3>
+    <div class="reference-grid">
+      <div>
+        <h4>Fichiers</h4>
+        <table>
+          <thead><tr><th>URI</th><th>Lines</th></tr></thead>
+          <tbody>${referenceRows}</tbody>
+        </table>
+      </div>
+      <div>
+        <h4>Liens détectés</h4>
+        <table>
+          <thead><tr><th>Source</th><th>Fichier</th></tr></thead>
+          <tbody>${linkRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderCapabilityResources(registry: CapabilityRegistry): string {
@@ -45,6 +145,7 @@ function renderCapabilityResources(registry: CapabilityRegistry): string {
           </thead>
           <tbody>${files}</tbody>
         </table>
+        ${renderReferenceSources(capability)}
       </section>`;
     })
     .join("");
@@ -162,9 +263,27 @@ export function renderDashboard(registry: CapabilityRegistry): string {
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border-top: 1px solid var(--line); padding: 9px 8px; text-align: left; vertical-align: top; }
     th { color: var(--muted); font-weight: 600; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
     .capability { margin-top: 16px; }
     .capability header { display: flex; align-items: start; justify-content: space-between; gap: 20px; margin-bottom: 8px; }
     .capability header strong { color: var(--ok); white-space: nowrap; }
+    .references {
+      border-top: 1px solid var(--line);
+      margin-top: 16px;
+      padding-top: 14px;
+    }
+    .references h4 {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .reference-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      gap: 16px;
+    }
     pre {
       overflow-x: auto;
       border: 1px solid var(--line);
@@ -174,7 +293,7 @@ export function renderDashboard(registry: CapabilityRegistry): string {
       color: var(--text);
     }
     @media (max-width: 820px) {
-      .top, .grid, .flow { grid-template-columns: 1fr; }
+      .top, .grid, .flow, .reference-grid { grid-template-columns: 1fr; }
       .stats { justify-content: flex-start; }
     }
   </style>
