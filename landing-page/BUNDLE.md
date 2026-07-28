@@ -1434,6 +1434,18 @@ formaliser une mémoire design.
   orientation long terme pour ajouter des sources plus spécialisées :
   accessibilité, design systems, brand systems, UX writing.
 
+### Neuform Community Featured
+
+- **URL** : https://neuform.ai/community/featured
+- **Date de consultation** : 2026-07-28
+- **Idée utile** : galerie de templates/remix AI HTML orientée systèmes
+  réutilisables, previews, sources `DESIGN.md`, directions de page et profils
+  créateurs. À utiliser comme source de veille pour étudier comment une
+  direction visuelle devient un système transmissible à un agent.
+- **Traduction dans la capacité** :
+  source d'inspiration pour `shared/design-principles.md` et les futures
+  références `DESIGN.md`, pas comme collection de layouts à copier.
+
 ## Pistes à explorer ensuite
 
 - Ajouter un `references/examples-reviewed.md` avec de vrais exemples de pages
