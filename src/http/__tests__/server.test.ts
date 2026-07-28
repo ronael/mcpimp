@@ -58,6 +58,10 @@ describe("Hono server", () => {
     expect(html).toContain("Le serveur scanne les dossiers racine");
     expect(html).toContain("/health");
     expect(html).toContain("/message");
+    expect(html).toContain('href="#discovery"');
+    expect(html).toContain('id="endpoints"');
+    expect(html).toContain('href="#capability-landing-page"');
+    expect(html).toContain('id="capability-landing-page"');
     expect(html).toContain("list-capabilities");
     expect(html).toContain("search-capabilities");
     expect(html).toContain("skill://landing-page/SKILL.md");

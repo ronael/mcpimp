@@ -21,6 +21,15 @@ function escapeAttribute(value: string): string {
   return escapeHtml(value).replaceAll("'", "&#39;");
 }
 
+function anchorId(value: string): string {
+  const normalized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return normalized || "section";
+}
+
 interface ReferenceLink {
   title: string;
   url: string;
@@ -121,6 +130,7 @@ function renderCapabilityResources(registry: CapabilityRegistry): string {
   return registry
     .listCapabilities()
     .map((capability) => {
+      const capabilityAnchor = `capability-${anchorId(capability.id)}`;
       const files = capability.files
         .map(
           (file) => `<tr>
@@ -131,7 +141,7 @@ function renderCapabilityResources(registry: CapabilityRegistry): string {
         )
         .join("");
 
-      return `<section class="capability">
+      return `<section class="capability" id="${escapeAttribute(capabilityAnchor)}">
         <header>
           <div>
             <h2>${escapeHtml(capability.name)}</h2>
@@ -149,6 +159,24 @@ function renderCapabilityResources(registry: CapabilityRegistry): string {
       </section>`;
     })
     .join("");
+}
+
+function renderDashboardNav(capabilities: Capability[]): string {
+  const capabilityLinks = capabilities
+    .map(
+      (capability) =>
+        `<a href="#capability-${escapeAttribute(anchorId(capability.id))}">${escapeHtml(capability.name)}</a>`,
+    )
+    .join("");
+
+  return `<nav class="dashboard-nav" aria-label="Navigation du dashboard">
+    <a href="#discovery">Découverte</a>
+    <a href="#endpoints">Endpoints</a>
+    <a href="#tools">Tools</a>
+    <a href="#upstreams">Upstreams</a>
+    <a href="#quick-test">Test rapide</a>
+    ${capabilityLinks}
+  </nav>`;
 }
 
 function renderEndpointRows(): string {
@@ -214,6 +242,7 @@ export function renderDashboard(registry: CapabilityRegistry): string {
       --ok: #a6e3a1;
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 86px; }
     body {
       margin: 0;
       background: var(--bg);
@@ -226,6 +255,34 @@ export function renderDashboard(registry: CapabilityRegistry): string {
     h3 { margin: 0 0 12px; font-size: 15px; letter-spacing: 0; }
     p { margin: 0; color: var(--muted); }
     code { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .dashboard-nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: -32px -20px 24px;
+      padding: 14px 20px;
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+    .dashboard-nav a {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    .dashboard-nav a:hover,
+    .dashboard-nav a:focus-visible {
+      border-color: var(--accent);
+      color: var(--accent);
+      text-decoration: none;
+    }
     .top {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -300,6 +357,8 @@ export function renderDashboard(registry: CapabilityRegistry): string {
 </head>
 <body>
   <main>
+    ${renderDashboardNav(capabilities)}
+
     <div class="top">
       <div>
         <h1>Capability Registry MCP</h1>
@@ -312,7 +371,7 @@ export function renderDashboard(registry: CapabilityRegistry): string {
       </div>
     </div>
 
-    <section class="panel">
+    <section class="panel" id="discovery">
       <h3>Découverte par l'IA</h3>
       <div class="flow">
         <div class="step"><strong>1. Scan</strong><p>Le registry inspecte les dossiers à la racine.</p></div>
@@ -323,17 +382,17 @@ export function renderDashboard(registry: CapabilityRegistry): string {
     </section>
 
     <div class="grid">
-      <section class="panel">
+      <section class="panel" id="endpoints">
         <h3>Endpoints HTTP</h3>
         <table><tbody>${renderEndpointRows()}</tbody></table>
       </section>
-      <section class="panel">
+      <section class="panel" id="tools">
         <h3>Tools MCP</h3>
         <table><tbody>${renderToolRows()}</tbody></table>
       </section>
     </div>
 
-    <section class="panel">
+    <section class="panel" id="upstreams">
       <h3>MCP upstream</h3>
       <table>
         <thead><tr><th>Capacité</th><th>Transport</th><th>Status</th><th>URL</th><th>Env manquantes</th></tr></thead>
@@ -341,7 +400,7 @@ export function renderDashboard(registry: CapabilityRegistry): string {
       </table>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="quick-test">
       <h3>Test rapide</h3>
       <pre><code>curl -sS http://localhost:3901/message \\
   -H 'content-type: application/json' \\
