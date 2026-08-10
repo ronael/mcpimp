@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/local.ts",
+    "sources:sync": "tsx src/cli/sources.ts",
     "build": "tsx scripts/build-worker.ts && tsc --noEmit",
     "cf:dev": "wrangler dev",
     "test": "vitest run",

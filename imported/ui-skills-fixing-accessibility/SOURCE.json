@@ -1,0 +1,35 @@
+{
+  "type": "github",
+  "sourceId": "ibelick-ui-skills",
+  "repository": "ibelick/ui-skills",
+  "path": "skills/fixing-accessibility",
+  "ref": "main",
+  "commit": "fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5",
+  "url": "https://github.com/ibelick/ui-skills/tree/fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5/skills/fixing-accessibility",
+  "revision": {
+    "kind": "git-commit",
+    "value": "fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5"
+  },
+  "contentHash": "sha256:92bf20e3534ceebaace27f12f98c9baf46882f9e466caf87e9c36850056d0b68",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/ibelick/ui-skills/blob/fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "ui-skills-fixing-accessibility",
+  "update": "review",
+  "lastSyncedAt": "2026-08-10T17:23:40.812Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 4718,
+      "binary": false,
+      "sha": "e2dcd7004645277488a142be152878b7310437e1",
+      "sha256": "549261e8a53b53a1a20c0ddbf736821e5fc0876ad82eee76e0efab8e9ee9dadf"
+    }
+  ]
+}

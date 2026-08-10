@@ -1,0 +1,51 @@
+{
+  "type": "github",
+  "sourceId": "ibelick-ui-skills",
+  "repository": "ibelick/ui-skills",
+  "path": "skills/improve-ui",
+  "ref": "main",
+  "commit": "fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5",
+  "url": "https://github.com/ibelick/ui-skills/tree/fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5/skills/improve-ui",
+  "revision": {
+    "kind": "git-commit",
+    "value": "fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5"
+  },
+  "contentHash": "sha256:fb3159b1673908efc71058d4fa4176790440360885874074b0cf1505f498fee6",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/ibelick/ui-skills/blob/fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [
+    "references"
+  ],
+  "skippedAssets": [],
+  "capability": "ui-skills-improve-ui",
+  "update": "review",
+  "lastSyncedAt": "2026-08-10T17:23:41.166Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 7830,
+      "binary": false,
+      "sha": "c3ed42a578d3c0ca798ddd122fe0886e9c9acbc0",
+      "sha256": "fa2ac808f6d9dab7bb3620880b014d2c18e227e5b006102856038096e573e69a"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "bytes": 386,
+      "binary": false,
+      "sha": "54b7aa85c942d5daf7d07fdd445ecb4d5ad5b963",
+      "sha256": "933af431364517518cbcfcd4e70eb8e8b390ead920abc48c071a4eedb6747183"
+    },
+    {
+      "path": "references/plan-template.md",
+      "bytes": 1590,
+      "binary": false,
+      "sha": "e08b3dd0b3a3a4c40a3861e0326e1159558ff7b7",
+      "sha256": "8faca7a14659a7f951d3b89fb730a43a4ce99966cc00481bf83d82b90f34b868"
+    }
+  ]
+}

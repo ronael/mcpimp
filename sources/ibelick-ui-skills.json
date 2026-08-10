@@ -1,0 +1,11 @@
+{
+  "id": "ibelick-ui-skills",
+  "type": "github",
+  "repository": "ibelick/ui-skills",
+  "ref": "main",
+  "roots": ["skills"],
+  "namespace": "ui-skills",
+  "update": "review",
+  "include": ["improve-ui", "baseline-ui", "fixing-accessibility", "fixing-motion-performance", "create-design-md"],
+  "notes": "Design/UI skills, MIT. Complements landing-page on execution quality: baseline UI, accessibility, motion performance, design memory."
+}

@@ -1,0 +1,18 @@
+{
+  "type": "github",
+  "sourceId": "demo-source",
+  "repository": "acme/demo-skills",
+  "path": "skills/demo",
+  "ref": "main",
+  "commit": "1111111111111111111111111111111111111111",
+  "url": "https://github.com/acme/demo-skills/tree/1111111111111111111111111111111111111111/skills/demo",
+  "revision": { "kind": "git-commit", "value": "1111111111111111111111111111111111111111" },
+  "contentHash": "sha256:demo",
+  "license": { "spdxId": "MIT", "name": "MIT License" },
+  "skillKind": "portable",
+  "skillTraits": ["references"],
+  "capability": "demo-imported",
+  "update": "review",
+  "lastSyncedAt": "2026-08-01T00:00:00.000Z",
+  "files": [{ "path": "SKILL.md", "bytes": 120, "binary": false, "sha": "aaa" }]
+}

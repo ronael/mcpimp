@@ -1,22 +1,33 @@
+import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
-import { basename, join, relative, sep } from "node:path";
+import { join, relative, sep } from "node:path";
+import { parseFrontmatter } from "./frontmatter";
+import { searchCapabilities } from "./search";
+import { countLines, decodeTextContent, mimeTypeFor } from "./text";
 import type {
   Capability,
   CapabilityFile,
+  CapabilityFileLayer,
   CapabilityFileType,
   CapabilityMcpConfig,
+  CapabilityOrigin,
   CapabilityUpstreamMcp,
   CapabilityResource,
   CapabilityRegistry,
+  CapabilitySearchOptions,
   CapabilitySearchResult,
 } from "./types";
 
 const IGNORED_NAMES = new Set([".git", "node_modules", ".DS_Store"]);
 
-interface Frontmatter {
-  name?: string;
-  description?: string;
-}
+/** Root folder holding capabilities imported from external sources. */
+export const IMPORTED_DIR = "imported";
+/** Verbatim upstream content inside an imported capability. */
+export const UPSTREAM_DIR = "upstream";
+/** Local MCPIMP additions, never touched by sync. */
+export const OVERRIDES_DIR = "overrides";
+/** Provenance manifest written by the ingestion layer. */
+export const SOURCE_MANIFEST = "SOURCE.json";
 
 interface RawMcpConfig {
   type?: "mcp" | "mcp-remote";
@@ -26,61 +37,38 @@ interface RawMcpConfig {
   headers?: Record<string, string>;
 }
 
-function normalizePath(path: string): string {
-  return path.split(sep).join("/");
+interface DiscoveredFile {
+  path: string;
+  fullPath: string;
+  layer: CapabilityFileLayer;
 }
 
-function parseFrontmatter(markdown: string): Frontmatter {
-  if (!markdown.startsWith("---")) return {};
-
-  const end = markdown.indexOf("\n---", 3);
-  if (end === -1) return {};
-
-  const frontmatter = markdown.slice(3, end).trim();
-  const parsed: Frontmatter = {};
-
-  for (const line of frontmatter.split("\n")) {
-    const separator = line.indexOf(":");
-    if (separator === -1) continue;
-
-    const key = line.slice(0, separator).trim();
-    const value = line.slice(separator + 1).trim().replace(/^["']|["']$/g, "");
-
-    if (key === "name") parsed.name = value;
-    if (key === "description") parsed.description = value;
-  }
-
-  return parsed;
+function normalizePath(path: string): string {
+  return path.split(sep).join("/");
 }
 
 function detectFileType(path: string): CapabilityFileType {
   if (path === "SKILL.md") return "skill";
   if (path === "README.md") return "readme";
   if (path === "BUNDLE.md") return "bundle";
-  if (path.startsWith("agents/") && path.endsWith(".md")) return "agent";
-  if (path.startsWith("shared/") && path.endsWith(".md")) return "shared";
-  if (path.startsWith("references/") && path.endsWith(".md")) return "reference";
+  if (path.startsWith("agents/")) return "agent";
+  if (path.startsWith("shared/")) return "shared";
+  if (path.startsWith("references/")) return "reference";
   if (path.startsWith("scripts/")) return "script";
   if (path.startsWith("assets/")) return "asset";
+  if (path.startsWith("data/")) return "data";
   return "other";
 }
 
-function mimeTypeFor(path: string): string {
-  if (path.endsWith(".md")) return "text/markdown";
-  if (path.endsWith(".json")) return "application/json";
-  if (path.endsWith(".txt")) return "text/plain";
-  return "text/plain";
-}
-
-function parseMcpConfig(text: string): CapabilityMcpConfig | undefined {
+function parseMcpConfig(text: string): CapabilityMcpConfig {
   const parsed = JSON.parse(text) as RawMcpConfig;
   if (parsed.type !== "mcp" && parsed.type !== "mcp-remote") {
-    throw new Error("mcp.json requires type \"mcp\" or \"mcp-remote\"");
+    throw new Error('mcp.json requires type "mcp" or "mcp-remote"');
   }
 
   const transport = parsed.transport || (parsed.type === "mcp-remote" ? "streamable-http" : undefined);
   if (transport !== "streamable-http") {
-    throw new Error("mcp.json only supports transport \"streamable-http\" in v1");
+    throw new Error('mcp.json only supports transport "streamable-http" in v1');
   }
   if (typeof parsed.url !== "string" || parsed.url.trim() === "") {
     throw new Error("mcp.json requires a non-empty url");
@@ -113,6 +101,43 @@ async function walkFiles(root: string): Promise<string[]> {
   return files;
 }
 
+async function collectLayer(root: string, layer: CapabilityFileLayer): Promise<DiscoveredFile[]> {
+  const exists = await stat(root).catch(() => null);
+  if (!exists?.isDirectory()) return [];
+
+  return (await walkFiles(root)).map((fullPath) => ({
+    path: normalizePath(relative(root, fullPath)),
+    fullPath,
+    layer,
+  }));
+}
+
+/**
+ * Reads one file into the index. Binary files are measured and hashed but never
+ * decoded: an external skill may ship images, fonts or PDFs, and forcing UTF-8 on
+ * those bytes corrupts the index and can throw.
+ */
+async function readCapabilityFile(capabilityId: string, discovered: DiscoveredFile): Promise<CapabilityFile> {
+  const bytes = await readFile(discovered.fullPath);
+  const text = decodeTextContent(discovered.path, bytes);
+  const binary = text === undefined;
+
+  return {
+    capabilityId,
+    path: discovered.path,
+    uri: `skill://${capabilityId}/${discovered.path}`,
+    name: `${capabilityId}/${discovered.path}`,
+    type: detectFileType(discovered.path),
+    mimeType: mimeTypeFor(discovered.path),
+    text,
+    lines: text === undefined ? 0 : countLines(text),
+    bytes: bytes.byteLength,
+    binary,
+    sha256: binary ? createHash("sha256").update(bytes).digest("hex") : undefined,
+    layer: discovered.layer,
+  };
+}
+
 function sortCapabilityFiles(files: CapabilityFile[]): CapabilityFile[] {
   const priority = new Map([
     ["SKILL.md", 0],
@@ -128,63 +153,134 @@ function sortCapabilityFiles(files: CapabilityFile[]): CapabilityFile[] {
   });
 }
 
+/**
+ * Reads provenance from `SOURCE.json`, projecting it onto `CapabilityOrigin`.
+ *
+ * The manifest also carries sync bookkeeping (the per-file hash table) that the
+ * MCP surface has no use for. Projecting explicitly keeps that out of tool
+ * responses and out of the Worker snapshot.
+ */
+async function readOrigin(capabilityRoot: string): Promise<CapabilityOrigin | undefined> {
+  const manifestPath = join(capabilityRoot, SOURCE_MANIFEST);
+  const raw = await readFile(manifestPath, "utf-8").catch(() => undefined);
+  if (raw === undefined) return undefined;
+
+  let manifest: CapabilityOrigin;
+  try {
+    manifest = JSON.parse(raw) as CapabilityOrigin;
+  } catch {
+    throw new Error(`Invalid ${SOURCE_MANIFEST} in ${capabilityRoot}`);
+  }
+
+  return {
+    type: manifest.type,
+    sourceId: manifest.sourceId,
+    repository: manifest.repository,
+    path: manifest.path,
+    ref: manifest.ref,
+    commit: manifest.commit,
+    url: manifest.url,
+    revision: manifest.revision,
+    contentHash: manifest.contentHash,
+    license: manifest.license,
+    discoverySource: manifest.discoverySource,
+    skillKind: manifest.skillKind,
+    skillTraits: manifest.skillTraits,
+    update: manifest.update,
+    lastSyncedAt: manifest.lastSyncedAt,
+    skippedAssets: manifest.skippedAssets,
+  };
+}
+
 export class FileSystemCapabilityRegistry implements CapabilityRegistry {
   private constructor(private readonly capabilities: Capability[]) {}
 
+  /**
+   * Discovers capabilities in two layouts:
+   *  - local: a root folder containing `SKILL.md`;
+   *  - imported: `imported/<id>/` containing `SOURCE.json` and `upstream/SKILL.md`,
+   *    optionally overlaid by `overrides/`.
+   *
+   * Both produce the same `skill://<id>/<path>` URIs, so the MCP runtime cannot
+   * tell them apart. On an id collision, the local capability wins.
+   */
   static async scan(root: string): Promise<FileSystemCapabilityRegistry> {
-    const entries = await readdir(root, { withFileTypes: true });
     const capabilities: Capability[] = [];
+    const seen = new Set<string>();
 
-    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      if (!entry.isDirectory() || IGNORED_NAMES.has(entry.name) || entry.name.startsWith(".")) {
-        continue;
-      }
-
-      const capabilityRoot = join(root, entry.name);
-      const skillPath = join(capabilityRoot, "SKILL.md");
-      const skillStat = await stat(skillPath).catch(() => null);
+    for (const entry of await this.readDirectories(root)) {
+      const capabilityRoot = join(root, entry);
+      const skillStat = await stat(join(capabilityRoot, "SKILL.md")).catch(() => null);
       if (!skillStat?.isFile()) continue;
 
-      capabilities.push(await this.readCapability(entry.name, capabilityRoot));
+      capabilities.push(await this.readCapability(entry, capabilityRoot, [{ dir: capabilityRoot, layer: "local" }]));
+      seen.add(entry);
     }
 
-    return new FileSystemCapabilityRegistry(capabilities);
+    const importedRoot = join(root, IMPORTED_DIR);
+    for (const entry of await this.readDirectories(importedRoot)) {
+      if (seen.has(entry)) continue;
+
+      const capabilityRoot = join(importedRoot, entry);
+      const manifest = await stat(join(capabilityRoot, SOURCE_MANIFEST)).catch(() => null);
+      if (!manifest?.isFile()) continue;
+
+      const capability = await this.readCapability(entry, capabilityRoot, [
+        { dir: join(capabilityRoot, UPSTREAM_DIR), layer: "upstream" },
+        { dir: join(capabilityRoot, OVERRIDES_DIR), layer: "override" },
+      ]);
+
+      if (!capability.files.some((file) => file.path === "SKILL.md")) continue;
+      capabilities.push(capability);
+    }
+
+    return new FileSystemCapabilityRegistry(
+      capabilities.sort((a, b) => a.id.localeCompare(b.id)),
+    );
   }
 
   static fromSnapshot(capabilities: Capability[]): FileSystemCapabilityRegistry {
     return new FileSystemCapabilityRegistry(capabilities);
   }
 
-  private static async readCapability(id: string, root: string): Promise<Capability> {
-    const skillText = await readFile(join(root, "SKILL.md"), "utf-8");
-    const frontmatter = parseFrontmatter(skillText);
-    const files = await Promise.all(
-      (await walkFiles(root))
-        .map((fullPath) => normalizePath(relative(root, fullPath)))
-        .map(async (path) => {
-          const text = await readFile(join(root, path), "utf-8");
-          return {
-            capabilityId: id,
-            path,
-            uri: `skill://${id}/${path}`,
-            name: `${id}/${path}`,
-            type: detectFileType(path),
-            mimeType: mimeTypeFor(path),
-            text,
-            lines: text.split("\n").length,
-          } satisfies CapabilityFile;
-        }),
+  private static async readDirectories(root: string): Promise<string[]> {
+    const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
+
+    return entries
+      .filter((entry) => entry.isDirectory() && !IGNORED_NAMES.has(entry.name) && !entry.name.startsWith("."))
+      .map((entry) => entry.name)
+      .sort((a, b) => a.localeCompare(b));
+  }
+
+  private static async readCapability(
+    id: string,
+    capabilityRoot: string,
+    layers: { dir: string; layer: CapabilityFileLayer }[],
+  ): Promise<Capability> {
+    const byPath = new Map<string, DiscoveredFile>();
+    for (const { dir, layer } of layers) {
+      for (const discovered of await collectLayer(dir, layer)) {
+        byPath.set(discovered.path, discovered);
+      }
+    }
+
+    const files = sortCapabilityFiles(
+      await Promise.all([...byPath.values()].map((discovered) => readCapabilityFile(id, discovered))),
     );
+
+    const skill = files.find((file) => file.path === "SKILL.md");
+    const frontmatter = parseFrontmatter(skill?.text || "");
+    const mcpFile = files.find((file) => file.path === "mcp.json");
 
     return {
       id,
       name: frontmatter.name || id,
       description: frontmatter.description || "",
-      rootPath: root,
-      files: sortCapabilityFiles(files),
-      mcp: files.find((file) => file.path === "mcp.json")?.text
-        ? parseMcpConfig(files.find((file) => file.path === "mcp.json")!.text)
-        : undefined,
+      tags: frontmatter.tags.length > 0 ? frontmatter.tags : undefined,
+      rootPath: capabilityRoot,
+      files,
+      mcp: mcpFile?.text ? parseMcpConfig(mcpFile.text) : undefined,
+      origin: await readOrigin(capabilityRoot),
     };
   }
 
@@ -213,45 +309,29 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
 
   listResources(): CapabilityResource[] {
     return this.capabilities.flatMap((capability) =>
-      capability.files.map((file) => ({
-        uri: file.uri,
-        name: file.name,
-        mimeType: file.mimeType,
-        description: `${capability.name}: ${file.path}`,
-      })),
+      capability.files
+        .filter((file) => !file.binary)
+        .map((file) => ({
+          uri: file.uri,
+          name: file.name,
+          mimeType: file.mimeType,
+          description: `${capability.name}: ${file.path}`,
+        })),
     );
   }
 
   readResource(uri: string): CapabilityFile {
     const file = this.capabilities.flatMap((capability) => capability.files).find((item) => item.uri === uri);
     if (!file) throw new Error(`Resource not found: ${uri}`);
+    if (file.binary) {
+      throw new Error(
+        `Binary resource is not readable as text: ${uri} (${file.bytes} bytes, ${file.mimeType}, sha256 ${file.sha256})`,
+      );
+    }
     return file;
   }
 
-  search(query: string): CapabilitySearchResult[] {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return [];
-
-    return this.capabilities.flatMap((capability) =>
-      capability.files
-        .filter((file) => file.mimeType.startsWith("text/"))
-        .filter((file) => file.text.toLowerCase().includes(normalizedQuery))
-        .map((file) => {
-          const snippet =
-            file.text
-              .split("\n")
-              .find((line) => line.toLowerCase().includes(normalizedQuery))
-              ?.trim() || "";
-
-          return {
-            capabilityId: capability.id,
-            capabilityName: capability.name,
-            path: file.path,
-            uri: file.uri,
-            title: basename(file.path),
-            snippet,
-          };
-        }),
-    );
+  search(query: string, options?: CapabilitySearchOptions): CapabilitySearchResult[] {
+    return searchCapabilities(this.capabilities, query, options);
   }
 }

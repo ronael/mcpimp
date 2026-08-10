@@ -1,0 +1,35 @@
+{
+  "type": "github",
+  "sourceId": "ibelick-ui-skills",
+  "repository": "ibelick/ui-skills",
+  "path": "skills/baseline-ui",
+  "ref": "main",
+  "commit": "fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5",
+  "url": "https://github.com/ibelick/ui-skills/tree/fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5/skills/baseline-ui",
+  "revision": {
+    "kind": "git-commit",
+    "value": "fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5"
+  },
+  "contentHash": "sha256:ee988cee1835d3bc4fbd52576b6155f5769e7c797701f58f886b644727fe9ed4",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/ibelick/ui-skills/blob/fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "ui-skills-baseline-ui",
+  "update": "review",
+  "lastSyncedAt": "2026-08-10T17:23:40.450Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 3419,
+      "binary": false,
+      "sha": "98477ee0f2e9cc7506453ee5aa9f88d1d033ab2f",
+      "sha256": "fea3322f36d58fdafafce2aef56e4556dd2ac7b20876b7dff7d8be7f25fa597f"
+    }
+  ]
+}

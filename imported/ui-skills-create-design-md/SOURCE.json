@@ -1,0 +1,35 @@
+{
+  "type": "github",
+  "sourceId": "ibelick-ui-skills",
+  "repository": "ibelick/ui-skills",
+  "path": "skills/create-design-md",
+  "ref": "main",
+  "commit": "fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5",
+  "url": "https://github.com/ibelick/ui-skills/tree/fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5/skills/create-design-md",
+  "revision": {
+    "kind": "git-commit",
+    "value": "fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5"
+  },
+  "contentHash": "sha256:78551598e4c5046e9cdac0c786e3a4ab2f9bf93085125f75bfa1a14123968cb8",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/ibelick/ui-skills/blob/fdc667270fd2c71b3a8b7aca04dda154a7b8a5d5/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "ui-skills-create-design-md",
+  "update": "review",
+  "lastSyncedAt": "2026-08-10T17:23:40.634Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 16208,
+      "binary": false,
+      "sha": "1aa15726985929fe8d95624767cdc9a524418925",
+      "sha256": "adba4fa94a9ca0291811ac26405e8fe15c1a6375743a80971c6f895bb837eeed"
+    }
+  ]
+}

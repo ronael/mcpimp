@@ -54,10 +54,13 @@ function uniqueLinks(links: ReferenceLink[]): ReferenceLink[] {
 
 function extractReferenceLinks(file: CapabilityFile): ReferenceLink[] {
   const links: ReferenceLink[] = [];
+  const text = file.text;
+  if (!text) return links;
+
   const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
   const bareUrlPattern = /https?:\/\/[^\s)]+/g;
 
-  for (const match of file.text.matchAll(markdownLinkPattern)) {
+  for (const match of text.matchAll(markdownLinkPattern)) {
     links.push({
       title: match[1].trim(),
       url: match[2],
@@ -65,12 +68,12 @@ function extractReferenceLinks(file: CapabilityFile): ReferenceLink[] {
     });
   }
 
-  for (const match of file.text.matchAll(bareUrlPattern)) {
+  for (const match of text.matchAll(bareUrlPattern)) {
     const url = match[0].replace(/[.,;:]$/, "");
     if (links.some((link) => link.url === url)) continue;
 
     links.push({
-      title: titleBefore(file.text, match.index ?? 0) || url,
+      title: titleBefore(text, match.index ?? 0) || url,
       url,
       sourcePath: file.path,
     });
@@ -126,6 +129,40 @@ function renderReferenceSources(capability: Capability): string {
   </div>`;
 }
 
+function renderProvenance(capability: Capability): string {
+  const origin = capability.origin;
+  if (!origin) return "";
+
+  const location = [origin.repository, origin.path].filter(Boolean).join("/") || origin.url || origin.sourceId;
+  const rows: [string, string | undefined][] = [
+    ["Source", `${origin.type} · ${location}`],
+    ["Ref", origin.ref],
+    ["Commit / revision", origin.commit || origin.revision?.value],
+    ["Content hash", origin.contentHash],
+    ["Découverte via", origin.discoverySource ? `${origin.discoverySource.type} · ${origin.discoverySource.url}` : undefined],
+    ["Licence", [origin.license?.spdxId, origin.license?.url].filter(Boolean).join(" · ") || undefined],
+    ["Type de skill", [origin.skillKind, ...(origin.skillTraits || [])].filter(Boolean).join(", ") || undefined],
+    ["Politique d'update", origin.update],
+    ["Dernière synchro", origin.lastSyncedAt],
+  ];
+
+  const body = rows
+    .filter(([, value]) => Boolean(value))
+    .map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td><code>${escapeHtml(String(value))}</code></td></tr>`)
+    .join("");
+
+  const skipped =
+    origin.skippedAssets && origin.skippedAssets.length > 0
+      ? `<p>${origin.skippedAssets.length} asset(s) binaire(s) référencé(s) mais non téléchargé(s).</p>`
+      : "";
+
+  return `<div class="references">
+    <h3>Provenance</h3>
+    <table><tbody>${body}</tbody></table>
+    ${skipped}
+  </div>`;
+}
+
 function renderCapabilityResources(registry: CapabilityRegistry): string {
   return registry
     .listCapabilities()
@@ -136,15 +173,17 @@ function renderCapabilityResources(registry: CapabilityRegistry): string {
           (file) => `<tr>
             <td><code>${escapeHtml(file.uri)}</code></td>
             <td>${escapeHtml(file.type)}</td>
-            <td>${file.lines}</td>
+            <td>${file.binary ? `${file.bytes} B (binaire)` : file.lines}</td>
           </tr>`,
         )
         .join("");
 
+      const badge = capability.origin ? `<span class="badge">importé</span>` : "";
+
       return `<section class="capability" id="${escapeAttribute(capabilityAnchor)}">
         <header>
           <div>
-            <h2>${escapeHtml(capability.name)}</h2>
+            <h2>${escapeHtml(capability.name)} ${badge}</h2>
             <p>${escapeHtml(capability.description || "No description")}</p>
           </div>
           <strong>${capability.files.length} files</strong>
@@ -155,6 +194,7 @@ function renderCapabilityResources(registry: CapabilityRegistry): string {
           </thead>
           <tbody>${files}</tbody>
         </table>
+        ${renderProvenance(capability)}
         ${renderReferenceSources(capability)}
       </section>`;
     })
@@ -323,6 +363,14 @@ export function renderDashboard(registry: CapabilityRegistry): string {
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
     .capability { margin-top: 16px; }
+    .badge {
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 6px;
+      vertical-align: middle;
+    }
     .capability header { display: flex; align-items: start; justify-content: space-between; gap: 20px; margin-bottom: 8px; }
     .capability header strong { color: var(--ok); white-space: nowrap; }
     .references {

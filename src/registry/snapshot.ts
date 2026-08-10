@@ -1,12 +1,19 @@
+import { searchCapabilities } from "./search";
 import type {
   Capability,
   CapabilityFile,
   CapabilityUpstreamMcp,
   CapabilityRegistry,
   CapabilityResource,
+  CapabilitySearchOptions,
   CapabilitySearchResult,
 } from "./types";
 
+/**
+ * Registry backed by the build-time snapshot, used by the Cloudflare Worker where
+ * there is no filesystem. Behaviour must stay identical to the filesystem
+ * registry: both delegate search to the same module.
+ */
 export class SnapshotCapabilityRegistry implements CapabilityRegistry {
   constructor(private readonly capabilities: Capability[]) {}
 
@@ -35,41 +42,29 @@ export class SnapshotCapabilityRegistry implements CapabilityRegistry {
 
   listResources(): CapabilityResource[] {
     return this.capabilities.flatMap((capability) =>
-      capability.files.map((file) => ({
-        uri: file.uri,
-        name: file.name,
-        mimeType: file.mimeType,
-        description: `${capability.name}: ${file.path}`,
-      })),
+      capability.files
+        .filter((file) => !file.binary)
+        .map((file) => ({
+          uri: file.uri,
+          name: file.name,
+          mimeType: file.mimeType,
+          description: `${capability.name}: ${file.path}`,
+        })),
     );
   }
 
   readResource(uri: string): CapabilityFile {
     const file = this.capabilities.flatMap((capability) => capability.files).find((item) => item.uri === uri);
     if (!file) throw new Error(`Resource not found: ${uri}`);
+    if (file.binary) {
+      throw new Error(
+        `Binary resource is not readable as text: ${uri} (${file.bytes} bytes, ${file.mimeType}, sha256 ${file.sha256})`,
+      );
+    }
     return file;
   }
 
-  search(query: string): CapabilitySearchResult[] {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return [];
-
-    return this.capabilities.flatMap((capability) =>
-      capability.files
-        .filter((file) => file.mimeType.startsWith("text/"))
-        .filter((file) => file.text.toLowerCase().includes(normalizedQuery))
-        .map((file) => ({
-          capabilityId: capability.id,
-          capabilityName: capability.name,
-          path: file.path,
-          uri: file.uri,
-          title: file.path.split("/").at(-1) || file.path,
-          snippet:
-            file.text
-              .split("\n")
-              .find((line) => line.toLowerCase().includes(normalizedQuery))
-              ?.trim() || "",
-        })),
-    );
+  search(query: string, options?: CapabilitySearchOptions): CapabilitySearchResult[] {
+    return searchCapabilities(this.capabilities, query, options);
   }
 }
