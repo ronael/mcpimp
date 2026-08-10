@@ -145,6 +145,9 @@ headers nécessaires sont résolus.
 
 ## Sources externes
 
+> Guide détaillé, avec recettes par cas d'usage et points d'extension du code :
+> ouvre [`docs/sources-guide.html`](docs/sources-guide.html) dans un navigateur.
+
 MCPIMP peut importer des skills publiés ailleurs (repos GitHub, catalogues web)
 et les maintenir à jour. L'ingestion est une couche **en amont** du registry :
 
