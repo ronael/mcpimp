@@ -83,7 +83,7 @@ export class WebCatalogSourceAdapter implements DiscoverySourceAdapter<WebCatalo
         repository,
         roots: source.roots,
         update: source.update,
-        namespace: repository.split("/").at(-1),
+        namespace: source.namespace ?? repository.split("/").at(-1),
         include: source.include,
         exclude: source.exclude,
         maxFileBytes: source.maxFileBytes,

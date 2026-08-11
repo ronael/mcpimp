@@ -207,7 +207,8 @@ on ne duplique jamais le HTML du catalogue.
   "type": "web-catalog",
   "url": "https://agent-design.com/skills",
   "roots": [".claude/skills"],
-  "include": ["design-system"],
+  "namespace": "ui-ux-pro-max",
+  "include": ["ui-ux-pro-max"],
   "allowedRepositories": ["nextlevelbuilder/ui-ux-pro-max-skill"]
 }
 ```
@@ -347,7 +348,7 @@ ui-skills-create-design-md             ibelick/ui-skills (MIT)
 ui-skills-fixing-accessibility         ibelick/ui-skills (MIT)
 ui-skills-fixing-motion-performance    ibelick/ui-skills (MIT)
 ui-skills-improve-ui                   ibelick/ui-skills (MIT)
-ui-ux-pro-max-skill-design-system      nextlevelbuilder/ui-ux-pro-max-skill (MIT)
+ui-ux-pro-max                          nextlevelbuilder/ui-ux-pro-max-skill (MIT)
                                        découvert via agent-design.com
 ```
 

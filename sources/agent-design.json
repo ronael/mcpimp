@@ -3,8 +3,9 @@
   "type": "web-catalog",
   "url": "https://agent-design.com/skills",
   "update": "review",
+  "namespace": "ui-ux-pro-max",
   "roots": [".claude/skills"],
-  "include": ["design-system"],
+  "include": ["ui-ux-pro-max"],
   "allowedRepositories": ["nextlevelbuilder/ui-ux-pro-max-skill"],
   "notes": "Catalogue used for discovery only. Content is always imported from the original repository, never scraped from the catalogue page. A repository must be listed in allowedRepositories before anything is imported from it."
 }

@@ -1,0 +1,352 @@
+{
+  "type": "github",
+  "sourceId": "agent-design:nextlevelbuilder/ui-ux-pro-max-skill",
+  "repository": "nextlevelbuilder/ui-ux-pro-max-skill",
+  "path": ".claude/skills/ui-ux-pro-max",
+  "ref": "main",
+  "commit": "abb7f2fd5a083fa1ff55c326a963ff0d95c33f99",
+  "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/tree/abb7f2fd5a083fa1ff55c326a963ff0d95c33f99/.claude/skills/ui-ux-pro-max",
+  "revision": {
+    "kind": "git-commit",
+    "value": "abb7f2fd5a083fa1ff55c326a963ff0d95c33f99"
+  },
+  "contentHash": "sha256:c9f43511ae969469bb9e09d1546775311b0caac374691e137472138e521b56a5",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/abb7f2fd5a083fa1ff55c326a963ff0d95c33f99/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "platform-specific",
+  "skillTraits": [
+    "binaries",
+    "data",
+    "platform-dependent",
+    "references",
+    "scripts"
+  ],
+  "skippedAssets": [
+    {
+      "path": "data/google-fonts.csv",
+      "bytes": 743272,
+      "reason": "larger than 524288 bytes",
+      "url": "https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/abb7f2fd5a083fa1ff55c326a963ff0d95c33f99/.claude/skills/ui-ux-pro-max/data/google-fonts.csv",
+      "sha": "73fd6c507d5b5078a6dbe8f8085ec2feb1837a33"
+    }
+  ],
+  "capability": "ui-ux-pro-max",
+  "discoverySource": {
+    "type": "website",
+    "url": "https://agent-design.com/skills",
+    "name": "agent-design",
+    "revision": {
+      "kind": "content-hash",
+      "value": "sha256:a88ec45285a2cd037e2c6e83e7dc54fd2827b181e90481f9b931a00bf0b78b68"
+    }
+  },
+  "update": "review",
+  "lastSyncedAt": "2026-08-11T18:52:12.360Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 13577,
+      "binary": false,
+      "sha": "5fffe0c83d03189af7c9eed0622de006fb1ae68e",
+      "sha256": "305a7527fcb2f5b6e4129ab22cd839b5172d26df7f14d3324bfdec8fc1763560"
+    },
+    {
+      "path": "data/app-interface.csv",
+      "bytes": 9743,
+      "binary": false,
+      "sha": "f34c3cd0de0eee83553b996756e1b999749d56a1",
+      "sha256": "2a17ef810dab715ce1f339861817a8fbe3ccc38142b70517301e874803e838ac"
+    },
+    {
+      "path": "data/charts.csv",
+      "bytes": 19365,
+      "binary": false,
+      "sha": "56dceef298d018416646da28856aedf9d4e297b7",
+      "sha256": "a70ef7460b0eaaea8614f86a0d09a4bc38b467804179762464b5ca45b491baac"
+    },
+    {
+      "path": "data/colors.csv",
+      "bytes": 38668,
+      "binary": false,
+      "sha": "77a511fff7f166d29284a11fa9008e4d54d3b8a6",
+      "sha256": "cb26759805217edaaa31b09836aec09eab0fe245c58f5884e9a16ef802c6e26a"
+    },
+    {
+      "path": "data/icons.csv",
+      "bytes": 20637,
+      "binary": false,
+      "sha": "210a8d0863177abe5e559750d076a27216c87e49",
+      "sha256": "f376c29fb4df37b4bdb366a5aa70cb211ba3dd8b435390aaa03152a64b07d2e8"
+    },
+    {
+      "path": "data/landing.csv",
+      "bytes": 16685,
+      "binary": false,
+      "sha": "7a211834d2591a2963bac1ac8081d31daf038142",
+      "sha256": "121a2cac7cf21050234b5f80e7b4e182f10123536032e0f9ad862ad3aec9677d"
+    },
+    {
+      "path": "data/motion.csv",
+      "bytes": 10500,
+      "binary": false,
+      "sha": "e3dfc962e9b183f2b1843b54fe212edc3da059c3",
+      "sha256": "6452fbd8028ab71d52993775340e1bc40a150d92be8d4b4cb8710620fd1a7512"
+    },
+    {
+      "path": "data/products.csv",
+      "bytes": 73485,
+      "binary": false,
+      "sha": "6ad79009af697bd6071e8de92b22e0ab8643e02c",
+      "sha256": "e9749e4fd8f7d4c94919c25ebd347a4adaddb671e7b01d33fbc2c87d447e6667"
+    },
+    {
+      "path": "data/react-performance.csv",
+      "bytes": 14822,
+      "binary": false,
+      "sha": "671465f29ce8d1b12e1576ab81c7b610161f2f6d",
+      "sha256": "904c8afcda229629545912dde0e8ac37503757131f0169f80b016f1f58c4fd3f"
+    },
+    {
+      "path": "data/stacks/angular.csv",
+      "bytes": 18137,
+      "binary": false,
+      "sha": "f157b3571c3b7568d15f1afad51c57c1f3a80561",
+      "sha256": "9de35bbda536ced9af7642d88b7675cefa3e18c370ab40c0875f75ab473f0fd6"
+    },
+    {
+      "path": "data/stacks/astro.csv",
+      "bytes": 11870,
+      "binary": false,
+      "sha": "0b920deb7e353c47db24a42bbfcb874f94bf9ec0",
+      "sha256": "6b587e32df201b6e5e7b2ed187b65eee8e6d55dcd6cc16bde29fc25e0f911dae"
+    },
+    {
+      "path": "data/stacks/avalonia.csv",
+      "bytes": 25626,
+      "binary": false,
+      "sha": "52dbae2c55c4042b5ba5bf63f8b60cd93e669905",
+      "sha256": "6bfa40ec6609fcb59e52a38281edcc3a3e5b5e56341304fe5628b32cb9b1f875"
+    },
+    {
+      "path": "data/stacks/flutter.csv",
+      "bytes": 10416,
+      "binary": false,
+      "sha": "b8dfd0d696bdb885184c271feb0d8722f7d7c655",
+      "sha256": "fe36d404c799781e8ba6e9a8179b45799ed5126a545528550cd2eb0f2346e8c5"
+    },
+    {
+      "path": "data/stacks/html-tailwind.csv",
+      "bytes": 11305,
+      "binary": false,
+      "sha": "51ff57a6808b199e664eda22fbd7736d827d9a9a",
+      "sha256": "7aef38e75c53559470afcfa91580a9917ca8b7dbf8b92110389e23e93703ac52"
+    },
+    {
+      "path": "data/stacks/javafx.csv",
+      "bytes": 30871,
+      "binary": false,
+      "sha": "6ee5d667021b93595608aa071f5cae071b1eb7c5",
+      "sha256": "5545e331b2479eb431ca45203799ce1b0ab1e369045ab7735d5a9f85ec78f956"
+    },
+    {
+      "path": "data/stacks/jetpack-compose.csv",
+      "bytes": 8195,
+      "binary": false,
+      "sha": "971ff9e3074c9a1a414b1a7e69745f286291d3f6",
+      "sha256": "6c8fd4b0391c342c12b0af15610cd5becbeccaef0bbe8dcfc01d928c3195d93e"
+    },
+    {
+      "path": "data/stacks/laravel.csv",
+      "bytes": 18519,
+      "binary": false,
+      "sha": "04b890466467a4edb1a2c7f2c758b07276ac8e25",
+      "sha256": "3e9f551b5232136f7b5ce1304c5e1bf5a83bd63c0dc02afb37502b238772d145"
+    },
+    {
+      "path": "data/stacks/nextjs.csv",
+      "bytes": 12493,
+      "binary": false,
+      "sha": "8762161a982279b2bdaad86860d10f0afbfeb13f",
+      "sha256": "e828ccc04843742f52f545a068e8a9ab0d2b97c0e771f7e93bf0cef74da05554"
+    },
+    {
+      "path": "data/stacks/nuxt-ui.csv",
+      "bytes": 21230,
+      "binary": false,
+      "sha": "caf4ff6a538e8ce968b129cb2d57411c77be7f78",
+      "sha256": "b9972b31e721faabc667ee2b4e93ba2af29e1df86f186c2ff608b68370f0e3a5"
+    },
+    {
+      "path": "data/stacks/nuxtjs.csv",
+      "bytes": 16539,
+      "binary": false,
+      "sha": "c275d0de8c6a06a06f8439be017af660fefe91bb",
+      "sha256": "f7a3f2d9542856d00199f85c6c023b7c284cc698e2e6e12d61afce2edacb24d6"
+    },
+    {
+      "path": "data/stacks/react-native.csv",
+      "bytes": 9983,
+      "binary": false,
+      "sha": "d951315fd326d2078a1c8402c1d8d05eaf6cb5ae",
+      "sha256": "077aefc81d194895ecf7936b3ed298b978e36961f183e3a275f8acda19b5f621"
+    },
+    {
+      "path": "data/stacks/react.csv",
+      "bytes": 12962,
+      "binary": false,
+      "sha": "9f891f4ab9cc8362b22f919f1dcae5b9853fc9bf",
+      "sha256": "e5624ab41d33427d88e41d07581ce4eca59b37b36ab72a6ad43a9c8e2d0a1c72"
+    },
+    {
+      "path": "data/stacks/shadcn.csv",
+      "bytes": 15921,
+      "binary": false,
+      "sha": "fb86e8d1c135aa384df284f216c3db9c5187ae57",
+      "sha256": "395c2e415ef6f48a474acccdc8eb2c7258a6ed751a5037ba171a2d8823e02ded"
+    },
+    {
+      "path": "data/stacks/svelte.csv",
+      "bytes": 11009,
+      "binary": false,
+      "sha": "39b6d2e4404cca19d2afe86529597638e6752d2e",
+      "sha256": "71af52d64f266c88070b91dbbaa900c2f8074b6baae9f35eaea6ba9cec6fd803"
+    },
+    {
+      "path": "data/stacks/swiftui.csv",
+      "bytes": 10821,
+      "binary": false,
+      "sha": "1009d75ccdac6eb667ee141285908a249e82fb50",
+      "sha256": "c9c2d2510f8e66281a2514e8dd0125a6b653b9ef53a71281b5e7dfe003d5b569"
+    },
+    {
+      "path": "data/stacks/threejs.csv",
+      "bytes": 44860,
+      "binary": false,
+      "sha": "08d4840489ecf38318b2802f930fdb29b71d0be4",
+      "sha256": "c74d6ba76021f8d72c0ed12c559caecfeb6961829242acf6bcb9e99926b1a396"
+    },
+    {
+      "path": "data/stacks/uno.csv",
+      "bytes": 27471,
+      "binary": false,
+      "sha": "d079d26a4543ec17e0005cf948991c64fd93c172",
+      "sha256": "5d2e0f396bb9dc5a2661204264cc0eda7cc4fa3d78152dec89d668704a41b8fc"
+    },
+    {
+      "path": "data/stacks/uwp.csv",
+      "bytes": 22867,
+      "binary": false,
+      "sha": "0aad97e804668a9ef180bd9292da7a58a65fea10",
+      "sha256": "debf669928871261ced9333788d5afd5784377ea1fa1b4f53993dd8f1574c0fc"
+    },
+    {
+      "path": "data/stacks/vue.csv",
+      "bytes": 11006,
+      "binary": false,
+      "sha": "86b05cffdcd30abedf357e21ddf0fe51baed541f",
+      "sha256": "c2724915d3c11cd67263f25896cff721f787a0fdd8326002d31e9f5806dfd8f8"
+    },
+    {
+      "path": "data/stacks/winui.csv",
+      "bytes": 25152,
+      "binary": false,
+      "sha": "80509439688a73465c24113eebefb7a8ea4e125c",
+      "sha256": "2d970b08e44509d7afa53ce7feb446930b2d5e0667fa637df9aeeed65c42bbbe"
+    },
+    {
+      "path": "data/stacks/wpf.csv",
+      "bytes": 22538,
+      "binary": false,
+      "sha": "d58e3e519a09909261433d27260de51f265e3df2",
+      "sha256": "ca78b5f28dc50d66900548d602d74856400097284c73e076fcfbb5a38ae5083c"
+    },
+    {
+      "path": "data/styles.csv",
+      "bytes": 142602,
+      "binary": false,
+      "sha": "4f5d8224990b1c2dda61801338bae11be575a3cd",
+      "sha256": "1bf9c1d8484a0a7a54fb67555902380446865b604c8449e47a449cb3d9c1ef88"
+    },
+    {
+      "path": "data/typography.csv",
+      "bytes": 49830,
+      "binary": false,
+      "sha": "1cd99d2830f9ba77f0d117e5f3782174cb162fef",
+      "sha256": "7abead73de0e43e09544f164cb60cd431674e411f1e063e555a8b44d51273328"
+    },
+    {
+      "path": "data/ui-reasoning.csv",
+      "bytes": 52908,
+      "binary": false,
+      "sha": "da631eff8dec4d2849e071ee8ace13477b609af7",
+      "sha256": "06e4369445388ba9b7a57347510b125b7a2145bbf8546a327ba50292503b204a"
+    },
+    {
+      "path": "data/ux-guidelines.csv",
+      "bytes": 18667,
+      "binary": false,
+      "sha": "49f89c9d0c8b1305b80ac010a36780a8169d65cc",
+      "sha256": "e01943c433b2cad3040f19389b3b0455673758a569b7a927b5bedf65c989cb96"
+    },
+    {
+      "path": "references/pro-rules.md",
+      "bytes": 9585,
+      "binary": false,
+      "sha": "ff9919fa02da4ceaed778cb1e115517a068c6378",
+      "sha256": "bc56db7cb40c5f4d8d4f6229f5c7072865278488fe5b97c76d3a38eb596da4fc"
+    },
+    {
+      "path": "references/quick-reference.md",
+      "bytes": 21637,
+      "binary": false,
+      "sha": "add99a81d4522f36f3ec98ff8e348796d5f09553",
+      "sha256": "b01ad594cc069d18786d5e8865356cc511226ba6f48d328fd975d31aae8e5781"
+    },
+    {
+      "path": "scripts/core.py",
+      "bytes": 18801,
+      "binary": false,
+      "sha": "b7137eb2afdaec8215a7c7463959f9c8dfc18ed4",
+      "sha256": "64c149019196ee24647464a27278eb96d3b4638ded73ebfc35ccd2bc99c083a9"
+    },
+    {
+      "path": "scripts/design_system.py",
+      "bytes": 63694,
+      "binary": false,
+      "sha": "7d790e1128736582565b6485e1d11afa425d4070",
+      "sha256": "5612e607f3d4fded1aa83e5bf62d54a137a7087efbb70b72c91c30680b4d2dfd"
+    },
+    {
+      "path": "scripts/search.py",
+      "bytes": 8687,
+      "binary": false,
+      "sha": "2b7562b6515691602cdaa9e096b3b93168e7de1e",
+      "sha256": "69a349d69543f35f45a12c0c82922c550d1b0a16a2b37f6b1406afb2ad2919c8"
+    },
+    {
+      "path": "scripts/tests/test_core.py",
+      "bytes": 5901,
+      "binary": false,
+      "sha": "4ca4a95c4ff5fb33eb9b67c1a2204db64e504162",
+      "sha256": "ce60ac571164cf35e8c866550ad989fa686706a56fa48df4fdf76444b94fdd8d"
+    },
+    {
+      "path": "scripts/tests/test_design_system_mode.py",
+      "bytes": 6345,
+      "binary": false,
+      "sha": "06f7eb3511b8bf906dd953fd94eb992cf1ac2321",
+      "sha256": "c38424e0f575f498c10564844338abce9363cd0b002ba8bd35c9d2762c2674ae"
+    },
+    {
+      "path": "scripts/validate_data.py",
+      "bytes": 4185,
+      "binary": false,
+      "sha": "6c59d5aa830ce4b546a1b6a4751fcf57262cdd58",
+      "sha256": "f1b5e0916f3c2f8271416f93f6ff9ebf3311a68a943a19c1b83f16823cbb05a7"
+    }
+  ]
+}
