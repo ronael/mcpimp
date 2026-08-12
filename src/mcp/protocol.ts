@@ -32,16 +32,7 @@ export function jsonRpcFailure(id: JsonRpcId, code: number, message: string): Js
   return { jsonrpc: "2.0", id, error: { code, message } };
 }
 
-export function createSseInitializeMessage(): string {
-  const payload = JSON.stringify({
-    jsonrpc: "2.0",
-    id: null,
-    method: "initialize",
-    params: {
-      protocolVersion: "2025-03-26",
-      capabilities: { tools: {}, resources: {} },
-    },
-  });
-
-  return `event: message\ndata: ${payload}\n\n`;
+export function formatSseEvent(event: string, data: unknown): string {
+  const payload = typeof data === "string" ? data : JSON.stringify(data);
+  return `event: ${event}\ndata: ${payload}\n\n`;
 }
