@@ -67,11 +67,27 @@ describe("MCP handler", () => {
     expect(read.result.contents[0].text).toContain("# Landing Page");
   });
 
-  it("returns a JSON-RPC error for missing resources", async () => {
+  it("loads one exact capability file for progressive disclosure", async () => {
     const handle = await createHandler();
     const response: any = await handle({
       jsonrpc: "2.0",
       id: 6,
+      method: "tools/call",
+      params: {
+        name: "load-capability",
+        arguments: { id: "landing-page", path: "shared/rules.md" },
+      },
+    });
+
+    expect(response.result.content[0].text).toContain("# Rules");
+    expect(response.result.content[0].text).not.toContain("# Landing Page");
+  });
+
+  it("returns a JSON-RPC error for missing resources", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 7,
       method: "resources/read",
       params: { uri: "skill://landing-page/missing.md" },
     });

@@ -132,6 +132,7 @@ export interface CapabilityResource {
 export interface CapabilitySearchResult {
   capabilityId: string;
   capabilityName: string;
+  capabilityDescription: string;
   path: string;
   uri: string;
   title: string;

@@ -59,6 +59,19 @@ const FILE_TYPE_WEIGHTS: Record<CapabilityFile["type"], number> = {
   bundle: 0.35,
 };
 
+/**
+ * Procedural documents remain searchable, but should not outrank domain
+ * guidance just because a query contains words like "landing" or "conversion".
+ * They are useful after a capability has been selected, not as creative input.
+ */
+const FILE_PATH_MULTIPLIERS: Record<string, number> = {
+  "shared/output-schemas.md": 0.2,
+  "shared/examples.md": 0.35,
+  "shared/anti-generic.md": 0.55,
+  "shared/scoring-rubric.md": 0.55,
+  "BUNDLE.md": 0.2,
+};
+
 /** Licence notices carry provenance text that would otherwise pollute every result. */
 const NOTICE_PATTERN = /^(LICEN[CS]E|NOTICE|COPYING)(\.[a-z]+)?$/i;
 
@@ -193,6 +206,10 @@ function buildSnippet(document: IndexedDocument, matched: Set<string>): string {
   return best.length > SNIPPET_MAX_LENGTH ? `${best.slice(0, SNIPPET_MAX_LENGTH - 1)}…` : best;
 }
 
+function fileRelevanceWeight(file: CapabilityFile): number {
+  return (FILE_TYPE_WEIGHTS[file.type] ?? 1) * (FILE_PATH_MULTIPLIERS[file.path] ?? 1);
+}
+
 export function searchCapabilities(
   capabilities: Capability[],
   query: string,
@@ -251,13 +268,14 @@ export function searchCapabilities(
 
       const coverage = roots.size === 0 ? 1 : matchedRoots.size / roots.size;
       score *= coverage * coverage;
-      score *= FILE_TYPE_WEIGHTS[document.file.type] ?? 1;
+      score *= fileRelevanceWeight(document.file);
 
       if (document.normalizedText.includes(phrase)) score *= PHRASE_BONUS;
 
       return {
         capabilityId: document.capability.id,
         capabilityName: document.capability.name,
+        capabilityDescription: document.capability.description,
         path: document.file.path,
         uri: document.file.uri,
         title: document.file.path.split("/").at(-1) || document.file.path,

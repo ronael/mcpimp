@@ -16,11 +16,8 @@ skills/
   worker.ts               # entrypoint Cloudflare
   sources/                # sources externes déclarées (1 JSON par source)
   imported/               # capacités importées, avec leur provenance
-  landing-page/           # première capacité réelle
+  landing-page/           # orchestrateur local minimal
     SKILL.md
-    agents/
-    shared/
-    BUNDLE.md
   nocodb/                 # capacité proxy vers un MCP personnel
     SKILL.md
     mcp.json
@@ -35,8 +32,8 @@ La v1 découvre automatiquement les dossiers racine qui contiennent un
 
 ```txt
 skill://landing-page/SKILL.md
-skill://landing-page/agents/ui-designer.md
-skill://landing-page/shared/content-rules.md
+skill://ui-ux-pro-max/SKILL.md
+skill://ui-ux-pro-max/references/quick-reference.md
 ```
 
 ## Outils MCP
@@ -45,7 +42,7 @@ skill://landing-page/shared/content-rules.md
 |---|---|
 | `list-capabilities` | Liste les capacités disponibles, avec leur origine |
 | `capability-info` | Donne les métadonnées, la provenance et les fichiers |
-| `load-capability` | Charge tout ou partie d'une capacité |
+| `load-capability` | Charge une capacité, une section ou un fichier exact |
 | `search-capabilities` | Recherche classée dans les fichiers indexés |
 | `list-upstreams` | Vérifie les MCP upstream configurés par capacité |
 
@@ -63,6 +60,9 @@ retourner toutes les correspondances littérales. Le score combine :
 - un poids par type de fichier : un `SKILL.md` passe devant un `BUNDLE.md`
   (qui concatène tout et matche donc n'importe quoi), les scripts et les CSV
   passent derrière la prose.
+- un déclassement supplémentaire pour les fichiers procéduraux (`output-schemas`,
+  `examples`, `scoring-rubric`, `BUNDLE`) : ils restent trouvables par une
+  recherche ciblée, mais ne doivent pas masquer la connaissance design directe.
 
 Une table de synonymes légère (`src/registry/synonyms.ts`) fait le pont
 français/anglais et couvre le vocabulaire design (`photographic` ↔ `imagerie`

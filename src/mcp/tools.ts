@@ -24,7 +24,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "load-capability",
-    description: "Load a capability as concatenated Markdown content.",
+    description: "Load a capability as Markdown content. Prefer an exact path for progressive disclosure; otherwise load a section.",
     inputSchema: {
       type: "object",
       properties: {
@@ -34,6 +34,10 @@ export const MCP_TOOLS = [
           enum: ["full", "skill", "agents", "shared", "references"],
           default: "full",
         },
+        path: {
+          type: "string",
+          description: "Optional exact file path inside the capability, for example shared/content-rules.md.",
+        },
       },
       required: ["id"],
     },
@@ -41,7 +45,7 @@ export const MCP_TOOLS = [
   {
     name: "search-capabilities",
     description:
-      "Ranked search across indexed capability text. Accepts several words; results are scored on capability name, description, tags, headings and content.",
+      "Ranked search across indexed capability files. Accepts several words; results include the capability id, description, matching file and snippet. Group results by capabilityId, inspect shortlisted capabilities with capability-info, then load only the selected capabilities.",
     inputSchema: {
       type: "object",
       properties: {
@@ -148,6 +152,7 @@ function provenanceBanner(capability: Capability): string {
 function loadCapability(registry: CapabilityRegistry, args: Record<string, unknown>) {
   const id = requireString(args, "id");
   const section = typeof args.section === "string" ? args.section : "full";
+  const path = typeof args.path === "string" ? args.path.trim() : "";
   const capability = registry.getCapability(id);
   if (!capability) throw new Error(`Capability not found: ${id}`);
 
@@ -159,13 +164,21 @@ function loadCapability(registry: CapabilityRegistry, args: Record<string, unkno
     references: (type) => type === "reference",
   };
 
-  const matches = sections[section];
-  if (!matches) throw new Error(`Unknown section: ${section}`);
+  let body: string;
+  if (path) {
+    const file = capability.files.find((candidate) => candidate.path === path);
+    if (!file) throw new Error(`Capability file not found: ${id}/${path}`);
+    if (typeof file.text !== "string") throw new Error(`Capability file is not readable as text: ${id}/${path}`);
+    body = `<!-- ${file.path} -->\n\n${file.text}`;
+  } else {
+    const matches = sections[section];
+    if (!matches) throw new Error(`Unknown section: ${section}`);
 
-  const body = capability.files
-    .filter((file) => typeof file.text === "string" && matches(file.type))
-    .map((file) => `<!-- ${file.path} -->\n\n${file.text}`)
-    .join("\n\n");
+    body = capability.files
+      .filter((file) => typeof file.text === "string" && matches(file.type))
+      .map((file) => `<!-- ${file.path} -->\n\n${file.text}`)
+      .join("\n\n");
+  }
 
   const banner = provenanceBanner(capability);
   return banner ? `${banner}\n\n${body}` : body;
