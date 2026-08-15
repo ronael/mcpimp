@@ -1,0 +1,10 @@
+{
+  "id": "elayadesign-ai-design-skills",
+  "type": "github",
+  "repository": "elayadesign/ai-design-skills",
+  "ref": "main",
+  "roots": ["skills"],
+  "namespace": "elaya-design",
+  "update": "review",
+  "include": ["landing-page-design"]
+}

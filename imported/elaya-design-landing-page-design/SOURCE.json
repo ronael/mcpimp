@@ -1,0 +1,35 @@
+{
+  "type": "github",
+  "sourceId": "elayadesign-ai-design-skills",
+  "repository": "elayadesign/ai-design-skills",
+  "path": "skills/landing-page-design",
+  "ref": "main",
+  "commit": "1c1e97cb9878e236552c772092dda7adcdddbcb2",
+  "url": "https://github.com/elayadesign/ai-design-skills/tree/1c1e97cb9878e236552c772092dda7adcdddbcb2/skills/landing-page-design",
+  "revision": {
+    "kind": "git-commit",
+    "value": "1c1e97cb9878e236552c772092dda7adcdddbcb2"
+  },
+  "contentHash": "sha256:394067354f47006661b5888e3c10dfe88934b7a3fb6c9753eb56bc503738f172",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/elayadesign/ai-design-skills/blob/1c1e97cb9878e236552c772092dda7adcdddbcb2/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "elaya-design-landing-page-design",
+  "update": "review",
+  "lastSyncedAt": "2026-08-15T07:35:19.288Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 16528,
+      "binary": false,
+      "sha": "d1f81e4f1142c0369828b14f4d04ccd5b898106a",
+      "sha256": "3aae79f3d33ea293491fe6251f9fee56ee0cbb7aa66d41b3f29cfc662e4bbdd6"
+    }
+  ]
+}
