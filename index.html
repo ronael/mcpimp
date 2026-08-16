@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MCPIMP, registry personnel de capabilities pour agents IA</title>
-  <meta name="description" content="MCPIMP découvre, recherche et charge les capabilities utiles à tes agents tout en conservant la provenance, le commit et la licence de chaque source.">
+  <meta name="description" content="MCPIMP centralise les capabilities et les serveurs MCP de plusieurs agents, puis conserve la provenance, le commit et la licence de chaque source.">
   <meta name="theme-color" content="#0a0a0a">
   <meta property="og:type" content="website">
   <meta property="og:title" content="MCPIMP, le registry personnel de capabilities">
@@ -718,6 +718,137 @@
     .benefit-card:nth-child(4) .benefit-icon { color: var(--violet); }
     .benefit-card p { max-width: 480px; color: var(--muted); }
 
+    .shared-flow {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) 48px minmax(0, 1.1fr) 48px minmax(0, 0.8fr);
+      align-items: center;
+      gap: var(--s5);
+      margin-bottom: var(--s10);
+    }
+
+    .flow-column {
+      display: grid;
+      gap: var(--s4);
+    }
+
+    .flow-label {
+      margin-bottom: var(--s2);
+      color: #5e5e59;
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    .flow-node,
+    .hub-node {
+      padding: var(--s5);
+      border: 1px solid #d4d4cd;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .flow-node {
+      display: flex;
+      align-items: center;
+      gap: var(--s4);
+      color: #343431;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 620;
+    }
+
+    .flow-node i {
+      color: #246e43;
+      font-size: 24px;
+    }
+
+    .flow-arrow {
+      display: grid;
+      place-items: center;
+      color: #7a7a74;
+      font-size: 24px;
+    }
+
+    .hub-node {
+      padding: var(--s6);
+      border-color: var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      box-shadow: 0 24px 48px rgba(10, 10, 10, 0.16);
+    }
+
+    .hub-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s4);
+      margin-bottom: var(--s6);
+    }
+
+    .hub-head strong {
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 650;
+    }
+
+    .hub-head span {
+      color: var(--acid);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .hub-tools {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--s3);
+    }
+
+    .hub-tool {
+      min-width: 0;
+      padding: var(--s3);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--panel);
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .central-benefits {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-top: 1px solid #d4d4cd;
+      border-left: 1px solid #d4d4cd;
+    }
+
+    .central-benefit {
+      min-height: 176px;
+      padding: var(--s6);
+      border-right: 1px solid #d4d4cd;
+      border-bottom: 1px solid #d4d4cd;
+    }
+
+    .central-benefit strong {
+      display: block;
+      margin-bottom: var(--s3);
+      font-size: 18px;
+      line-height: 28px;
+      font-weight: 650;
+    }
+
+    .central-benefit p {
+      margin-bottom: 0;
+      color: #5e5e59;
+      font-size: 14px;
+      line-height: 20px;
+      text-wrap: pretty;
+    }
+
     .steps {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -815,6 +946,20 @@
 
     .security-list i { margin-top: var(--s1); color: var(--acid); font-size: 20px; }
 
+    .security-boundary {
+      margin-top: var(--s7);
+      padding: var(--s5);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-strong);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 20px;
+      text-wrap: pretty;
+    }
+
+    .security-boundary strong { color: var(--paper); }
+
     .manifest {
       overflow: hidden;
       border: 1px solid var(--line);
@@ -849,7 +994,7 @@
 
     .use-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: var(--s5);
     }
 
@@ -874,7 +1019,49 @@
     .use-card:nth-child(2) i { color: var(--cyan); }
     .use-card:nth-child(3) i { color: var(--coral); }
     .use-card:nth-child(4) i { color: var(--violet); }
+    .use-card:nth-child(5) i { color: var(--acid); }
     .use-card p { color: var(--muted); }
+
+    .integration-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s3);
+      margin-bottom: var(--s6);
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .integration-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: var(--line);
+    }
+
+    .integration-status.active { color: var(--acid); }
+    .integration-status.active::before { background: var(--acid); }
+
+    .integration-tool {
+      display: block;
+      margin-top: var(--s6);
+      color: var(--paper);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .integration-note {
+      max-width: 760px;
+      margin: var(--s7) 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 20px;
+      text-wrap: pretty;
+    }
 
     .install-grid {
       display: grid;
@@ -1109,6 +1296,10 @@
       .section { padding: var(--s11) 0; }
       .section-head { margin-bottom: var(--s8); }
       .problem-grid, .benefit-grid, .steps, .use-grid { grid-template-columns: 1fr; }
+      .shared-flow { grid-template-columns: 1fr; gap: var(--s5); }
+      .shared-flow .flow-column:last-child { grid-column: auto; }
+      .shared-flow .flow-arrow { transform: rotate(90deg); }
+      .central-benefits { grid-template-columns: 1fr; }
       .problem-card { min-height: 300px; padding: var(--s6); }
       .benefit-card { min-height: 240px; padding: var(--s6); }
       .step { min-height: 400px; padding: var(--s6); }
@@ -1148,10 +1339,10 @@
         <span>MCPIMP</span>
       </a>
       <div class="nav-links">
-        <a href="#avantages">Avantages</a>
+        <a href="#centralisation">Centralisation</a>
         <a href="#fonctionnement">Fonctionnement</a>
-        <a href="#provenance">Provenance</a>
-        <a href="#faq">FAQ</a>
+        <a href="#integrations">Intégrations</a>
+        <a href="#provenance">Sécurité</a>
         <a class="nav-cta" href="#installation">Installer</a>
       </div>
       <button class="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu">
@@ -1162,10 +1353,10 @@
 
   <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
     <nav aria-label="Navigation mobile">
-      <a href="#avantages">Avantages <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+      <a href="#centralisation">Centralisation <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
       <a href="#fonctionnement">Fonctionnement <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
-      <a href="#provenance">Provenance <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
-      <a href="#faq">FAQ <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+      <a href="#integrations">Intégrations <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+      <a href="#provenance">Sécurité <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
       <a href="#installation">Installer <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
     </nav>
   </div>
@@ -1176,7 +1367,7 @@
         <div class="hero-copy reveal">
           <p class="eyebrow">Capability registry pour agents IA</p>
           <h1>Le registre personnel qui donne les bonnes capabilities à tes agents.</h1>
-          <p>MCPIMP découvre, recherche et charge les sections utiles de tes skills. Les imports se synchronisent en amont. Le runtime reste local, stable et inspectable.</p>
+          <p>MCPIMP donne à plusieurs agents un point d’entrée commun pour découvrir des skills et appeler des MCP amont. Tu configures le hub une fois, puis chaque client retrouve le même registre.</p>
           <div class="hero-actions">
             <a class="button-primary" href="#installation">Installer MCPIMP <i class="ph ph-arrow-down" aria-hidden="true"></i></a>
           </div>
@@ -1197,17 +1388,17 @@
             <div class="terminal-command"><span class="prompt">›</span><span id="demo-command">list-capabilities</span></div>
             <div class="terminal-output" id="demo-output"></div>
           </div>
-          <div class="product-caption"><span>Transport MCP via HTTP et SSE</span><span>aucun appel réseau au runtime</span></div>
+          <div class="product-caption"><span>Transport MCP via HTTP et SSE</span><span>capabilities lues sur disque</span></div>
         </div>
       </div>
     </section>
 
     <aside class="proof-strip" aria-label="Garanties produit">
       <div class="shell">
-        <div class="proof-fact"><i class="ph ph-hard-drives" aria-hidden="true"></i><span>Capabilities locales et importées, exposées de la même façon</span></div>
+        <div class="proof-fact"><i class="ph ph-share-network" aria-hidden="true"></i><span>Un endpoint partagé par plusieurs agents compatibles MCP</span></div>
         <div class="proof-fact"><i class="ph ph-file-lock" aria-hidden="true"></i><span>Provenance et licence lisibles par l’agent</span></div>
         <div class="proof-fact"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span>Recherche classée dans le contenu des skills</span></div>
-        <div class="proof-fact"><i class="ph ph-cloud-slash" aria-hidden="true"></i><span>Runtime local indépendant du réseau</span></div>
+        <div class="proof-fact"><i class="ph ph-cloud-slash" aria-hidden="true"></i><span>Skills importés disponibles même sans réseau</span></div>
       </div>
     </aside>
 
@@ -1277,7 +1468,51 @@
       </div>
     </section>
 
-    <section class="section paper" id="fonctionnement" aria-labelledby="fonctionnement-title">
+    <section class="section paper" id="centralisation" aria-labelledby="centralisation-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <p class="section-kicker">Un MCP partagé</p>
+            <h2 id="centralisation-title">Configure le hub une fois. Tes agents partagent ensuite le même point d’entrée.</h2>
+          </div>
+          <p>Chaque client se connecte à MCPIMP. Le registry agrège ses propres outils et les outils des MCP amont sous des noms stables.</p>
+        </div>
+
+        <div class="shared-flow reveal" aria-label="Schéma de centralisation MCP">
+          <div class="flow-column">
+            <span class="flow-label">Agents connectés</span>
+            <div class="flow-node"><i class="ph ph-terminal-window" aria-hidden="true"></i><span>Codex</span></div>
+            <div class="flow-node"><i class="ph ph-code" aria-hidden="true"></i><span>Claude Code</span></div>
+            <div class="flow-node"><i class="ph ph-plugs-connected" aria-hidden="true"></i><span>Tout client MCP</span></div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
+          <div class="hub-node">
+            <div class="hub-head"><strong>MCPIMP</strong><span>endpoint commun</span></div>
+            <div class="hub-tools">
+              <span class="hub-tool">list-capabilities</span>
+              <span class="hub-tool">search-capabilities</span>
+              <span class="hub-tool">load-capability</span>
+              <span class="hub-tool">capability.tool</span>
+            </div>
+          </div>
+          <div class="flow-arrow flow-arrow-out" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
+          <div class="flow-column">
+            <span class="flow-label">Ressources centralisées</span>
+            <div class="flow-node"><i class="ph ph-file-text" aria-hidden="true"></i><span>Skills locaux</span></div>
+            <div class="flow-node"><i class="ph ph-github-logo" aria-hidden="true"></i><span>Sources synchronisées</span></div>
+            <div class="flow-node"><i class="ph ph-network" aria-hidden="true"></i><span>MCP amont</span></div>
+          </div>
+        </div>
+
+        <div class="central-benefits">
+          <div class="central-benefit reveal"><strong>Une seule configuration</strong><p>Chaque agent référence le même endpoint MCPIMP. Ajouter une intégration ne demande plus de la recopier chez chaque provider.</p></div>
+          <div class="central-benefit reveal"><strong>Les mêmes outils partout</strong><p>Les outils amont reçoivent un préfixe stable. Les agents retrouvent les mêmes noms et le même état de configuration.</p></div>
+          <div class="central-benefit reveal"><strong>Une maintenance centralisée</strong><p>Sources, variables d’environnement et politiques de synchronisation se gèrent au niveau du registry.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="fonctionnement" aria-labelledby="fonctionnement-title">
       <div class="shell">
         <div class="section-head reveal">
           <div>
@@ -1325,11 +1560,13 @@
           <h2 id="provenance-title">Chaque import garde ses papiers.</h2>
           <p>MCPIMP traite le contenu externe comme une donnée non fiable. Il le conserve avec son identité technique, sans exécuter les scripts importés.</p>
           <ul class="security-list">
-            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Commit et empreinte du contenu enregistrés à l’import</span></li>
-            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Licence détectée et notice conservée avec le skill</span></li>
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Commit, empreinte et licence enregistrés à l’import</span></li>
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Catalogues limités par <code>allowedRepositories</code> et mises à jour contrôlées par <code>review</code></span></li>
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Overrides locaux conservés séparément du contenu amont</span></li>
             <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Scripts externes indexés comme texte inerte</span></li>
-            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>HTTPS, hôtes autorisés, limites de taille et chemins validés</span></li>
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Secrets référencés par variables d’environnement plutôt qu’écrits dans <code>mcp.json</code></span></li>
           </ul>
+          <p class="security-boundary"><strong>Périmètre actuel.</strong> MCPIMP ne fournit pas encore de permissions par agent, de journal d’audit persistant ni de coffre chiffré. Ces fonctions ne sont donc pas présentées comme disponibles.</p>
         </div>
         <figure class="manifest reveal">
           <figcaption class="manifest-head"><span>SOURCE.json</span><span>vérifié sur disque</span></figcaption>
@@ -1348,21 +1585,23 @@
       </div>
     </section>
 
-    <section class="section" aria-labelledby="usages-title">
+    <section class="section" id="integrations" aria-labelledby="usages-title">
       <div class="shell">
         <div class="section-head reveal">
           <div>
-            <p class="section-kicker">Cas d’usage</p>
-            <h2 id="usages-title">Un registry commun pour des workflows très différents.</h2>
+            <p class="section-kicker">Exemples d’intégrations</p>
+            <h2 id="usages-title">Le proxy MCP ne s’arrête pas à NocoDB.</h2>
           </div>
-          <p>La capability reste l’unité métier. Elle peut contenir des instructions, des références, des données, des scripts ou la configuration d’un MCP amont.</p>
+          <p>NocoDB est l’exemple présent dans le dépôt. Le même mécanisme peut exposer tout serveur compatible avec le transport HTTP pris en charge.</p>
         </div>
         <div class="use-grid">
-          <article class="use-card reveal"><i class="ph ph-browser" aria-hidden="true"></i><h3>Landing pages</h3><p>Retrouver une méthode de structure, de rédaction, d’accessibilité et de motion au moment de construire.</p></article>
-          <article class="use-card reveal"><i class="ph ph-tree-structure" aria-hidden="true"></i><h3>Architecture frontend</h3><p>Charger les conventions d’un projet sans dupliquer un long document dans chaque conversation.</p></article>
-          <article class="use-card reveal"><i class="ph ph-database" aria-hidden="true"></i><h3>Opérations NocoDB</h3><p>Exposer un MCP amont sous un préfixe stable et vérifier sa configuration depuis le registry.</p></article>
-          <article class="use-card reveal"><i class="ph ph-git-branch" aria-hidden="true"></i><h3>Bibliothèque partagée</h3><p>Versionner les règles locales, suivre les sources externes et déployer un snapshot sur Cloudflare Worker.</p></article>
+          <article class="use-card reveal"><span class="integration-status active">Dans le dépôt</span><i class="ph ph-database" aria-hidden="true"></i><h3>NocoDB</h3><p>Lister des tables, lire des enregistrements et déclencher les outils du MCP NocoDB depuis un préfixe commun.</p><code class="integration-tool">nocodb.*</code></article>
+          <article class="use-card reveal"><span class="integration-status">Configuration possible</span><i class="ph ph-github-logo" aria-hidden="true"></i><h3>GitHub</h3><p>Donner aux agents un accès centralisé aux issues, aux pull requests et aux informations des dépôts autorisés.</p><code class="integration-tool">github.*</code></article>
+          <article class="use-card reveal"><span class="integration-status">Configuration possible</span><i class="ph ph-notepad" aria-hidden="true"></i><h3>Notion</h3><p>Rechercher la documentation interne et charger une page utile sans configurer le même serveur dans chaque agent.</p><code class="integration-tool">notion.*</code></article>
+          <article class="use-card reveal"><span class="integration-status">Configuration possible</span><i class="ph ph-warning-circle" aria-hidden="true"></i><h3>Sentry</h3><p>Consulter des incidents, des traces et des releases depuis un MCP amont géré au même endroit.</p><code class="integration-tool">sentry.*</code></article>
+          <article class="use-card reveal"><span class="integration-status">Configuration possible</span><i class="ph ph-cylinder" aria-hidden="true"></i><h3>PostgreSQL</h3><p>Exposer un serveur MCP de données avec les droits définis par l’intégration amont et les secrets fournis par l’environnement.</p><code class="integration-tool">postgres.*</code></article>
         </div>
+        <p class="integration-note">Les quatre derniers cas sont des exemples de projection. Ils ne sont pas livrés dans le dépôt et les noms d’outils affichés sont illustratifs.</p>
       </div>
     </section>
 
@@ -1371,8 +1610,8 @@
         <div class="install-copy reveal">
           <p class="section-kicker">Installation locale</p>
           <h2 id="installation-title">Branche le registry à ton agent.</h2>
-          <p>Clone le projet, lance le serveur puis déclare son endpoint SSE dans ton client MCP. Tu gardes la main sur les fichiers et les mises à jour.</p>
-          <div class="install-note"><i class="ph ph-shield-check" aria-hidden="true"></i><span>Aucun compte, aucune carte bancaire et aucun service distant ne sont nécessaires pour le runtime local.</span></div>
+          <p>Clone le projet, lance le serveur puis déclare son endpoint SSE dans tes clients MCP. Les agents partagent ensuite le même registre et les mêmes intégrations.</p>
+          <div class="install-note"><i class="ph ph-shield-check" aria-hidden="true"></i><span>Aucun compte ni service distant ne sont requis pour utiliser le registry et ses capabilities locales.</span></div>
         </div>
         <div class="command-stack reveal">
           <div class="command-card">
@@ -1412,8 +1651,12 @@
         </div>
         <div class="faq-list reveal">
           <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>Comment plusieurs agents partagent le même MCP ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p>Chaque client MCP pointe vers le même endpoint MCPIMP. Le serveur publie ses outils de registry et ajoute les outils des MCP amont avec un préfixe stable. Une nouvelle intégration se configure donc dans le hub, sans recopier sa configuration chez chaque provider.</p></div></div>
+          </div>
+          <div class="faq-item">
             <button class="faq-question" type="button" aria-expanded="false"><span>MCPIMP fonctionne sans réseau ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
-            <div class="faq-answer"><div><p>Non. Le runtime lit les capabilities déjà présentes sur disque. Le réseau sert uniquement pendant la synchronisation des sources externes.</p></div></div>
+            <div class="faq-answer"><div><p>Oui pour les capabilities déjà présentes sur disque. La synchronisation des sources externes et les appels vers un MCP amont distant nécessitent naturellement le réseau.</p></div></div>
           </div>
           <div class="faq-item">
             <button class="faq-question" type="button" aria-expanded="false"><span>Quelles sources sont compatibles ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
@@ -1429,7 +1672,7 @@
           </div>
           <div class="faq-item">
             <button class="faq-question" type="button" aria-expanded="false"><span>Comment ajouter mes propres règles à un skill importé ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
-            <div class="faq-answer"><div><p>Oui. Le dossier <code>overrides/</code> est fusionné par dessus le contenu amont et n’est jamais touché par la synchronisation.</p></div></div>
+            <div class="faq-answer"><div><p>Ajoute les fichiers concernés dans <code>overrides/</code>. Ce dossier est fusionné par dessus le contenu amont et n’est jamais touché par la synchronisation.</p></div></div>
           </div>
           <div class="faq-item">
             <button class="faq-question" type="button" aria-expanded="false"><span>La recherche repose sur des embeddings ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
@@ -1447,7 +1690,7 @@
       <div class="shell reveal">
         <div>
           <h2 id="final-title">Donne à tes agents un registre qu’ils peuvent réellement interroger.</h2>
-          <p>Commence en local, importe une capability, puis laisse MCPIMP fournir uniquement le contexte nécessaire.</p>
+          <p>Commence en local, relie tes agents au même endpoint, puis ajoute des capabilities et des MCP amont depuis un seul endroit.</p>
         </div>
         <a class="button-primary" href="#installation">Installer MCPIMP <i class="ph ph-arrow-up" aria-hidden="true"></i></a>
       </div>
