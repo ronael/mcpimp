@@ -1,0 +1,56 @@
+{
+  "type": "github",
+  "sourceId": "mattpocock-skills",
+  "repository": "mattpocock/skills",
+  "path": "skills/engineering/domain-modeling",
+  "ref": "main",
+  "commit": "9c9f36ccd3995266cd675468af71639c8dde1ec5",
+  "url": "https://github.com/mattpocock/skills/tree/9c9f36ccd3995266cd675468af71639c8dde1ec5/skills/engineering/domain-modeling",
+  "revision": {
+    "kind": "git-commit",
+    "value": "9c9f36ccd3995266cd675468af71639c8dde1ec5"
+  },
+  "contentHash": "sha256:16196cdef548f08556ed21fe719f4c16ae8a2eacfe6a027652f13e1894b26ec9",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/mattpocock/skills/blob/9c9f36ccd3995266cd675468af71639c8dde1ec5/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "matt-pocock-domain-modeling",
+  "update": "review",
+  "lastSyncedAt": "2026-08-17T20:54:28.513Z",
+  "files": [
+    {
+      "path": "ADR-FORMAT.md",
+      "bytes": 2766,
+      "binary": false,
+      "sha": "da7e78ec1c220cd0aedf7ad36424c9398034f375",
+      "sha256": "f1f36cd3f8d3b6474ddd5855da4e233bfc4ae1a1c5024909ccf11871819a41b2"
+    },
+    {
+      "path": "CONTEXT-FORMAT.md",
+      "bytes": 2299,
+      "binary": false,
+      "sha": "eaf2a18573f0a2d8c69ed53e29e4d9e21baf81d8",
+      "sha256": "b8cc318f2a4285b530e908b6bc43901c3c5cd11100362636bbc4216639bef597"
+    },
+    {
+      "path": "SKILL.md",
+      "bytes": 3361,
+      "binary": false,
+      "sha": "e660e8cca0a97f1924016eeb8a504cac8f96a120",
+      "sha256": "9617041db9b0f6606ecf974e2061c83596b05059b5bb20ddb884c60f147c70e9"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "bytes": 101,
+      "binary": false,
+      "sha": "7f1522d2f11506ee205275ab7c282aa52366ecf6",
+      "sha256": "f6bf2aa996c6e6f53fdd0708e18a0d16a56aed8322cca59fedbe3c0d2c75f06b"
+    }
+  ]
+}

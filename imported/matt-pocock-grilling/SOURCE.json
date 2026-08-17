@@ -1,0 +1,42 @@
+{
+  "type": "github",
+  "sourceId": "mattpocock-skills",
+  "repository": "mattpocock/skills",
+  "path": "skills/productivity/grilling",
+  "ref": "main",
+  "commit": "9c9f36ccd3995266cd675468af71639c8dde1ec5",
+  "url": "https://github.com/mattpocock/skills/tree/9c9f36ccd3995266cd675468af71639c8dde1ec5/skills/productivity/grilling",
+  "revision": {
+    "kind": "git-commit",
+    "value": "9c9f36ccd3995266cd675468af71639c8dde1ec5"
+  },
+  "contentHash": "sha256:f3f16e23876d838a87e287d0097480a0c6c3217bf30dc0302e9a1fd7710fd04e",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/mattpocock/skills/blob/9c9f36ccd3995266cd675468af71639c8dde1ec5/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "matt-pocock-grilling",
+  "update": "review",
+  "lastSyncedAt": "2026-08-17T20:54:28.691Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 1857,
+      "binary": false,
+      "sha": "1c2bb7bffed8386f51ae138b3c1348341e19616b",
+      "sha256": "d2498125dd20a0d3a27f03e0ebcc8e681cf42be468e2d3e3c9e8f5dadcae8d47"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "bytes": 113,
+      "binary": false,
+      "sha": "ddbdb96139c0c1dfe6bca698f39d0465674b8a39",
+      "sha256": "1411d7df7d99b7e621a1ff8283c8133cc2464be63d064e52d8ce169c6800ee9b"
+    }
+  ]
+}

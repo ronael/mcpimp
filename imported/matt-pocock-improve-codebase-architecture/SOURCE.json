@@ -1,0 +1,49 @@
+{
+  "type": "github",
+  "sourceId": "mattpocock-skills",
+  "repository": "mattpocock/skills",
+  "path": "skills/engineering/improve-codebase-architecture",
+  "ref": "main",
+  "commit": "9c9f36ccd3995266cd675468af71639c8dde1ec5",
+  "url": "https://github.com/mattpocock/skills/tree/9c9f36ccd3995266cd675468af71639c8dde1ec5/skills/engineering/improve-codebase-architecture",
+  "revision": {
+    "kind": "git-commit",
+    "value": "9c9f36ccd3995266cd675468af71639c8dde1ec5"
+  },
+  "contentHash": "sha256:a5c1a2dd8afee2e764504c9b3d0a793a9c2e76474c67746b90e38fbed9c67b14",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/mattpocock/skills/blob/9c9f36ccd3995266cd675468af71639c8dde1ec5/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "matt-pocock-improve-codebase-architecture",
+  "update": "review",
+  "lastSyncedAt": "2026-08-17T20:52:12.393Z",
+  "files": [
+    {
+      "path": "HTML-REPORT.md",
+      "bytes": 6685,
+      "binary": false,
+      "sha": "17f6d2c7b8342ee7c4260d8d98024d462c7d3eaa",
+      "sha256": "0b0936104158abeef7246ff6cbabefa4dc055f17589f2833f2d93001421910a1"
+    },
+    {
+      "path": "SKILL.md",
+      "bytes": 6049,
+      "binary": false,
+      "sha": "86c025ba94c45a4a85bdbf2e0318b3b72044d608",
+      "sha256": "387f38d21367761c94d4b4dcea9e9d7d3e31f896c4decebf4984483e42125cfc"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "bytes": 166,
+      "binary": false,
+      "sha": "706fdca096da5937fe57875a9154017d50668c42",
+      "sha256": "c8cb20f68ebf0edb4e497bc11ae5fcaa196004e661cd189015b04f4109ced7f1"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "mattpocock-skills",
+  "type": "github",
+  "repository": "mattpocock/skills",
+  "ref": "main",
+  "roots": ["skills/engineering", "skills/productivity"],
+  "namespace": "matt-pocock",
+  "update": "review",
+  "include": ["improve-codebase-architecture", "codebase-design", "domain-modeling", "grilling"],
+  "notes": "Declared from https://www.aihero.dev/skills-codebase-design. Import is centered on /improve-codebase-architecture and includes its companion skills so referenced files and follow-up Skill calls are available."
+}

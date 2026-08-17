@@ -1,0 +1,56 @@
+{
+  "type": "github",
+  "sourceId": "mattpocock-skills",
+  "repository": "mattpocock/skills",
+  "path": "skills/engineering/codebase-design",
+  "ref": "main",
+  "commit": "9c9f36ccd3995266cd675468af71639c8dde1ec5",
+  "url": "https://github.com/mattpocock/skills/tree/9c9f36ccd3995266cd675468af71639c8dde1ec5/skills/engineering/codebase-design",
+  "revision": {
+    "kind": "git-commit",
+    "value": "9c9f36ccd3995266cd675468af71639c8dde1ec5"
+  },
+  "contentHash": "sha256:0eed4eb3b0a1d144d72706afc61747d47900f9c85ca18f6549c3628529e610d7",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/mattpocock/skills/blob/9c9f36ccd3995266cd675468af71639c8dde1ec5/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "matt-pocock-codebase-design",
+  "update": "review",
+  "lastSyncedAt": "2026-08-17T20:54:28.128Z",
+  "files": [
+    {
+      "path": "DEEPENING.md",
+      "bytes": 2559,
+      "binary": false,
+      "sha": "3938457b88ddf98262d5f461aac703dbd74f749a",
+      "sha256": "125e6b77413ad2bc7cf7a772bc74336d580a50f9e797db2178ed133d62333d06"
+    },
+    {
+      "path": "DESIGN-IT-TWICE.md",
+      "bytes": 2691,
+      "binary": false,
+      "sha": "8419ad6fa966be2e9e435c932b3584df56cb1af6",
+      "sha256": "09f9948ea7636a4d3704c5ab909762e876c0b39849eefb14d2e03a398cc9c7e7"
+    },
+    {
+      "path": "SKILL.md",
+      "bytes": 6488,
+      "binary": false,
+      "sha": "16620c24528b737408e78d95dd6a0e01a98d3d63",
+      "sha256": "a8d50abac5a4018f60e1d911d4b6f4e36454ca14d6c390c0695a578c7de65dad"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "bytes": 102,
+      "binary": false,
+      "sha": "3180715edb37f6e96bec42f92f00169faa8886ef",
+      "sha256": "edebc9e4fcfe102114012575eaa9600b9b5fd08c311664f389c36e7bc717740f"
+    }
+  ]
+}
