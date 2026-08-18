@@ -399,6 +399,8 @@ Ajoute un serveur au niveau **projet** (ce dépôt) dans `.kimi-code/mcp.json` :
 
 Ou au niveau **utilisateur** dans `~/.kimi-code/mcp.json`. Relance ta session, puis tape `/mcp` pour voir l'état de connexion. Les outils sont préfixés `mcp__mcpimp__` (ex. `mcp__mcpimp__list-capabilities`).
 
+> **Priorité :** si un même nom existe dans `.kimi-code/mcp.json` (projet) et `~/.kimi-code/mcp.json` (utilisateur), c’est la version **projet** qui prime.
+
 ### Claude Desktop
 
 Édite `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) :
