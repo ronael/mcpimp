@@ -199,4 +199,25 @@ describe("syncSources", () => {
     expect(file.text).toContain("MCPIMP override");
     expect(file.layer).toBe("override");
   });
+
+  it("refuses to overwrite a local capability that has no SOURCE.json", async () => {
+    installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
+
+    const localRoot = join(root, "catalog/capabilities/skills/ui-improve-ui");
+    await mkdir(localRoot, { recursive: true });
+    await writeFile(
+      join(localRoot, "SKILL.md"),
+      "---\nname: improve-ui\ndescription: Local version.\n---\n\n# Local",
+      "utf-8",
+    );
+
+    const report = await run([githubSource()], { apply: true });
+
+    expect(report.entries[0]).toMatchObject({
+      status: "unavailable",
+      applied: false,
+      reason: expect.stringContaining("exists locally without SOURCE.json"),
+    });
+    expect(await readFile(join(localRoot, "SKILL.md"), "utf-8")).toContain("# Local");
+  });
 });
