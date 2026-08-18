@@ -18,6 +18,7 @@ const CATALOG_ROOT = resolve("catalog/capabilities");
 const PUBLIC_IDS = [
   "elaya-design-landing-page-design",
   "frontend-architecture",
+  "hallmark",
   "landing-page",
   "matt-pocock-codebase-design",
   "matt-pocock-domain-modeling",

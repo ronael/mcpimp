@@ -1,0 +1,10 @@
+{
+  "id": "nutlope-hallmark",
+  "type": "github",
+  "repository": "Nutlope/hallmark",
+  "ref": "main",
+  "roots": ["skills"],
+  "namespace": "hallmark",
+  "update": "review",
+  "notes": "Hallmark, MIT. Anti-AI-slop design skill: build new pages, audit and redesign existing ones, extract design from URL or screenshots. Single skill with a large references library (components, themes, macrostructures, verbs audit/redesign, slop-test)."
+}
