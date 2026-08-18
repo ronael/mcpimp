@@ -1,0 +1,37 @@
+{
+  "type": "github",
+  "sourceId": "leonxlnx-taste-skills",
+  "repository": "leonxlnx/taste-skill",
+  "path": "skills/soft-skill",
+  "ref": "main",
+  "commit": "dfb6f9f9e93a39f673b1827c0889cc28326d1800",
+  "url": "https://github.com/leonxlnx/taste-skill/tree/dfb6f9f9e93a39f673b1827c0889cc28326d1800/skills/soft-skill",
+  "revision": {
+    "kind": "git-commit",
+    "value": "dfb6f9f9e93a39f673b1827c0889cc28326d1800"
+  },
+  "contentHash": "sha256:d05bc7c2ff0f2ba9036a99b757dab1aaec620c2ad64e20d08ef40b3d00c00b1b",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/leonxlnx/taste-skill/blob/dfb6f9f9e93a39f673b1827c0889cc28326d1800/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "taste-skill-soft-skill",
+  "namespace": "taste-skill",
+  "slug": "soft-skill",
+  "update": "review",
+  "lastSyncedAt": "2026-08-18T20:27:29.797Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 10561,
+      "binary": false,
+      "sha": "4038f41ec0137ec92e98ed0151fe3b7038b9329e",
+      "sha256": "e1e32f5e2d420872c6c7332b53d5ff7721946766b78c4822b424c2d512c8fdbc"
+    }
+  ]
+}

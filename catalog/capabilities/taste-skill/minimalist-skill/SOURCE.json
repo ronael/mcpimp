@@ -1,0 +1,37 @@
+{
+  "type": "github",
+  "sourceId": "leonxlnx-taste-skills",
+  "repository": "leonxlnx/taste-skill",
+  "path": "skills/minimalist-skill",
+  "ref": "main",
+  "commit": "dfb6f9f9e93a39f673b1827c0889cc28326d1800",
+  "url": "https://github.com/leonxlnx/taste-skill/tree/dfb6f9f9e93a39f673b1827c0889cc28326d1800/skills/minimalist-skill",
+  "revision": {
+    "kind": "git-commit",
+    "value": "dfb6f9f9e93a39f673b1827c0889cc28326d1800"
+  },
+  "contentHash": "sha256:11cf75c7b102632c8ba8e2e26b910e5016c1e2810b9138b282dac9b80d528eb8",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/leonxlnx/taste-skill/blob/dfb6f9f9e93a39f673b1827c0889cc28326d1800/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "taste-skill-minimalist-skill",
+  "namespace": "taste-skill",
+  "slug": "minimalist-skill",
+  "update": "review",
+  "lastSyncedAt": "2026-08-18T20:27:28.313Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 7901,
+      "binary": false,
+      "sha": "44ead27ef04ffe79ade0c6df7fd696dbcf7b246b",
+      "sha256": "36bc7328f085405f43b476938e62460fa573bf7e984e949e072bcf014831a44c"
+    }
+  ]
+}

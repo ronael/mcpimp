@@ -1,0 +1,37 @@
+{
+  "type": "github",
+  "sourceId": "leonxlnx-taste-skills",
+  "repository": "leonxlnx/taste-skill",
+  "path": "skills/imagegen-frontend-web",
+  "ref": "main",
+  "commit": "dfb6f9f9e93a39f673b1827c0889cc28326d1800",
+  "url": "https://github.com/leonxlnx/taste-skill/tree/dfb6f9f9e93a39f673b1827c0889cc28326d1800/skills/imagegen-frontend-web",
+  "revision": {
+    "kind": "git-commit",
+    "value": "dfb6f9f9e93a39f673b1827c0889cc28326d1800"
+  },
+  "contentHash": "sha256:c9469030610aee704317d10a1c64aff1c95b6c14b98e1b18db67fa1aa58888ba",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/leonxlnx/taste-skill/blob/dfb6f9f9e93a39f673b1827c0889cc28326d1800/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "taste-skill-imagegen-frontend-web",
+  "namespace": "taste-skill",
+  "slug": "imagegen-frontend-web",
+  "update": "review",
+  "lastSyncedAt": "2026-08-18T20:27:28.119Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 36854,
+      "binary": false,
+      "sha": "26b293b8d0088631c41ebefde4a650768d01cf22",
+      "sha256": "6b5c2256522fdba1e3313eafa3d743b960a7b13ec029d3e6586e04b23327c1f8"
+    }
+  ]
+}

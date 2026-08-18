@@ -1,0 +1,11 @@
+{
+  "id": "leonxlnx-taste-skills",
+  "type": "github",
+  "repository": "leonxlnx/taste-skill",
+  "ref": "main",
+  "roots": ["skills"],
+  "namespace": "taste-skill",
+  "update": "review",
+  "include": ["taste-skill", "redesign-skill", "minimalist-skill", "soft-skill", "imagegen-frontend-web"],
+  "notes": "Taste-Skill, MIT. Curated subset: taste-skill (anti-slop design flag), redesign-skill (upgrade of existing sites), minimalist-skill and soft-skill (two premium aesthetic protocols), imagegen-frontend-web (section-wise landing image direction). Excluded: superseded taste-skill-v1, gpt-taste (overlaps soft-skill), output-skill (generic output), stitch-skill (Google Stitch specific), brutalist-skill, brandkit and mobile imagegen (niches)."
+}

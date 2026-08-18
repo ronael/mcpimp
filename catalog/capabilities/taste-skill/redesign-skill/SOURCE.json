@@ -1,0 +1,37 @@
+{
+  "type": "github",
+  "sourceId": "leonxlnx-taste-skills",
+  "repository": "leonxlnx/taste-skill",
+  "path": "skills/redesign-skill",
+  "ref": "main",
+  "commit": "dfb6f9f9e93a39f673b1827c0889cc28326d1800",
+  "url": "https://github.com/leonxlnx/taste-skill/tree/dfb6f9f9e93a39f673b1827c0889cc28326d1800/skills/redesign-skill",
+  "revision": {
+    "kind": "git-commit",
+    "value": "dfb6f9f9e93a39f673b1827c0889cc28326d1800"
+  },
+  "contentHash": "sha256:e165f823c8c28d33939bcb4041942c56b24c456337bdf363ebbddfc37561770f",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/leonxlnx/taste-skill/blob/dfb6f9f9e93a39f673b1827c0889cc28326d1800/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "taste-skill-redesign-skill",
+  "namespace": "taste-skill",
+  "slug": "redesign-skill",
+  "update": "review",
+  "lastSyncedAt": "2026-08-18T20:27:29.382Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 15060,
+      "binary": false,
+      "sha": "c8304f0c9301385e3641b052d6b25b8af11cb6c1",
+      "sha256": "98ad3e5b051bfb71b2795f7e8a6aa0d32b51ee095606c098a4b2822ac07926c9"
+    }
+  ]
+}
