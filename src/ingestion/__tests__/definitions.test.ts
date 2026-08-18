@@ -58,9 +58,9 @@ describe("loadSourceDefinitions", () => {
 
   it("rejects a definition whose id does not match its filename", async () => {
     const { mkdir } = await import("node:fs/promises");
-    await mkdir(join(root, "sources"), { recursive: true });
+    await mkdir(join(root, "catalog/sources"), { recursive: true });
     await writeFile(
-      join(root, "sources", "acme.json"),
+      join(root, "catalog/sources", "acme.json"),
       JSON.stringify({ id: "other", type: "github", repository: "a/b" }),
       "utf-8",
     );
@@ -70,8 +70,8 @@ describe("loadSourceDefinitions", () => {
 
   it("rejects malformed JSON with the offending file named", async () => {
     const { mkdir } = await import("node:fs/promises");
-    await mkdir(join(root, "sources"), { recursive: true });
-    await writeFile(join(root, "sources", "broken.json"), "{ not json", "utf-8");
+    await mkdir(join(root, "catalog/sources"), { recursive: true });
+    await writeFile(join(root, "catalog/sources", "broken.json"), "{ not json", "utf-8");
 
     await expect(loadSourceDefinitions(root)).rejects.toThrow(/broken\.json: invalid JSON/);
   });

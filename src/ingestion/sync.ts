@@ -1,6 +1,6 @@
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
-import { IMPORTED_DIR, OVERRIDES_DIR, SOURCE_MANIFEST, UPSTREAM_DIR } from "../registry/filesystem";
+import { OVERRIDES_DIR, SOURCE_MANIFEST, UPSTREAM_DIR } from "../registry/filesystem";
 import type { CapabilityDiscoverySource, CapabilityOrigin, UpdatePolicy } from "../registry/types";
 import { GitHubSourceAdapter } from "./github";
 import { assertSafeRelativePath, classifySkill, sha256 } from "./normalize";
@@ -53,24 +53,26 @@ export interface SyncOptions {
   targets?: string[];
 }
 
-function importedRoot(root: string): string {
-  return join(root, IMPORTED_DIR);
+const CAPABILITIES_DIR = "catalog/capabilities/skills";
+
+function capabilitiesRoot(root: string): string {
+  return join(root, CAPABILITIES_DIR);
 }
 
-/** Every write path is re-checked against the imported root before it is used. */
-function assertInsideImported(root: string, candidate: string): string {
-  const base = resolve(importedRoot(root));
+/** Every write path is re-checked against the capabilities root before it is used. */
+function assertInsideCapabilities(root: string, candidate: string): string {
+  const base = resolve(capabilitiesRoot(root));
   const target = resolve(candidate);
 
   if (target !== base && !target.startsWith(base + sep)) {
-    throw new Error(`Refusing to write outside ${IMPORTED_DIR}/: ${candidate}`);
+    throw new Error(`Refusing to write outside ${CAPABILITIES_DIR}/: ${candidate}`);
   }
 
   return target;
 }
 
 async function readManifest(root: string, capabilityId: string): Promise<SourceManifest | undefined> {
-  const path = join(importedRoot(root), capabilityId, SOURCE_MANIFEST);
+  const path = join(capabilitiesRoot(root), capabilityId, SOURCE_MANIFEST);
   const raw = await readFile(path, "utf-8").catch(() => undefined);
   if (raw === undefined) return undefined;
 
@@ -79,6 +81,32 @@ async function readManifest(root: string, capabilityId: string): Promise<SourceM
   } catch {
     throw new Error(`Invalid ${SOURCE_MANIFEST} for capability ${capabilityId}`);
   }
+}
+
+/**
+ * Ownership rule for sync writes:
+ * - missing target directory => external source may create it;
+ * - target exists with a valid SOURCE.json => managed by sync, update allowed;
+ * - target exists without SOURCE.json => local capability, refuse to overwrite;
+ * - anything else => explicit error, never silent overwrite.
+ */
+async function checkOwnership(
+  root: string,
+  capabilityId: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const capabilityRoot = join(capabilitiesRoot(root), capabilityId);
+  const exists = await stat(capabilityRoot).catch(() => null);
+  if (!exists) return { ok: true };
+
+  const manifestStat = await stat(join(capabilityRoot, SOURCE_MANIFEST)).catch(() => null);
+  if (!manifestStat?.isFile()) {
+    return {
+      ok: false,
+      reason: `capability "${capabilityId}" exists locally without ${SOURCE_MANIFEST}; refusing external overwrite`,
+    };
+  }
+
+  return { ok: true };
 }
 
 function diffFiles(previous: SyncFileRecord[] | undefined, next: DiscoveredSkill["files"]) {
@@ -116,15 +144,15 @@ async function writeSkill(
   files: { path: string; bytes: Uint8Array }[],
   manifest: SourceManifest,
 ): Promise<void> {
-  const capabilityRoot = assertInsideImported(root, join(importedRoot(root), skill.capabilityId));
-  const upstreamDir = assertInsideImported(root, join(capabilityRoot, UPSTREAM_DIR));
-  const stagingDir = assertInsideImported(root, `${upstreamDir}.staging`);
+  const capabilityRoot = assertInsideCapabilities(root, join(capabilitiesRoot(root), skill.capabilityId));
+  const upstreamDir = assertInsideCapabilities(root, join(capabilityRoot, UPSTREAM_DIR));
+  const stagingDir = assertInsideCapabilities(root, `${upstreamDir}.staging`);
 
   await rm(stagingDir, { recursive: true, force: true });
   await mkdir(stagingDir, { recursive: true });
 
   for (const file of files) {
-    const target = assertInsideImported(root, join(stagingDir, assertSafeRelativePath(file.path)));
+    const target = assertInsideCapabilities(root, join(stagingDir, assertSafeRelativePath(file.path)));
     await mkdir(dirname(target), { recursive: true });
     await writeFile(target, file.bytes);
   }
@@ -294,15 +322,22 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
       };
 
       if (status !== "up-to-date" && apply && mayWrite(status, policy, targeted)) {
-        try {
-          const files = await github.fetch(source, skill);
-          const manifest = buildManifest(skill, policy, run.discoverySource, files);
-          await writeSkill(root, skill, files, manifest);
-          entry.applied = true;
-        } catch (error) {
+        const ownership = await checkOwnership(root, skill.capabilityId);
+        if (!ownership.ok) {
           entry.status = "unavailable";
-          entry.reason = error instanceof Error ? error.message : "unknown fetch error";
+          entry.reason = ownership.reason;
           report.errors.push({ sourceId: source.id, message: entry.reason });
+        } else {
+          try {
+            const files = await github.fetch(source, skill);
+            const manifest = buildManifest(skill, policy, run.discoverySource, files);
+            await writeSkill(root, skill, files, manifest);
+            entry.applied = true;
+          } catch (error) {
+            entry.status = "unavailable";
+            entry.reason = error instanceof Error ? error.message : "unknown fetch error";
+            report.errors.push({ sourceId: source.id, message: entry.reason });
+          }
         }
       } else if (status === "update-available" && apply && !targeted) {
         entry.reason = `policy "${policy}": run sources:sync --apply ${skill.capabilityId} to accept`;

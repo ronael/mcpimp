@@ -7,7 +7,7 @@ import { FileSystemCapabilityRegistry } from "./registry/filesystem";
 await loadDotenv();
 
 const port = Number(process.env.PORT || 3901);
-const root = resolve(process.env.CAPABILITIES_ROOT || ".");
+const root = resolve(process.env.CAPABILITIES_ROOT || "catalog/capabilities/skills");
 const registry = await FileSystemCapabilityRegistry.scan(root);
 const app = createServer(registry);
 

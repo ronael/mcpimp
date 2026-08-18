@@ -9,5 +9,5 @@
     "types": ["@cloudflare/workers-types", "node", "vitest/globals"],
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts", "worker.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "generated/**/*.ts", "test/**/*.ts", "worker.ts"]
 }

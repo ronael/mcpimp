@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
 import { createMcpHandler } from "../../mcp/handler";
 
+const CATALOG_ROOT = resolve("catalog/capabilities/skills");
+
 const requiredNames = [
   "landing-page",
   "ui-ux-pro-max",
@@ -15,7 +17,7 @@ const requiredNames = [
 
 describe("design capability catalog", () => {
   it("keeps every required design skill present, loadable and provenance-aware", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(resolve("."));
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const capabilities = registry.listCapabilities();
     const byName = new Map(capabilities.map((capability) => [capability.name, capability]));
 
@@ -35,7 +37,7 @@ describe("design capability catalog", () => {
   });
 
   it("finds the real UI/UX capabilities through representative queries", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(resolve("."));
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const cases = [
       ["landing visual identity", "ui-ux-pro-max"],
       ["accessibility keyboard contrast", "ui-skills-fixing-accessibility"],
@@ -54,14 +56,14 @@ describe("design capability catalog", () => {
   });
 
   it("keeps the local landing orchestrator minimal", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(resolve("."));
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const landing = registry.listCapabilities().find((capability) => capability.id === "landing-page");
 
     expect(landing?.files.map((file) => file.path)).toEqual(["SKILL.md"]);
   });
 
   it("exposes the selected capability through the MCP tool flow", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(resolve("."));
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const handle = createMcpHandler(registry);
 
     const search: any = await handle({

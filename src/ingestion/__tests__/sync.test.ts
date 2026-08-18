@@ -51,7 +51,9 @@ describe("syncSources", () => {
     const report = await run([githubSource()]);
 
     expect(report.entries).toMatchObject([{ capabilityId: "ui-improve-ui", status: "new", applied: false }]);
-    await expect(readFile(join(root, "imported/ui-improve-ui/SOURCE.json"), "utf-8")).rejects.toThrow();
+    await expect(
+      readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/SOURCE.json"), "utf-8"),
+    ).rejects.toThrow();
   });
 
   it("writes upstream content and a provenance manifest on apply", async () => {
@@ -60,7 +62,9 @@ describe("syncSources", () => {
     const report = await run([githubSource()], { apply: true });
     expect(report.entries[0]).toMatchObject({ status: "new", applied: true });
 
-    const manifest = JSON.parse(await readFile(join(root, "imported/ui-improve-ui/SOURCE.json"), "utf-8"));
+    const manifest = JSON.parse(
+      await readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/SOURCE.json"), "utf-8"),
+    );
     expect(manifest).toMatchObject({
       capability: "ui-improve-ui",
       repository: "acme/ui-skills",
@@ -73,7 +77,7 @@ describe("syncSources", () => {
     expect(manifest.lastSyncedAt).toEqual(expect.any(String));
     expect(manifest.files.map((file: { path: string }) => file.path)).toContain("references/plan.md");
 
-    const skill = await readFile(join(root, "imported/ui-improve-ui/upstream/SKILL.md"), "utf-8");
+    const skill = await readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/upstream/SKILL.md"), "utf-8");
     expect(skill).toContain("# Improve UI");
   });
 
@@ -112,15 +116,15 @@ describe("syncSources", () => {
 
     const blind = await run([githubSource()], { apply: true });
     expect(blind.entries[0]).toMatchObject({ status: "update-available", applied: false });
-    expect(await readFile(join(root, "imported/ui-improve-ui/upstream/references/plan.md"), "utf-8")).toContain(
-      "Original plan",
-    );
+    expect(
+      await readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/upstream/references/plan.md"), "utf-8"),
+    ).toContain("Original plan");
 
     const targeted = await run([githubSource()], { apply: true, targets: ["ui-improve-ui"] });
     expect(targeted.entries[0]).toMatchObject({ applied: true });
-    expect(await readFile(join(root, "imported/ui-improve-ui/upstream/references/plan.md"), "utf-8")).toContain(
-      "Rewritten",
-    );
+    expect(
+      await readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/upstream/references/plan.md"), "utf-8"),
+    ).toContain("Rewritten");
   });
 
   it('applies an update without being named under the "auto" policy', async () => {
@@ -137,14 +141,14 @@ describe("syncSources", () => {
     const github = installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
     await run([githubSource()], { apply: true });
 
-    const overridePath = join(root, "imported/ui-improve-ui/overrides/mcpimp-notes.md");
+    const overridePath = join(root, "catalog/capabilities/skills/ui-improve-ui/overrides/mcpimp-notes.md");
     await writeFile(overridePath, "# MCPIMP notes\n\nLocal guidance.\n", "utf-8");
 
     github.remove("skills/improve-ui/references/plan.md", NEXT_COMMIT);
     await run([githubSource()], { apply: true, targets: ["ui-improve-ui"] });
 
     await expect(
-      readFile(join(root, "imported/ui-improve-ui/upstream/references/plan.md"), "utf-8"),
+      readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/upstream/references/plan.md"), "utf-8"),
     ).rejects.toThrow();
     expect(await readFile(overridePath, "utf-8")).toContain("Local guidance");
   });
@@ -165,7 +169,7 @@ describe("syncSources", () => {
     installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
     await run([githubSource()], { apply: true });
 
-    const registry = await FileSystemCapabilityRegistry.scan(root);
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities/skills"));
     const capability = registry.getCapability("ui-improve-ui");
 
     expect(capability).toMatchObject({
@@ -182,14 +186,14 @@ describe("syncSources", () => {
     installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
     await run([githubSource()], { apply: true });
 
-    await mkdir(join(root, "imported/ui-improve-ui/overrides/references"), { recursive: true });
+    await mkdir(join(root, "catalog/capabilities/skills/ui-improve-ui/overrides/references"), { recursive: true });
     await writeFile(
-      join(root, "imported/ui-improve-ui/overrides/references/plan.md"),
+      join(root, "catalog/capabilities/skills/ui-improve-ui/overrides/references/plan.md"),
       "# Plan\n\nMCPIMP override.\n",
       "utf-8",
     );
 
-    const registry = await FileSystemCapabilityRegistry.scan(root);
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities/skills"));
     const file = registry.readResource("skill://ui-improve-ui/references/plan.md");
 
     expect(file.text).toContain("MCPIMP override");

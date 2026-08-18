@@ -3,20 +3,20 @@ import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
 import { parseFrontmatter } from "../frontmatter";
 
-const importedRoot = resolve("test/fixtures/imported-root");
+const capabilitiesRoot = resolve("test/fixtures/synced-capabilities");
 
-describe("imported capability layout", () => {
-  it("exposes an imported capability under the same skill:// namespace as a local one", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(importedRoot);
+describe("synced capability layout", () => {
+  it("exposes a synced capability under the same skill:// namespace as a local one", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(capabilitiesRoot);
 
-    expect(registry.listCapabilities().map((capability) => capability.id)).toEqual(["demo-imported"]);
-    expect(registry.readResource("skill://demo-imported/SKILL.md").text).toContain("Upstream body");
+    expect(registry.listCapabilities().map((capability) => capability.id)).toContain("with-provenance");
+    expect(registry.readResource("skill://with-provenance/SKILL.md").text).toContain("Upstream body");
   });
 
   it("carries the provenance manifest through as capability origin", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(importedRoot);
+    const registry = await FileSystemCapabilityRegistry.scan(capabilitiesRoot);
 
-    expect(registry.getCapability("demo-imported")?.origin).toMatchObject({
+    expect(registry.getCapability("with-provenance")?.origin).toMatchObject({
       type: "github",
       sourceId: "demo-source",
       repository: "acme/demo-skills",
@@ -29,23 +29,23 @@ describe("imported capability layout", () => {
   });
 
   it("layers overrides on top of upstream files of the same path", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(importedRoot);
-    const file = registry.readResource("skill://demo-imported/references/notes.md");
+    const registry = await FileSystemCapabilityRegistry.scan(capabilitiesRoot);
+    const file = registry.readResource("skill://with-provenance/references/notes.md");
 
     expect(file.text).toContain("MCPIMP-specific guidance");
     expect(file.layer).toBe("override");
   });
 
   it("marks untouched upstream files as the upstream layer", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(importedRoot);
+    const registry = await FileSystemCapabilityRegistry.scan(capabilitiesRoot);
 
-    expect(registry.readResource("skill://demo-imported/SKILL.md").layer).toBe("upstream");
+    expect(registry.readResource("skill://with-provenance/SKILL.md").layer).toBe("upstream");
   });
 
   it("does not leak SOURCE.json into the capability file list", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(importedRoot);
+    const registry = await FileSystemCapabilityRegistry.scan(capabilitiesRoot);
 
-    expect(registry.getCapability("demo-imported")?.files.map((file) => file.path)).toEqual([
+    expect(registry.getCapability("with-provenance")?.files.map((file) => file.path)).toEqual([
       "SKILL.md",
       "references/notes.md",
     ]);

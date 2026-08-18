@@ -20,9 +20,7 @@ import type {
 
 const IGNORED_NAMES = new Set([".git", "node_modules", ".DS_Store"]);
 
-/** Root folder holding capabilities imported from external sources. */
-export const IMPORTED_DIR = "imported";
-/** Verbatim upstream content inside an imported capability. */
+/** Verbatim upstream content inside a synced capability. */
 export const UPSTREAM_DIR = "upstream";
 /** Local MCPIMP additions, never touched by sync. */
 export const OVERRIDES_DIR = "overrides";
@@ -196,42 +194,37 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
   private constructor(private readonly capabilities: Capability[]) {}
 
   /**
-   * Discovers capabilities in two layouts:
-   *  - local: a root folder containing `SKILL.md`;
-   *  - imported: `imported/<id>/` containing `SOURCE.json` and `upstream/SKILL.md`,
-   *    optionally overlaid by `overrides/`.
+   * Discovers capabilities under `root` in two layouts:
+   *  - local: a direct child folder containing `SKILL.md` and no `SOURCE.json`;
+   *  - synced: a direct child folder containing `SOURCE.json`, whose content is
+   *    read from `upstream/` and overlaid by `overrides/`.
    *
-   * Both produce the same `skill://<id>/<path>` URIs, so the MCP runtime cannot
-   * tell them apart. On an id collision, the local capability wins.
+   * The presence of `SOURCE.json` determines the layout, not the folder name.
+   * A synced capability must still expose an effective `SKILL.md` (either in
+   * `upstream/` or in `overrides/`). Both layouts produce the same
+   * `skill://<id>/<path>` URIs, so the MCP runtime cannot tell them apart.
    */
   static async scan(root: string): Promise<FileSystemCapabilityRegistry> {
     const capabilities: Capability[] = [];
-    const seen = new Set<string>();
 
     for (const entry of await this.readDirectories(root)) {
       const capabilityRoot = join(root, entry);
-      const skillStat = await stat(join(capabilityRoot, "SKILL.md")).catch(() => null);
-      if (!skillStat?.isFile()) continue;
+      const hasManifest = await stat(join(capabilityRoot, SOURCE_MANIFEST)).then((s) => s.isFile()).catch(() => false);
 
-      capabilities.push(await this.readCapability(entry, capabilityRoot, [{ dir: capabilityRoot, layer: "local" }]));
-      seen.add(entry);
-    }
+      if (hasManifest) {
+        const capability = await this.readCapability(entry, capabilityRoot, [
+          { dir: join(capabilityRoot, UPSTREAM_DIR), layer: "upstream" },
+          { dir: join(capabilityRoot, OVERRIDES_DIR), layer: "override" },
+        ]);
+        if (!capability.files.some((file) => file.path === "SKILL.md")) continue;
+        capabilities.push(capability);
+        continue;
+      }
 
-    const importedRoot = join(root, IMPORTED_DIR);
-    for (const entry of await this.readDirectories(importedRoot)) {
-      if (seen.has(entry)) continue;
-
-      const capabilityRoot = join(importedRoot, entry);
-      const manifest = await stat(join(capabilityRoot, SOURCE_MANIFEST)).catch(() => null);
-      if (!manifest?.isFile()) continue;
-
-      const capability = await this.readCapability(entry, capabilityRoot, [
-        { dir: join(capabilityRoot, UPSTREAM_DIR), layer: "upstream" },
-        { dir: join(capabilityRoot, OVERRIDES_DIR), layer: "override" },
-      ]);
-
-      if (!capability.files.some((file) => file.path === "SKILL.md")) continue;
-      capabilities.push(capability);
+      const hasLocalSkill = await stat(join(capabilityRoot, "SKILL.md")).then((s) => s.isFile()).catch(() => false);
+      if (hasLocalSkill) {
+        capabilities.push(await this.readCapability(entry, capabilityRoot, [{ dir: capabilityRoot, layer: "local" }]));
+      }
     }
 
     return new FileSystemCapabilityRegistry(

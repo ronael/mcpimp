@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { loadDotenv } from "../env/load-dotenv";
-import { loadSourceDefinitions } from "../sources/definitions";
-import { syncSources, type SyncEntry, type SyncReport } from "../sources/sync";
+import { loadSourceDefinitions } from "../ingestion/definitions";
+import { syncSources, type SyncEntry, type SyncReport } from "../ingestion/sync";
 
 /**
  * `pnpm sources:sync [--apply] [target…]`
@@ -92,7 +92,7 @@ const root = resolve(process.env.CAPABILITIES_ROOT || ".");
 const sources = await loadSourceDefinitions(root);
 
 if (sources.length === 0) {
-  console.error(`No source definition found in ${root}/sources.`);
+  console.error(`No source definition found in ${root}/catalog/sources.`);
   process.exit(1);
 }
 

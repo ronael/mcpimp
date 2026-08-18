@@ -140,3 +140,6 @@ dist
 
 # Cloudflare local state
 .wrangler/
+
+# Generated build artifacts
+generated/
