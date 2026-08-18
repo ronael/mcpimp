@@ -1,0 +1,10 @@
+{
+  "type": "github",
+  "sourceId": "acme",
+  "repository": "acme/ui-skills",
+  "path": "skills/foo",
+  "namespace": "ui-skills",
+  "slug": "foo",
+  "update": "review",
+  "files": []
+}

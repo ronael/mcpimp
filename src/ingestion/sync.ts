@@ -1,7 +1,13 @@
-import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
 import { CAPABILITIES_DIR } from "../core/paths";
-import { OVERRIDES_DIR, SOURCE_MANIFEST, UPSTREAM_DIR, assertManifestIdentity } from "../registry/filesystem";
+import {
+  IGNORED_NAMES,
+  OVERRIDES_DIR,
+  SOURCE_MANIFEST,
+  UPSTREAM_DIR,
+  assertManifestIdentity,
+} from "../registry/filesystem";
 import type { CapabilityDiscoverySource, CapabilityOrigin, UpdatePolicy } from "../registry/types";
 import { GitHubSourceAdapter } from "./github";
 import { assertSafeSegment, capabilityIdFor } from "../core/names";
@@ -91,6 +97,57 @@ async function readManifest(root: string, namespace: string, slug: string): Prom
   }
 }
 
+/** A directory is a capability candidate when it carries a supported component. */
+async function isCapabilityCandidate(dir: string): Promise<boolean> {
+  for (const name of ["SKILL.md", "mcp.json", SOURCE_MANIFEST]) {
+    const entry = await stat(join(dir, name)).catch(() => null);
+    if (entry?.isFile()) return true;
+  }
+  return false;
+}
+
+/**
+ * Slugification lets several filesystem locations produce the same public id
+ * (e.g. `ui.skills/foo` and `ui-skills/foo`, or `local/ui-skills-foo` and
+ * `ui-skills/foo`). Ownership by path is not enough: the public id is global.
+ * Returns the first other location that already claims `capabilityId`, or the
+ * location we are about to write (`namespace`/`slug`) when it already exists.
+ */
+async function claimedById(
+  root: string,
+  capabilityId: string,
+  namespace: string,
+  slug: string,
+): Promise<string | undefined> {
+  const base = capabilitiesRoot(root);
+  const namespaceEntries = await readdir(base, { withFileTypes: true }).catch(() => []);
+
+  for (const namespaceEntry of namespaceEntries.sort((a, b) => a.name.localeCompare(b.name))) {
+    if (!namespaceEntry.isDirectory() || IGNORED_NAMES.has(namespaceEntry.name) || namespaceEntry.name.startsWith(".")) {
+      continue;
+    }
+
+    const otherNamespace = assertSafeSegment(namespaceEntry.name, "namespace");
+    const slugEntries = await readdir(join(base, namespaceEntry.name), { withFileTypes: true }).catch(() => []);
+
+    for (const slugEntry of slugEntries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (!slugEntry.isDirectory() || IGNORED_NAMES.has(slugEntry.name) || slugEntry.name.startsWith(".")) {
+        continue;
+      }
+
+      const otherSlug = assertSafeSegment(slugEntry.name, "slug");
+      if (otherNamespace === namespace && otherSlug === slug) continue;
+
+      if (!(await isCapabilityCandidate(join(base, namespaceEntry.name, slugEntry.name)))) continue;
+      if (capabilityIdFor(otherNamespace, otherSlug) !== capabilityId) continue;
+
+      return join(base, namespaceEntry.name, slugEntry.name);
+    }
+  }
+
+  return undefined;
+}
+
 /**
  * Ownership rule for sync writes:
  * - missing target directory => external source may create it;
@@ -109,6 +166,18 @@ async function checkOwnership(
   capabilityId: string,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const capabilityRoot = capabilityRootFor(root, namespace, slug);
+
+  // The public id is global. Even with the target path free, another location
+  // may already map to the same id after slugification: refuse to mint a second
+  // physical location for an id that already exists.
+  const claimedAt = await claimedById(root, capabilityId, namespace, slug);
+  if (claimedAt) {
+    return {
+      ok: false,
+      reason: `capability id "${capabilityId}" is already owned at ${claimedAt}; refusing a second location for the same id`,
+    };
+  }
+
   const exists = await stat(capabilityRoot).catch(() => null);
   if (!exists) return { ok: true };
 

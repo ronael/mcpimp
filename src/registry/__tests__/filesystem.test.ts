@@ -170,4 +170,22 @@ describe("FileSystemCapabilityRegistry", () => {
       FileSystemCapabilityRegistry.scan(resolve("test/fixtures/mismatched-manifest")),
     ).rejects.toThrow(/SOURCE.json slug "bar" does not match folder "foo"/);
   });
+
+  it("fails loudly when two folders map to the same public id", async () => {
+    await expect(FileSystemCapabilityRegistry.scan(resolve("test/fixtures/duplicate-ids"))).rejects.toThrow(
+      /Duplicate capability id "ui-skills-improve-ui" at .*local\/ui-skills-improve-ui and .*ui-skills\/improve-ui/,
+    );
+  });
+
+  it("fails loudly when a synced SOURCE.json is missing its capability id", async () => {
+    await expect(
+      FileSystemCapabilityRegistry.scan(resolve("test/fixtures/missing-capability")),
+    ).rejects.toThrow(/must declare "namespace", "slug" and "capability"/);
+  });
+
+  it("rejects an mcp.json whose optional metadata has the wrong shape", async () => {
+    await expect(FileSystemCapabilityRegistry.scan(resolve("test/fixtures/invalid-mcp"))).rejects.toThrow(
+      /mcp.json "name" must be a string/,
+    );
+  });
 });

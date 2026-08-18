@@ -1,0 +1,7 @@
+{
+  "type": "mcp",
+  "transport": "streamable-http",
+  "url": "https://example.com/mcp",
+  "name": 42,
+  "tags": "crm"
+}

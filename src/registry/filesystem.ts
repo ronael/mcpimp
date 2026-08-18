@@ -20,7 +20,7 @@ import type {
   CapabilityUpstreamMcp,
 } from "./types";
 
-const IGNORED_NAMES = new Set([".git", "node_modules", ".DS_Store"]);
+export const IGNORED_NAMES = new Set([".git", "node_modules", ".DS_Store"]);
 
 /** Verbatim upstream content inside a synced capability. */
 export const UPSTREAM_DIR = "upstream";
@@ -83,6 +83,21 @@ function parseMcpConfig(text: string): CapabilityMcpConfig {
     throw new Error("mcp.json requires a non-empty url");
   }
 
+  // Optional metadata gives an MCP-only capability its identity. These feed the
+  // search index, so their shapes are validated rather than trusted: search
+  // assumes tags is an array and name is searchable text.
+  if (parsed.name !== undefined && typeof parsed.name !== "string") {
+    throw new Error('mcp.json "name" must be a string when present');
+  }
+  if (parsed.description !== undefined && typeof parsed.description !== "string") {
+    throw new Error('mcp.json "description" must be a string when present');
+  }
+  if (parsed.tags !== undefined && (!Array.isArray(parsed.tags) || parsed.tags.some((tag) => typeof tag !== "string"))) {
+    throw new Error('mcp.json "tags" must be an array of strings when present');
+  }
+
+  const tags = parsed.tags && parsed.tags.length > 0 ? parsed.tags : undefined;
+
   return {
     type: "mcp",
     transport: "streamable-http",
@@ -91,7 +106,7 @@ function parseMcpConfig(text: string): CapabilityMcpConfig {
     headers: parsed.headers,
     name: parsed.name,
     description: parsed.description,
-    tags: parsed.tags,
+    tags,
   };
 }
 
@@ -228,8 +243,8 @@ export function assertManifestIdentity(
   namespace: string,
   slug: string,
 ): void {
-  if (manifest.namespace === undefined || manifest.slug === undefined) {
-    throw new Error(`SOURCE.json for ${namespace}/${slug} must declare "namespace" and "slug"`);
+  if (manifest.namespace === undefined || manifest.slug === undefined || manifest.capability === undefined) {
+    throw new Error(`SOURCE.json for ${namespace}/${slug} must declare "namespace", "slug" and "capability"`);
   }
   if (slugify(manifest.namespace) !== slugify(namespace)) {
     throw new Error(`SOURCE.json namespace "${manifest.namespace}" does not match folder "${namespace}"`);
@@ -238,7 +253,7 @@ export function assertManifestIdentity(
     throw new Error(`SOURCE.json slug "${manifest.slug}" does not match folder "${slug}"`);
   }
   const id = capabilityIdFor(namespace, slug);
-  if (manifest.capability !== undefined && slugify(manifest.capability) !== id) {
+  if (slugify(manifest.capability) !== id) {
     throw new Error(
       `SOURCE.json capability "${manifest.capability}" does not match ${namespace}/${slug} (expected "${id}")`,
     );
@@ -296,6 +311,23 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
       const capability = await this.readCapability(location, layers);
       if (!capability.components.skill && !capability.components.mcp) continue;
       capabilities.push(capability);
+    }
+
+    // Two folders can map to the same public id after slugification (e.g.
+    // `ui.skills/foo` and `ui-skills/foo`, or `local/ui-skills-foo` and
+    // `ui-skills/foo`). A stable registry must never expose a duplicate id,
+    // because getCapability/skill:// URIs/search/tools resolve by id.
+    const claimed = new Map<string, string>();
+    for (const capability of capabilities) {
+      const first = claimed.get(capability.id);
+      if (first !== undefined) {
+        throw new Error(
+          `Duplicate capability id "${capability.id}" at ${first} and ${capability.rootPath}; refusing to start with ambiguous ids`,
+        );
+      }
+      // In scan() rootPath is always set by readCapability; the fallback keeps
+      // the invariant meaningful for any future caller that omits it.
+      claimed.set(capability.id, capability.rootPath ?? capability.id);
     }
 
     return new FileSystemCapabilityRegistry(

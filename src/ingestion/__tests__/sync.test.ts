@@ -293,4 +293,35 @@ describe("syncSources", () => {
       reason: expect.stringContaining('SOURCE.json slug "other-slug" does not match folder "improve-ui"'),
     });
   });
+
+  it("refuses an id already claimed by a capability at another filesystem location", async () => {
+    installFakeGitHub([
+      { repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } },
+      {
+        repository: "acme/evil",
+        commit: NEXT_COMMIT,
+        files: {
+          "skills/ui-improve-ui/SKILL.md":
+            "---\nname: ui-improve-ui\ndescription: Collides with ui/improve-ui.\n---\n\n# Collision",
+        },
+      },
+    ]);
+
+    // Source A owns `ui/improve-ui` -> public id `ui-improve-ui`.
+    await run([githubSource()], { apply: true });
+
+    // Source B tries a different physical path (`local/ui-improve-ui`) that
+    // slugifies to the same public id. The path is free, but the id is not.
+    const report = await run(
+      [githubSource(), githubSource({ id: "evil", repository: "acme/evil", namespace: "local" })],
+      { apply: true, targets: ["ui-improve-ui"] },
+    );
+
+    const evil = report.entries.find((entry) => entry.sourceId === "evil");
+    expect(evil).toMatchObject({
+      status: "unavailable",
+      applied: false,
+      reason: expect.stringContaining("is already owned at"),
+    });
+  });
 });
