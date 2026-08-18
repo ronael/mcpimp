@@ -124,9 +124,18 @@
       justify-content: space-between;
       min-height: 48px;
       padding: var(--s2) var(--s2) var(--s2) var(--s5);
-      border: 1px solid rgba(247, 247, 242, 0.16);
-      border-radius: 9999px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      transition: background 700ms var(--ease), border-color 700ms var(--ease),
+        box-shadow 700ms var(--ease), backdrop-filter 700ms var(--ease);
+    }
+
+    .nav-wrap.scrolled .nav {
       background: rgba(24, 24, 24, 0.78);
+      border-color: rgba(247, 247, 242, 0.16);
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
       backdrop-filter: blur(24px);
     }
@@ -161,9 +170,15 @@
       gap: var(--s1);
     }
 
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+    }
+
     .nav-links a {
       padding: var(--s3) var(--s4);
-      border-radius: 9999px;
+      border-radius: 6px;
       color: var(--muted);
       font-size: 14px;
       line-height: 20px;
@@ -205,7 +220,7 @@
       min-height: 40px;
       margin-left: var(--s2);
       padding: var(--s3) var(--s4);
-      border-radius: 9999px;
+      border-radius: 6px;
       font-size: 14px;
       line-height: 20px;
     }
@@ -667,6 +682,12 @@
       text-wrap: pretty;
     }
 
+    /* .step cards live on the dark fonctionnement section: give them explicit
+       light-on-panel text instead of inheriting the page-wide light color,
+       which made titles invisible on the old white cards. */
+    .step h3 { color: var(--paper); }
+    .step p { color: var(--muted); }
+
     .problem-card code {
       position: absolute;
       right: var(--s5);
@@ -861,16 +882,17 @@
       position: relative;
       min-height: 440px;
       padding: var(--s7);
-      border: 1px solid #d4d4cd;
+      border: 1px solid var(--line);
       border-radius: 8px;
-      background: #ffffff;
+      background: var(--panel);
+      color: var(--paper);
     }
 
     .step::before {
       content: "0" counter(step);
       display: block;
       margin-bottom: var(--s10);
-      color: #7a7a74;
+      color: var(--acid);
       font-family: "Geist Mono Variable", monospace;
       font-size: 14px;
       line-height: 20px;
@@ -883,8 +905,9 @@
       left: var(--s5);
       min-height: 112px;
       padding: var(--s5);
+      border: 1px solid var(--line);
       border-radius: 4px;
-      background: var(--ink);
+      background: #0d0d0d;
       color: var(--paper);
       font-family: "Geist Mono Variable", monospace;
       font-size: 12px;
@@ -1343,11 +1366,13 @@
         <a href="#fonctionnement">Fonctionnement</a>
         <a href="#integrations">Intégrations</a>
         <a href="#provenance">Sécurité</a>
-        <a class="nav-cta" href="#installation">Installer</a>
       </div>
-      <button class="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu">
-        <span></span><span></span>
-      </button>
+      <div class="nav-actions">
+        <a class="nav-cta" href="#installation">Installer</a>
+        <button class="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span>
+        </button>
+      </div>
     </nav>
   </header>
 
@@ -1367,7 +1392,7 @@
         <div class="hero-copy reveal">
           <p class="eyebrow">Capability registry pour agents IA</p>
           <h1>Le registre personnel qui donne les bonnes capabilities à tes agents.</h1>
-          <p>MCPIMP donne à plusieurs agents un point d’entrée commun pour découvrir des skills et appeler des MCP amont. Tu configures le hub une fois, puis chaque client retrouve le même registre.</p>
+          <p>MCPIMP donne à plusieurs agents un point d’entrée commun pour découvrir des capabilities et appeler des MCP amont. Tu configures le hub une fois, puis chaque client retrouve le même registre.</p>
           <div class="hero-actions">
             <a class="button-primary" href="#installation">Installer MCPIMP <i class="ph ph-arrow-down" aria-hidden="true"></i></a>
           </div>
@@ -1397,8 +1422,8 @@
       <div class="shell">
         <div class="proof-fact"><i class="ph ph-share-network" aria-hidden="true"></i><span>Un endpoint partagé par plusieurs agents compatibles MCP</span></div>
         <div class="proof-fact"><i class="ph ph-file-lock" aria-hidden="true"></i><span>Provenance et licence lisibles par l’agent</span></div>
-        <div class="proof-fact"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span>Recherche classée dans le contenu des skills</span></div>
-        <div class="proof-fact"><i class="ph ph-cloud-slash" aria-hidden="true"></i><span>Skills importés disponibles même sans réseau</span></div>
+        <div class="proof-fact"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span>Recherche classée dans le contenu des capabilities</span></div>
+        <div class="proof-fact"><i class="ph ph-cloud-slash" aria-hidden="true"></i><span>Capabilities importées disponibles même sans réseau</span></div>
       </div>
     </aside>
 
@@ -1409,7 +1434,7 @@
             <p class="section-kicker">Le problème</p>
             <h2 id="problemes-title">Les bons workflows existent déjà. Il reste à les retrouver.</h2>
           </div>
-          <p>Quand les skills vivent dans des dépôts, des catalogues et des prompts isolés, chaque nouveau projet recommence le même travail de collecte.</p>
+          <p>Quand les capabilities vivent dans des dépôts, des catalogues et des prompts isolés, chaque nouveau projet recommence le même travail de collecte.</p>
         </div>
         <div class="problem-grid">
           <article class="problem-card reveal">
@@ -1524,7 +1549,7 @@
         <div class="steps">
           <article class="step reveal">
             <h3>Déclare les sources</h3>
-            <p>Ajoute un dépôt GitHub ou un catalogue web autorisé dans <code>sources/</code>. Les filtres déterminent les skills à importer.</p>
+            <p>Ajoute un dépôt GitHub ou un catalogue web autorisé dans <code>catalog/sources/</code>. Les filtres déterminent les capabilities à importer.</p>
             <div class="step-code"><span class="json-key">"repository"</span>: <span class="json-string">"elayadesign/ai-design-skills"</span>,
 <span class="json-key">"include"</span>: [<span class="json-string">"landing-page-design"</span>]</div>
           </article>
@@ -1543,7 +1568,7 @@
 <span class="json-string">"accessibilité motion landing"</span>
 
 <span class="prompt">›</span> load-capability
-<span class="json-string">"landing-page-design"</span></div>
+<span class="json-string">"elaya-design-landing-page-design"</span></div>
           </article>
         </div>
       </div>
@@ -1610,7 +1635,7 @@
         <div class="install-copy reveal">
           <p class="section-kicker">Installation locale</p>
           <h2 id="installation-title">Branche le registry à ton agent.</h2>
-          <p>Clone le projet, lance le serveur puis déclare son endpoint SSE dans tes clients MCP. Les agents partagent ensuite le même registre et les mêmes intégrations.</p>
+          <p>Clone le projet, lance le serveur puis déclare son endpoint MCP dans tes clients. Les agents partagent ensuite le même registre et les mêmes intégrations.</p>
           <div class="install-note"><i class="ph ph-shield-check" aria-hidden="true"></i><span>Aucun compte ni service distant ne sont requis pour utiliser le registry et ses capabilities locales.</span></div>
         </div>
         <div class="command-stack reveal">
@@ -1671,7 +1696,7 @@
             <div class="faq-answer"><div><p>Non. Ils sont indexés comme du texte inerte. MCPIMP n’interprète pas les instructions récupérées pendant l’ingestion.</p></div></div>
           </div>
           <div class="faq-item">
-            <button class="faq-question" type="button" aria-expanded="false"><span>Comment ajouter mes propres règles à un skill importé ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <button class="faq-question" type="button" aria-expanded="false"><span>Comment ajouter mes propres règles à une capability importée ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
             <div class="faq-answer"><div><p>Ajoute les fichiers concernés dans <code>overrides/</code>. Ce dossier est fusionné par dessus le contenu amont et n’est jamais touché par la synchronisation.</p></div></div>
           </div>
           <div class="faq-item">
@@ -1740,15 +1765,15 @@
       search: {
         command: 'search-capabilities  "landing accessibilité motion"',
         rows: [
-          ["landing-page-design · Hero section", "score classé · SKILL.md"],
-          ["fixing-accessibility · Focus states", "résultat ciblé · SKILL.md"],
-          ["fixing-motion-performance · Scroll", "résultat ciblé · SKILL.md"]
+          ["elaya-design-landing-page-design · Hero", "score classé · SKILL.md"],
+          ["ui-skills-fixing-accessibility · Focus states", "résultat ciblé · SKILL.md"],
+          ["ui-skills-fixing-motion-performance · Scroll", "résultat ciblé · SKILL.md"]
         ]
       },
       load: {
-        command: 'load-capability  "landing-page-design"  section: "Hero"',
+        command: 'load-capability  "elaya-design-landing-page-design"  section: "skill"',
         rows: [
-          ["Section chargée", "Hero section · 42 lignes utiles"],
+          ["Section chargée", "skill · 380 lignes utiles"],
           ["Provenance", "commit 1c1e97cb · licence MIT"],
           ["Contexte", "référence importée · autorité limitée"]
         ]
@@ -1803,6 +1828,11 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") setMenu(false);
     });
+
+    const navWrap = document.querySelector(".nav-wrap");
+    const updateHeader = () => navWrap.classList.toggle("scrolled", window.scrollY > 24);
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    updateHeader();
 
     document.querySelectorAll(".copy-button").forEach((button) => {
       button.addEventListener("click", async () => {
