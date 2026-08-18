@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "ui-skills-fixing-motion-performance",
+  "namespace": "ui-skills",
+  "slug": "fixing-motion-performance",
   "update": "review",
   "lastSyncedAt": "2026-08-10T17:23:40.980Z",
   "files": [

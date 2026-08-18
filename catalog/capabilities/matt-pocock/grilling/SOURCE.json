@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "matt-pocock-grilling",
+  "namespace": "matt-pocock",
+  "slug": "grilling",
   "update": "review",
   "lastSyncedAt": "2026-08-17T20:54:28.691Z",
   "files": [

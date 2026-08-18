@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "ui-skills-create-design-md",
+  "namespace": "ui-skills",
+  "slug": "create-design-md",
   "update": "review",
   "lastSyncedAt": "2026-08-10T17:23:40.634Z",
   "files": [

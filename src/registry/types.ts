@@ -134,6 +134,13 @@ export interface CapabilityMcpConfig {
   url: string;
   enabled?: boolean;
   headers?: Record<string, string>;
+  /**
+   * Human-readable identity for MCP-only capabilities (no SKILL.md). Absent for
+   * capabilities whose identity comes from SKILL.md frontmatter.
+   */
+  name?: string;
+  description?: string;
+  tags?: string[];
 }
 
 export interface CapabilityResource {

@@ -1,0 +1,7 @@
+{
+  "type": "mcp",
+  "transport": "streamable-http",
+  "url": "https://example.com/crm/mcp",
+  "name": "CRM Connector",
+  "description": "Connect to the CRM to read customer records and manage pipelines."
+}

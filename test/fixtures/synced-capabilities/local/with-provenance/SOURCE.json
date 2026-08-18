@@ -11,7 +11,9 @@
   "license": { "spdxId": "MIT", "name": "MIT License" },
   "skillKind": "portable",
   "skillTraits": ["references"],
-  "capability": "demo-imported",
+  "capability": "with-provenance",
+  "namespace": "local",
+  "slug": "with-provenance",
   "update": "review",
   "lastSyncedAt": "2026-08-01T00:00:00.000Z",
   "files": [{ "path": "SKILL.md", "bytes": 120, "binary": false, "sha": "aaa" }]

@@ -36,6 +36,7 @@ const FIELD_WEIGHTS = {
   capabilityName: 6,
   capabilityDescription: 4,
   tags: 5,
+  namespaceSlug: 3,
   path: 3,
   headings: 2.5,
   body: 1,
@@ -122,6 +123,11 @@ interface IndexedDocument {
   /** Terms found in file-level fields only (path, headings, body). */
   fileTerms: Set<string>;
   normalizedText: string;
+  /**
+   * The one file that represents this capability when only its metadata matches.
+   * Undefined only when the capability has no indexable text file at all.
+   */
+  representative?: CapabilityFile;
 }
 
 function addField(target: Map<string, number>, value: string, weight: number, collect?: Set<string>): void {
@@ -136,6 +142,7 @@ function indexFile(capability: Capability, file: CapabilityFile): IndexedDocumen
   const fileTerms = new Set<string>();
 
   addField(weights, `${capability.id} ${capability.name}`, FIELD_WEIGHTS.capabilityName);
+  addField(weights, `${capability.namespace} ${capability.slug}`, FIELD_WEIGHTS.namespaceSlug);
   addField(weights, capability.description, FIELD_WEIGHTS.capabilityDescription);
   addField(weights, (capability.tags || []).join(" "), FIELD_WEIGHTS.tags);
 
@@ -148,6 +155,25 @@ function indexFile(capability: Capability, file: CapabilityFile): IndexedDocumen
   addField(weights, text, FIELD_WEIGHTS.body, fileTerms);
 
   return { capability, file, weights, fileTerms, normalizedText: normalizeText(text) };
+}
+
+/**
+ * The single file that stands for a capability when only its metadata matches:
+ * SKILL.md when present, else mcp.json, else the highest-relevance indexed file.
+ *
+ * This keeps capabilities without a SKILL.md (today: MCP-only) discoverable by
+ * id/namespace/slug/name/description/tags while still surfacing a metadata match
+ * once, instead of repeating it on every file the capability happens to contain.
+ */
+function representativeFileFor(capability: Capability, indexed: CapabilityFile[]): CapabilityFile | undefined {
+  const skill = indexed.find((file) => file.path === "SKILL.md");
+  if (skill) return skill;
+  const mcp = indexed.find((file) => file.path === "mcp.json");
+  if (mcp) return mcp;
+  return indexed.reduce<CapabilityFile | undefined>(
+    (best, file) => (!best || fileRelevanceWeight(file) > fileRelevanceWeight(best) ? file : best),
+    undefined,
+  );
 }
 
 interface QueryTerm {
@@ -225,11 +251,16 @@ export function searchCapabilities(
     ? capabilities.filter((capability) => capability.id === options.capabilityId)
     : capabilities;
 
-  const documents = scope.flatMap((capability) =>
-    capability.files
+  const documents = scope.flatMap((capability) => {
+    const indexed = capability.files
       .filter((file) => typeof file.text === "string" && !NOTICE_PATTERN.test(file.path))
-      .map((file) => indexFile(capability, file)),
-  );
+      .map((file) => indexFile(capability, file));
+    const representative = representativeFileFor(
+      capability,
+      indexed.map((document) => document.file),
+    );
+    return indexed.map((document) => ({ ...document, representative }));
+  });
 
   if (documents.length === 0) return [];
 
@@ -262,9 +293,11 @@ export function searchCapabilities(
 
       if (score === 0) return undefined;
 
-      // A capability-level match alone should surface the capability once, via its
-      // SKILL.md, instead of every file it happens to contain.
-      if (!matchedInFile && document.file.type !== "skill") return undefined;
+      // A capability-level match alone should surface the capability once, via
+      // its representative file (SKILL.md, else mcp.json, else the most relevant
+      // indexed file) instead of every file it happens to contain. This keeps
+      // MCP-only capabilities, which have no SKILL.md, discoverable by metadata.
+      if (!matchedInFile && document.file !== document.representative) return undefined;
 
       const coverage = roots.size === 0 ? 1 : matchedRoots.size / roots.size;
       score *= coverage * coverage;

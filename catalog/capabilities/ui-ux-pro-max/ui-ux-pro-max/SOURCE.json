@@ -35,6 +35,8 @@
     }
   ],
   "capability": "ui-ux-pro-max",
+  "namespace": "ui-ux-pro-max",
+  "slug": "ui-ux-pro-max",
   "discoverySource": {
     "type": "website",
     "url": "https://agent-design.com/skills",

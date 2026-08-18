@@ -110,6 +110,9 @@ function summarizeCapability(registry: CapabilityRegistry, id: string) {
 
   return {
     id: capability.id,
+    namespace: capability.namespace,
+    slug: capability.slug,
+    components: capability.components,
     name: capability.name,
     description: capability.description,
     tags: capability.tags,
@@ -203,8 +206,11 @@ export function callMcpTool(
       return textContent(
         registry.listCapabilities().map((capability) => ({
           id: capability.id,
+          namespace: capability.namespace,
+          slug: capability.slug,
           name: capability.name,
           description: capability.description,
+          components: capability.components,
           tags: capability.tags,
           files: capability.files.length,
           origin: originSummary(capability),

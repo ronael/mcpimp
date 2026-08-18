@@ -261,4 +261,36 @@ describe("syncSources", () => {
 
     expect(report.errors[0].message).toMatch(/Unsafe namespace/);
   });
+
+  it("refuses to touch a capability whose manifest identity disagrees with its folder", async () => {
+    installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
+
+    const target = join(root, "catalog/capabilities/ui/improve-ui");
+    await mkdir(target, { recursive: true });
+    await writeFile(
+      join(target, "SOURCE.json"),
+      JSON.stringify(
+        {
+          type: "github",
+          sourceId: "acme",
+          namespace: "ui",
+          slug: "other-slug",
+          capability: "ui-other-slug",
+          update: "review",
+          files: [],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+
+    const report = await run([githubSource()], { apply: true, targets: ["ui-improve-ui"] });
+
+    expect(report.entries[0]).toMatchObject({
+      status: "unavailable",
+      applied: false,
+      reason: expect.stringContaining('SOURCE.json slug "other-slug" does not match folder "improve-ui"'),
+    });
+  });
 });

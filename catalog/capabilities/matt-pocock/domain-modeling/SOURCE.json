@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "matt-pocock-domain-modeling",
+  "namespace": "matt-pocock",
+  "slug": "domain-modeling",
   "update": "review",
   "lastSyncedAt": "2026-08-17T20:54:28.513Z",
   "files": [

@@ -72,6 +72,16 @@ const CAPABILITIES: Capability[] = [
   ),
 ];
 
+/** An MCP-only capability: no SKILL.md, identity carried by mcp.json metadata. */
+const MCP_ONLY = capability(
+  "crm-connector",
+  "local",
+  "crm-connector",
+  "CRM Connector",
+  "Connect to the CRM to read customer records and manage pipelines.",
+  [file("crm-connector", "mcp.json", '{"type":"mcp","url":"https://example.com/crm/mcp"}', "other")],
+);
+
 function ids(query: string): string[] {
   return searchCapabilities(CAPABILITIES, query).map((hit) => `${hit.capabilityId}/${hit.path}`);
 }
@@ -164,5 +174,25 @@ describe("searchCapabilities", () => {
     ];
 
     expect(searchCapabilities(withBinary, "logo")).toEqual([]);
+  });
+
+  it("finds an MCP-only capability by its id without a SKILL.md", () => {
+    const [top] = searchCapabilities([MCP_ONLY], "crm-connector");
+
+    expect(top.capabilityId).toBe("crm-connector");
+    expect(top.path).toBe("mcp.json");
+  });
+
+  it("finds an MCP-only capability by its name", () => {
+    const [top] = searchCapabilities([MCP_ONLY], "CRM Connector");
+
+    expect(top.capabilityId).toBe("crm-connector");
+    expect(top.path).toBe("mcp.json");
+  });
+
+  it("finds an MCP-only capability by its description", () => {
+    const top = searchCapabilities([MCP_ONLY], "customer records")[0];
+
+    expect(top.capabilityId).toBe("crm-connector");
   });
 });

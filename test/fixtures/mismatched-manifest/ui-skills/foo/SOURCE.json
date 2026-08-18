@@ -1,0 +1,11 @@
+{
+  "type": "github",
+  "sourceId": "acme",
+  "repository": "acme/ui-skills",
+  "path": "skills/bar",
+  "namespace": "ui-skills",
+  "slug": "bar",
+  "capability": "ui-skills-bar",
+  "update": "review",
+  "files": []
+}

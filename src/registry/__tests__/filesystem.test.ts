@@ -139,4 +139,35 @@ describe("FileSystemCapabilityRegistry", () => {
       id: "landing-page",
     });
   });
+
+  it("reads name, description and tags from mcp.json for MCP-only capabilities", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+    const capability = registry.getCapability("crm-connector");
+
+    expect(capability).toMatchObject({
+      id: "crm-connector",
+      namespace: "local",
+      slug: "crm-connector",
+      components: { skill: false, mcp: true },
+      name: "CRM Connector",
+      description: "Connect to the CRM to read customer records and manage pipelines.",
+    });
+    expect(capability?.files.map((file) => file.path)).toEqual(["mcp.json"]);
+  });
+
+  it("finds an MCP-only capability by id, name and description through search", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+
+    expect(registry.search("crm-connector", { limit: 10 }).map((hit) => hit.capabilityId)).toContain("crm-connector");
+    expect(registry.search("CRM Connector", { limit: 10 }).map((hit) => hit.capabilityId)).toContain("crm-connector");
+    expect(registry.search("customer records", { limit: 10 }).map((hit) => hit.capabilityId)).toContain(
+      "crm-connector",
+    );
+  });
+
+  it("fails loudly when SOURCE.json identity disagrees with the folder", async () => {
+    await expect(
+      FileSystemCapabilityRegistry.scan(resolve("test/fixtures/mismatched-manifest")),
+    ).rejects.toThrow(/SOURCE.json slug "bar" does not match folder "foo"/);
+  });
 });

@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
 import { CAPABILITIES_DIR } from "../core/paths";
-import { OVERRIDES_DIR, SOURCE_MANIFEST, UPSTREAM_DIR } from "../registry/filesystem";
+import { OVERRIDES_DIR, SOURCE_MANIFEST, UPSTREAM_DIR, assertManifestIdentity } from "../registry/filesystem";
 import type { CapabilityDiscoverySource, CapabilityOrigin, UpdatePolicy } from "../registry/types";
 import { GitHubSourceAdapter } from "./github";
 import { assertSafeSegment, capabilityIdFor } from "../core/names";
@@ -125,6 +125,18 @@ async function checkOwnership(
     return {
       ok: false,
       reason: `capability "${capabilityId}" has an unreadable ${SOURCE_MANIFEST}; refusing external overwrite`,
+    };
+  }
+
+  // The manifest must identify exactly the filesystem location it lives in
+  // (namespace/slug/capability). A manipulated manifest cannot rebrand a folder
+  // to let another source silently take over a capability.
+  try {
+    assertManifestIdentity(manifest, namespace, slug);
+  } catch (error) {
+    return {
+      ok: false,
+      reason: `capability "${capabilityId}" ${error instanceof Error ? error.message : "has an inconsistent manifest"}; refusing external overwrite`,
     };
   }
 

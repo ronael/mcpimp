@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "elaya-design-landing-page-design",
+  "namespace": "elaya-design",
+  "slug": "landing-page-design",
   "update": "review",
   "lastSyncedAt": "2026-08-15T07:35:19.288Z",
   "files": [

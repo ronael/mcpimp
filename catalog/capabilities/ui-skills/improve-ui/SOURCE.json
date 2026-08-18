@@ -23,6 +23,8 @@
   ],
   "skippedAssets": [],
   "capability": "ui-skills-improve-ui",
+  "namespace": "ui-skills",
+  "slug": "improve-ui",
   "update": "review",
   "lastSyncedAt": "2026-08-10T17:23:41.166Z",
   "files": [

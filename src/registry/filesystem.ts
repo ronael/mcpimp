@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
-import { capabilityIdFor, assertSafeSegment } from "../core/names";
+import { capabilityIdFor, assertSafeSegment, slugify } from "../core/names";
 import { parseFrontmatter } from "./frontmatter";
 import { searchCapabilities } from "./search";
 import { countLines, decodeTextContent, mimeTypeFor } from "./text";
@@ -35,6 +35,9 @@ interface RawMcpConfig {
   url?: string;
   enabled?: boolean;
   headers?: Record<string, string>;
+  name?: string;
+  description?: string;
+  tags?: string[];
 }
 
 interface DiscoveredFile {
@@ -86,6 +89,9 @@ function parseMcpConfig(text: string): CapabilityMcpConfig {
     url: parsed.url,
     enabled: parsed.enabled,
     headers: parsed.headers,
+    name: parsed.name,
+    description: parsed.description,
+    tags: parsed.tags,
   };
 }
 
@@ -211,6 +217,34 @@ interface SourceManifestShape {
   capability?: string;
 }
 
+/**
+ * The filesystem is the structural truth for a synced capability: the manifest
+ * must declare the same namespace/slug (and a capability id derived from them),
+ * or the on-disk state is corrupted. This stops SOURCE.json from silently
+ * rebranding `ui-skills/foo` into a capability with identity `other/bar`.
+ */
+export function assertManifestIdentity(
+  manifest: { namespace?: string; slug?: string; capability?: string },
+  namespace: string,
+  slug: string,
+): void {
+  if (manifest.namespace === undefined || manifest.slug === undefined) {
+    throw new Error(`SOURCE.json for ${namespace}/${slug} must declare "namespace" and "slug"`);
+  }
+  if (slugify(manifest.namespace) !== slugify(namespace)) {
+    throw new Error(`SOURCE.json namespace "${manifest.namespace}" does not match folder "${namespace}"`);
+  }
+  if (slugify(manifest.slug) !== slugify(slug)) {
+    throw new Error(`SOURCE.json slug "${manifest.slug}" does not match folder "${slug}"`);
+  }
+  const id = capabilityIdFor(namespace, slug);
+  if (manifest.capability !== undefined && slugify(manifest.capability) !== id) {
+    throw new Error(
+      `SOURCE.json capability "${manifest.capability}" does not match ${namespace}/${slug} (expected "${id}")`,
+    );
+  }
+}
+
 async function readManifestShape(capabilityRoot: string): Promise<SourceManifestShape | undefined> {
   const manifestPath = join(capabilityRoot, SOURCE_MANIFEST);
   const raw = await readFile(manifestPath, "utf-8").catch(() => undefined);
@@ -308,8 +342,11 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
     layers: { dir: string; layer: CapabilityFileLayer }[],
   ): Promise<Capability> {
     const manifestShape = await readManifestShape(location.capabilityRoot);
-    const namespace = manifestShape?.namespace || location.namespace;
-    const slug = manifestShape?.slug || location.slug;
+    if (manifestShape) {
+      assertManifestIdentity(manifestShape, location.namespace, location.slug);
+    }
+    const namespace = location.namespace;
+    const slug = location.slug;
     const id = capabilityIdFor(namespace, slug);
 
     const byPath = new Map<string, DiscoveredFile>();
@@ -326,18 +363,24 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
     const skill = files.find((file) => file.path === "SKILL.md");
     const frontmatter = parseFrontmatter(skill?.text || "");
     const mcpFile = files.find((file) => file.path === "mcp.json");
+    const mcp = mcpFile?.text ? parseMcpConfig(mcpFile.text) : undefined;
+
+    // Without SKILL.md a capability (MCP-only) still carries a real identity:
+    // optional name/description/tags on mcp.json fill the metadata gap.
+    const name = frontmatter.name || mcp?.name || id;
+    const tags = frontmatter.tags.length > 0 ? frontmatter.tags : mcp?.tags;
 
     return {
       id,
       namespace,
       slug,
-      name: frontmatter.name || id,
-      description: frontmatter.description || "",
-      tags: frontmatter.tags.length > 0 ? frontmatter.tags : undefined,
+      name,
+      description: frontmatter.description || mcp?.description || "",
+      tags: tags && tags.length > 0 ? tags : undefined,
       components: detectComponents(files),
       rootPath: location.capabilityRoot,
       files,
-      mcp: mcpFile?.text ? parseMcpConfig(mcpFile.text) : undefined,
+      mcp,
       origin: await readOrigin(location.capabilityRoot),
     };
   }

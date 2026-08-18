@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "ui-skills-baseline-ui",
+  "namespace": "ui-skills",
+  "slug": "baseline-ui",
   "update": "review",
   "lastSyncedAt": "2026-08-10T17:23:40.450Z",
   "files": [

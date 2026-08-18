@@ -53,7 +53,7 @@ function formatEntry(entry: SyncEntry): string {
 
 function printReport(report: SyncReport, apply: boolean): void {
   if (report.entries.length === 0) {
-    console.log("No capability discovered. Check sources/*.json.");
+    console.log("No capability discovered. Check catalog/sources/*.json.");
   }
 
   for (const entry of report.entries) {

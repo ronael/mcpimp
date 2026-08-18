@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "ui-skills-fixing-accessibility",
+  "namespace": "ui-skills",
+  "slug": "fixing-accessibility",
   "update": "review",
   "lastSyncedAt": "2026-08-10T17:23:40.812Z",
   "files": [

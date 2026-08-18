@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "matt-pocock-codebase-design",
+  "namespace": "matt-pocock",
+  "slug": "codebase-design",
   "update": "review",
   "lastSyncedAt": "2026-08-17T20:54:28.128Z",
   "files": [

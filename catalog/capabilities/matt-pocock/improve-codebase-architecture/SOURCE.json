@@ -21,6 +21,8 @@
   "skillTraits": [],
   "skippedAssets": [],
   "capability": "matt-pocock-improve-codebase-architecture",
+  "namespace": "matt-pocock",
+  "slug": "improve-codebase-architecture",
   "update": "review",
   "lastSyncedAt": "2026-08-17T20:52:12.393Z",
   "files": [
