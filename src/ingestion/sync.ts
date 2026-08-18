@@ -1,8 +1,10 @@
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
+import { CAPABILITIES_DIR } from "../core/paths";
 import { OVERRIDES_DIR, SOURCE_MANIFEST, UPSTREAM_DIR } from "../registry/filesystem";
 import type { CapabilityDiscoverySource, CapabilityOrigin, UpdatePolicy } from "../registry/types";
 import { GitHubSourceAdapter } from "./github";
+import { assertSafeSegment, capabilityIdFor } from "../core/names";
 import { assertSafeRelativePath, classifySkill, sha256 } from "./normalize";
 import { updatePolicyOf, type DiscoveredSkill, type SourceDefinition } from "./types";
 import { WebCatalogSourceAdapter } from "./web-catalog";
@@ -22,6 +24,8 @@ export interface SyncFileRecord {
 /** `SOURCE.json`: provenance plus the exact file set of the synced revision. */
 export interface SourceManifest extends CapabilityOrigin {
   capability: string;
+  namespace: string;
+  slug: string;
   files: SyncFileRecord[];
 }
 
@@ -53,10 +57,14 @@ export interface SyncOptions {
   targets?: string[];
 }
 
-const CAPABILITIES_DIR = "catalog/capabilities/skills";
-
 function capabilitiesRoot(root: string): string {
   return join(root, CAPABILITIES_DIR);
+}
+
+function capabilityRootFor(root: string, namespace: string, slug: string): string {
+  const safeNamespace = assertSafeSegment(namespace, "namespace");
+  const safeSlug = assertSafeSegment(slug, "slug");
+  return join(capabilitiesRoot(root), safeNamespace, safeSlug);
 }
 
 /** Every write path is re-checked against the capabilities root before it is used. */
@@ -71,30 +79,36 @@ function assertInsideCapabilities(root: string, candidate: string): string {
   return target;
 }
 
-async function readManifest(root: string, capabilityId: string): Promise<SourceManifest | undefined> {
-  const path = join(capabilitiesRoot(root), capabilityId, SOURCE_MANIFEST);
+async function readManifest(root: string, namespace: string, slug: string): Promise<SourceManifest | undefined> {
+  const path = join(capabilityRootFor(root, namespace, slug), SOURCE_MANIFEST);
   const raw = await readFile(path, "utf-8").catch(() => undefined);
   if (raw === undefined) return undefined;
 
   try {
     return JSON.parse(raw) as SourceManifest;
   } catch {
-    throw new Error(`Invalid ${SOURCE_MANIFEST} for capability ${capabilityId}`);
+    throw new Error(`Invalid ${SOURCE_MANIFEST} for ${namespace}/${slug}`);
   }
 }
 
 /**
  * Ownership rule for sync writes:
  * - missing target directory => external source may create it;
- * - target exists with a valid SOURCE.json => managed by sync, update allowed;
+ * - target exists with a valid SOURCE.json belonging to the same source/capability
+ *   => managed by sync, update allowed;
  * - target exists without SOURCE.json => local capability, refuse to overwrite;
+ * - target exists with a SOURCE.json owned by another source/capability
+ *   => explicit collision, refuse to overwrite;
  * - anything else => explicit error, never silent overwrite.
  */
 async function checkOwnership(
   root: string,
+  sourceId: string,
+  namespace: string,
+  slug: string,
   capabilityId: string,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
-  const capabilityRoot = join(capabilitiesRoot(root), capabilityId);
+  const capabilityRoot = capabilityRootFor(root, namespace, slug);
   const exists = await stat(capabilityRoot).catch(() => null);
   if (!exists) return { ok: true };
 
@@ -103,6 +117,21 @@ async function checkOwnership(
     return {
       ok: false,
       reason: `capability "${capabilityId}" exists locally without ${SOURCE_MANIFEST}; refusing external overwrite`,
+    };
+  }
+
+  const manifest = await readManifest(root, namespace, slug);
+  if (!manifest) {
+    return {
+      ok: false,
+      reason: `capability "${capabilityId}" has an unreadable ${SOURCE_MANIFEST}; refusing external overwrite`,
+    };
+  }
+
+  if (manifest.sourceId !== sourceId || manifest.capability !== capabilityId) {
+    return {
+      ok: false,
+      reason: `capability "${capabilityId}" is owned by source "${manifest.sourceId}" (${manifest.capability}); refusing takeover by "${sourceId}"`,
     };
   }
 
@@ -144,7 +173,10 @@ async function writeSkill(
   files: { path: string; bytes: Uint8Array }[],
   manifest: SourceManifest,
 ): Promise<void> {
-  const capabilityRoot = assertInsideCapabilities(root, join(capabilitiesRoot(root), skill.capabilityId));
+  const capabilityRoot = assertInsideCapabilities(
+    root,
+    capabilityRootFor(root, skill.namespace, skill.slug),
+  );
   const upstreamDir = assertInsideCapabilities(root, join(capabilityRoot, UPSTREAM_DIR));
   const stagingDir = assertInsideCapabilities(root, `${upstreamDir}.staging`);
 
@@ -208,6 +240,8 @@ function buildManifest(
   return {
     ...skill.origin,
     capability: skill.capabilityId,
+    namespace: skill.namespace,
+    slug: skill.slug,
     discoverySource,
     skillKind: classification.kind,
     skillTraits: classification.traits,
@@ -300,50 +334,66 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
     }
 
     for (const skill of skills) {
-      const previous = await readManifest(root, skill.capabilityId);
-      const status: SyncStatus = !previous
-        ? "new"
-        : previous.contentHash === skill.contentHash
-          ? "up-to-date"
-          : "update-available";
+      try {
+        assertSafeSegment(skill.namespace, "namespace");
+        assertSafeSegment(skill.slug, "slug");
 
-      const targeted =
-        targets.includes(skill.capabilityId) || targets.includes(source.id) || targets.includes(skill.slug);
+        const previous = await readManifest(root, skill.namespace, skill.slug);
+        const status: SyncStatus = !previous
+          ? "new"
+          : previous.contentHash === skill.contentHash
+            ? "up-to-date"
+            : "update-available";
 
-      const entry: SyncEntry = {
-        capabilityId: skill.capabilityId,
-        sourceId: source.id,
-        status,
-        applied: false,
-        policy,
-        revision: skill.origin.commit,
-        previousRevision: previous?.commit,
-        changes: status === "update-available" ? diffFiles(previous?.files, skill.files) : undefined,
-      };
+        const targeted =
+          targets.includes(skill.capabilityId) || targets.includes(source.id) || targets.includes(skill.slug);
 
-      if (status !== "up-to-date" && apply && mayWrite(status, policy, targeted)) {
-        const ownership = await checkOwnership(root, skill.capabilityId);
-        if (!ownership.ok) {
-          entry.status = "unavailable";
-          entry.reason = ownership.reason;
-          report.errors.push({ sourceId: source.id, message: entry.reason });
-        } else {
-          try {
-            const files = await github.fetch(source, skill);
-            const manifest = buildManifest(skill, policy, run.discoverySource, files);
-            await writeSkill(root, skill, files, manifest);
-            entry.applied = true;
-          } catch (error) {
+        const entry: SyncEntry = {
+          capabilityId: skill.capabilityId,
+          sourceId: source.id,
+          status,
+          applied: false,
+          policy,
+          revision: skill.origin.commit,
+          previousRevision: previous?.commit,
+          changes: status === "update-available" ? diffFiles(previous?.files, skill.files) : undefined,
+        };
+
+        if (status !== "up-to-date" && apply && mayWrite(status, policy, targeted)) {
+          const ownership = await checkOwnership(root, source.id, skill.namespace, skill.slug, skill.capabilityId);
+          if (!ownership.ok) {
             entry.status = "unavailable";
-            entry.reason = error instanceof Error ? error.message : "unknown fetch error";
+            entry.reason = ownership.reason;
             report.errors.push({ sourceId: source.id, message: entry.reason });
+          } else {
+            try {
+              const files = await github.fetch(source, skill);
+              const manifest = buildManifest(skill, policy, run.discoverySource, files);
+              await writeSkill(root, skill, files, manifest);
+              entry.applied = true;
+            } catch (error) {
+              entry.status = "unavailable";
+              entry.reason = error instanceof Error ? error.message : "unknown fetch error";
+              report.errors.push({ sourceId: source.id, message: entry.reason });
+            }
           }
+        } else if (status === "update-available" && apply && !targeted) {
+          entry.reason = `policy "${policy}": run sources:sync --apply ${skill.capabilityId} to accept`;
         }
-      } else if (status === "update-available" && apply && !targeted) {
-        entry.reason = `policy "${policy}": run sources:sync --apply ${skill.capabilityId} to accept`;
-      }
 
-      report.entries.push(entry);
+        report.entries.push(entry);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "unknown skill error";
+        report.errors.push({ sourceId: source.id, message });
+        report.entries.push({
+          capabilityId: skill.capabilityId,
+          sourceId: source.id,
+          status: "unavailable",
+          applied: false,
+          policy,
+          reason: message,
+        });
+      }
     }
   }
 

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { capabilityIdFor, slugify } from "../core/names";
 import type { SkillKind } from "../registry/types";
 import type { DiscoveredFileRef } from "./types";
 
@@ -31,25 +32,7 @@ export function assertSafeRelativePath(path: string): string {
   return path;
 }
 
-export function slugify(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 64);
-}
-
-/** `<namespace>-<slug>`, collapsed when the slug already carries the namespace. */
-export function capabilityIdFor(namespace: string, slug: string): string {
-  const cleanNamespace = slugify(namespace);
-  const cleanSlug = slugify(slug);
-
-  if (!cleanNamespace) return cleanSlug;
-  if (cleanSlug === cleanNamespace || cleanSlug.startsWith(`${cleanNamespace}-`)) return cleanSlug;
-  return `${cleanNamespace}-${cleanSlug}`;
-}
+export { capabilityIdFor, slugify };
 
 /**
  * Deterministic identity for a skill at one revision: the sorted set of

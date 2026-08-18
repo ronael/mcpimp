@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
 import { createMcpHandler } from "../../mcp/handler";
 
-const CATALOG_ROOT = resolve("catalog/capabilities/skills");
+const CATALOG_ROOT = resolve("catalog/capabilities");
 
 const requiredNames = [
   "landing-page",
@@ -41,10 +41,12 @@ describe("design capability catalog", () => {
     const cases = [
       ["landing visual identity", "ui-ux-pro-max"],
       ["accessibility keyboard contrast", "ui-skills-fixing-accessibility"],
+      ["accessibility contrast", "ui-skills-fixing-accessibility"],
       ["motion performance animation", "ui-skills-fixing-motion-performance"],
       ["baseline typography spacing", "ui-skills-baseline-ui"],
       ["design language DESIGN.md", "ui-skills-create-design-md"],
       ["audit refine interface", "ui-skills-improve-ui"],
+      ["improve ui", "ui-skills-improve-ui"],
     ] as const;
 
     for (const [query, expectedId] of cases) {
@@ -60,6 +62,18 @@ describe("design capability catalog", () => {
     const landing = registry.listCapabilities().find((capability) => capability.id === "landing-page");
 
     expect(landing?.files.map((file) => file.path)).toEqual(["SKILL.md"]);
+  });
+
+  it("recognises NocoDB as a composite skill + mcp capability", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
+    const nocodb = registry.getCapability("nocodb");
+
+    expect(nocodb).toMatchObject({
+      namespace: "local",
+      slug: "nocodb",
+      components: { skill: true, mcp: true },
+    });
+    expect(registry.listUpstreamMcpServers().some((server) => server.capabilityId === "nocodb")).toBe(true);
   });
 
   it("exposes the selected capability through the MCP tool flow", async () => {

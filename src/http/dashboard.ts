@@ -410,7 +410,7 @@ export function renderDashboard(registry: CapabilityRegistry): string {
     <div class="top">
       <div>
         <h1>Capability Registry MCP</h1>
-        <p>Le serveur scanne les dossiers racine qui contiennent un <code>SKILL.md</code>, indexe leurs fichiers, puis les expose aux agents via MCP.</p>
+        <p>Le serveur scanne <code>catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code>, détecte les composants (<code>SKILL.md</code>, <code>mcp.json</code>, etc.), indexe les fichiers, puis les expose aux agents via MCP.</p>
       </div>
       <div class="stats">
         <div class="stat"><strong>${capabilities.length}</strong>capacités</div>
@@ -423,8 +423,8 @@ export function renderDashboard(registry: CapabilityRegistry): string {
       <h3>Découverte par l'IA</h3>
       <div class="flow">
         <div class="step"><strong>1. Scan</strong><p>Le registry inspecte les dossiers à la racine.</p></div>
-        <div class="step"><strong>2. Détection</strong><p>Un dossier devient capacité s'il contient <code>SKILL.md</code>.</p></div>
-        <div class="step"><strong>3. Index</strong><p>Les fichiers Markdown, scripts et assets sont classés.</p></div>
+        <div class="step"><strong>2. Détection</strong><p>Un dossier devient capacité s'il contient un composant supporté (<code>SKILL.md</code>, <code>mcp.json</code>).</p></div>
+        <div class="step"><strong>3. Index</strong><p>Les fichiers Markdown, scripts, assets et configs MCP sont classés.</p></div>
         <div class="step"><strong>4. MCP</strong><p>Les tools et resources exposent ces contenus aux agents.</p></div>
       </div>
     </section>

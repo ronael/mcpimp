@@ -84,7 +84,7 @@ describe("Hono server", () => {
     const response = await app.request("/dashboard");
     const html = await response.text();
 
-    expect(html).toContain("Le serveur scanne les dossiers racine");
+    expect(html).toContain("Le serveur scanne");
     expect(html).toContain("/health");
     expect(html).toContain("/message");
     expect(html).toContain('href="#discovery"');

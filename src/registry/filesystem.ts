@@ -1,21 +1,23 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
+import { capabilityIdFor, assertSafeSegment } from "../core/names";
 import { parseFrontmatter } from "./frontmatter";
 import { searchCapabilities } from "./search";
 import { countLines, decodeTextContent, mimeTypeFor } from "./text";
 import type {
   Capability,
+  CapabilityComponents,
   CapabilityFile,
   CapabilityFileLayer,
   CapabilityFileType,
   CapabilityMcpConfig,
   CapabilityOrigin,
-  CapabilityUpstreamMcp,
-  CapabilityResource,
   CapabilityRegistry,
+  CapabilityResource,
   CapabilitySearchOptions,
   CapabilitySearchResult,
+  CapabilityUpstreamMcp,
 } from "./types";
 
 const IGNORED_NAMES = new Set([".git", "node_modules", ".DS_Store"]);
@@ -39,6 +41,12 @@ interface DiscoveredFile {
   path: string;
   fullPath: string;
   layer: CapabilityFileLayer;
+}
+
+interface CapabilityLocation {
+  namespace: string;
+  slug: string;
+  capabilityRoot: string;
 }
 
 function normalizePath(path: string): string {
@@ -151,6 +159,13 @@ function sortCapabilityFiles(files: CapabilityFile[]): CapabilityFile[] {
   });
 }
 
+function detectComponents(files: CapabilityFile[]): CapabilityComponents {
+  return {
+    skill: files.some((file) => file.path === "SKILL.md"),
+    mcp: files.some((file) => file.path === "mcp.json"),
+  };
+}
+
 /**
  * Reads provenance from `SOURCE.json`, projecting it onto `CapabilityOrigin`.
  *
@@ -190,41 +205,63 @@ async function readOrigin(capabilityRoot: string): Promise<CapabilityOrigin | un
   };
 }
 
+interface SourceManifestShape {
+  namespace?: string;
+  slug?: string;
+  capability?: string;
+}
+
+async function readManifestShape(capabilityRoot: string): Promise<SourceManifestShape | undefined> {
+  const manifestPath = join(capabilityRoot, SOURCE_MANIFEST);
+  const raw = await readFile(manifestPath, "utf-8").catch(() => undefined);
+  if (raw === undefined) return undefined;
+
+  try {
+    return JSON.parse(raw) as SourceManifestShape;
+  } catch {
+    throw new Error(`Invalid ${SOURCE_MANIFEST} in ${capabilityRoot}`);
+  }
+}
+
 export class FileSystemCapabilityRegistry implements CapabilityRegistry {
   private constructor(private readonly capabilities: Capability[]) {}
 
   /**
-   * Discovers capabilities under `root` in two layouts:
-   *  - local: a direct child folder containing `SKILL.md` and no `SOURCE.json`;
-   *  - synced: a direct child folder containing `SOURCE.json`, whose content is
-   *    read from `upstream/` and overlaid by `overrides/`.
+   * Discovers capabilities under `root` in a namespace/slug layout:
    *
-   * The presence of `SOURCE.json` determines the layout, not the folder name.
-   * A synced capability must still expose an effective `SKILL.md` (either in
-   * `upstream/` or in `overrides/`). Both layouts produce the same
-   * `skill://<id>/<path>` URIs, so the MCP runtime cannot tell them apart.
+   *   catalog/capabilities/<namespace>/<slug>/
+   *
+   * A directory is a capability candidate if it contains at least one supported
+   * component file (today: SKILL.md or mcp.json). The presence of `SOURCE.json`
+   * selects the synced layout, where the effective file set is built from
+   * `upstream/` overlaid by `overrides/`. Without `SOURCE.json` the directory is
+   * treated as a local capability and read directly.
+   *
+   * Public capability ids remain stable regardless of the on-disk path: a synced
+   * capability with namespace `ui-skills` and slug `improve-ui` is exposed as
+   * `ui-skills-improve-ui`; a local capability is exposed by its slug alone.
    */
   static async scan(root: string): Promise<FileSystemCapabilityRegistry> {
     const capabilities: Capability[] = [];
 
-    for (const entry of await this.readDirectories(root)) {
-      const capabilityRoot = join(root, entry);
-      const hasManifest = await stat(join(capabilityRoot, SOURCE_MANIFEST)).then((s) => s.isFile()).catch(() => false);
+    for (const location of await this.readCapabilityLocations(root)) {
+      const hasManifest = await stat(join(location.capabilityRoot, SOURCE_MANIFEST))
+        .then((s) => s.isFile())
+        .catch(() => false);
 
+      let layers: { dir: string; layer: CapabilityFileLayer }[];
       if (hasManifest) {
-        const capability = await this.readCapability(entry, capabilityRoot, [
-          { dir: join(capabilityRoot, UPSTREAM_DIR), layer: "upstream" },
-          { dir: join(capabilityRoot, OVERRIDES_DIR), layer: "override" },
-        ]);
-        if (!capability.files.some((file) => file.path === "SKILL.md")) continue;
-        capabilities.push(capability);
-        continue;
+        layers = [
+          { dir: join(location.capabilityRoot, UPSTREAM_DIR), layer: "upstream" },
+          { dir: join(location.capabilityRoot, OVERRIDES_DIR), layer: "override" },
+        ];
+      } else {
+        layers = [{ dir: location.capabilityRoot, layer: "local" }];
       }
 
-      const hasLocalSkill = await stat(join(capabilityRoot, "SKILL.md")).then((s) => s.isFile()).catch(() => false);
-      if (hasLocalSkill) {
-        capabilities.push(await this.readCapability(entry, capabilityRoot, [{ dir: capabilityRoot, layer: "local" }]));
-      }
+      const capability = await this.readCapability(location, layers);
+      if (!capability.components.skill && !capability.components.mcp) continue;
+      capabilities.push(capability);
     }
 
     return new FileSystemCapabilityRegistry(
@@ -236,20 +273,45 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
     return new FileSystemCapabilityRegistry(capabilities);
   }
 
-  private static async readDirectories(root: string): Promise<string[]> {
-    const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
+  private static async readCapabilityLocations(root: string): Promise<CapabilityLocation[]> {
+    const locations: CapabilityLocation[] = [];
+    const namespaceEntries = await readdir(root, { withFileTypes: true }).catch(() => []);
 
-    return entries
-      .filter((entry) => entry.isDirectory() && !IGNORED_NAMES.has(entry.name) && !entry.name.startsWith("."))
-      .map((entry) => entry.name)
-      .sort((a, b) => a.localeCompare(b));
+    for (const namespaceEntry of namespaceEntries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (!namespaceEntry.isDirectory() || IGNORED_NAMES.has(namespaceEntry.name) || namespaceEntry.name.startsWith(".")) {
+        continue;
+      }
+
+      const namespace = assertSafeSegment(namespaceEntry.name, "namespace");
+      const namespaceRoot = join(root, namespaceEntry.name);
+      const slugEntries = await readdir(namespaceRoot, { withFileTypes: true }).catch(() => []);
+
+      for (const slugEntry of slugEntries.sort((a, b) => a.name.localeCompare(b.name))) {
+        if (!slugEntry.isDirectory() || IGNORED_NAMES.has(slugEntry.name) || slugEntry.name.startsWith(".")) {
+          continue;
+        }
+
+        const slug = assertSafeSegment(slugEntry.name, "slug");
+        locations.push({
+          namespace,
+          slug,
+          capabilityRoot: join(namespaceRoot, slugEntry.name),
+        });
+      }
+    }
+
+    return locations;
   }
 
   private static async readCapability(
-    id: string,
-    capabilityRoot: string,
+    location: CapabilityLocation,
     layers: { dir: string; layer: CapabilityFileLayer }[],
   ): Promise<Capability> {
+    const manifestShape = await readManifestShape(location.capabilityRoot);
+    const namespace = manifestShape?.namespace || location.namespace;
+    const slug = manifestShape?.slug || location.slug;
+    const id = capabilityIdFor(namespace, slug);
+
     const byPath = new Map<string, DiscoveredFile>();
     for (const { dir, layer } of layers) {
       for (const discovered of await collectLayer(dir, layer)) {
@@ -267,13 +329,16 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
 
     return {
       id,
+      namespace,
+      slug,
       name: frontmatter.name || id,
       description: frontmatter.description || "",
       tags: frontmatter.tags.length > 0 ? frontmatter.tags : undefined,
-      rootPath: capabilityRoot,
+      components: detectComponents(files),
+      rootPath: location.capabilityRoot,
       files,
       mcp: mcpFile?.text ? parseMcpConfig(mcpFile.text) : undefined,
-      origin: await readOrigin(capabilityRoot),
+      origin: await readOrigin(location.capabilityRoot),
     };
   }
 

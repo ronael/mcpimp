@@ -83,8 +83,11 @@ export interface DiscoveredFileRef {
 }
 
 export interface DiscoveredSkill {
-  /** Slug within the source, e.g. `improve-ui`. */
+  /** Namespace for grouping on disk, e.g. `ui-skills`. */
+  namespace: string;
+  /** Slug within the namespace, e.g. `improve-ui`. */
   slug: string;
+  /** Public stable id, e.g. `ui-skills-improve-ui`. */
   capabilityId: string;
   files: DiscoveredFileRef[];
   /** Deterministic hash of the selected file set at this revision. */

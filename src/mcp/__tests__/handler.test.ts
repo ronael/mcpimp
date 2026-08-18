@@ -155,8 +155,10 @@ describe("MCP handler", () => {
     });
 
     expect(call.result.content[0].text).toBe("tables: contacts");
-    expect(requests[0].init.headers["xc-mcp-token"]).toBe("secret-token");
-    expect(requests[0].init.headers.accept).toBe("application/json, text/event-stream");
+    const nocodbRequest = requests.find((request) => request.url === "https://nocodb-mcp.test/message");
+    expect(nocodbRequest).toBeDefined();
+    expect(nocodbRequest.init.headers["xc-mcp-token"]).toBe("secret-token");
+    expect(nocodbRequest.init.headers.accept).toBe("application/json, text/event-stream");
   });
 
   it("parses event-stream responses from an upstream HTTP MCP server", async () => {

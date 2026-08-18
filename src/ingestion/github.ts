@@ -203,6 +203,7 @@ export class GitHubSourceAdapter implements ContentSourceAdapter<GitHubSourceDef
       );
 
       skills.push({
+        namespace,
         slug,
         capabilityId: capabilityIdFor(namespace, slug),
         files,

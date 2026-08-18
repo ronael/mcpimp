@@ -1,0 +1,5 @@
+{
+  "type": "mcp",
+  "transport": "streamable-http",
+  "url": "https://example.com/mcp"
+}

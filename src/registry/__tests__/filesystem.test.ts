@@ -6,7 +6,7 @@ const fixturesRoot = resolve("test/fixtures/capabilities");
 const upstreamFixturesRoot = resolve("test/fixtures/upstream-capabilities");
 
 describe("FileSystemCapabilityRegistry", () => {
-  it("discovers folders that contain a SKILL.md", async () => {
+  it("discovers local capabilities that contain a SKILL.md", async () => {
     const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
 
     expect(registry.listCapabilities()).toMatchObject([
@@ -18,7 +18,7 @@ describe("FileSystemCapabilityRegistry", () => {
     ]);
   });
 
-  it("does not expose folders without a SKILL.md as capabilities", async () => {
+  it("does not expose folders without a supported component as capabilities", async () => {
     const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
 
     expect(registry.getCapability("invalid-no-skill")).toBeUndefined();
@@ -69,16 +69,74 @@ describe("FileSystemCapabilityRegistry", () => {
 
   it("loads optional mcp.json upstream config for active capabilities", async () => {
     const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+    const servers = registry.listUpstreamMcpServers();
 
-    expect(registry.listUpstreamMcpServers()).toMatchObject([
-      {
+    expect(servers).toContainEqual(
+      expect.objectContaining({
         capabilityId: "nocodb",
-        config: {
+        config: expect.objectContaining({
           type: "mcp",
           transport: "streamable-http",
           url: "env:TEST_NOCO_MCP_URL",
-        },
-      },
-    ]);
+        }),
+      }),
+    );
+    expect(servers).toContainEqual(
+      expect.objectContaining({
+        capabilityId: "mcp-only",
+        config: expect.objectContaining({
+          type: "mcp",
+          transport: "streamable-http",
+          url: "https://example.com/mcp",
+        }),
+      }),
+    );
+  });
+
+  it("discovers a capability that only contains mcp.json", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+
+    const capability = registry.getCapability("mcp-only");
+    expect(capability).toMatchObject({
+      id: "mcp-only",
+      namespace: "local",
+      slug: "mcp-only",
+      components: { skill: false, mcp: true },
+    });
+    expect(capability?.files.map((file) => file.path)).toEqual(["mcp.json"]);
+  });
+
+  it("detects composite capabilities with both skill and mcp components", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+
+    expect(registry.getCapability("nocodb")).toMatchObject({
+      id: "nocodb",
+      namespace: "local",
+      slug: "nocodb",
+      components: { skill: true, mcp: true },
+    });
+  });
+
+  it("derives public ids from namespace and slug", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(resolve("catalog/capabilities"));
+
+    expect(registry.getCapability("ui-skills-improve-ui")).toMatchObject({
+      namespace: "ui-skills",
+      slug: "improve-ui",
+    });
+    expect(registry.getCapability("matt-pocock-codebase-design")).toMatchObject({
+      namespace: "matt-pocock",
+      slug: "codebase-design",
+    });
+  });
+
+  it("exposes local capabilities by slug only, without a local- prefix", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(resolve("catalog/capabilities"));
+
+    expect(registry.getCapability("landing-page")).toMatchObject({
+      namespace: "local",
+      slug: "landing-page",
+      id: "landing-page",
+    });
   });
 });

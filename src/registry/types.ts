@@ -102,11 +102,25 @@ export interface SkippedAsset {
   sha?: string;
 }
 
+export interface CapabilityComponents {
+  /** True when the capability contains a SKILL.md. */
+  skill: boolean;
+  /** True when the capability contains an mcp.json upstream config. */
+  mcp: boolean;
+}
+
 export interface Capability {
+  /** Public stable id, e.g. ui-skills-improve-ui or landing-page. */
   id: string;
+  /** Logical namespace, e.g. ui-skills or local. */
+  namespace: string;
+  /** Short name within the namespace, e.g. improve-ui. */
+  slug: string;
   name: string;
   description: string;
   tags?: string[];
+  /** Detected components (skill, mcp, future components). */
+  components: CapabilityComponents;
   rootPath?: string;
   files: CapabilityFile[];
   mcp?: CapabilityMcpConfig;

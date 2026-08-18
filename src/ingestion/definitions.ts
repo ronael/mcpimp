@@ -1,9 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
+import { SOURCES_DIR } from "../core/paths";
 import type { SourceDefinition } from "./types";
-
-/** Folder holding one JSON file per registered external source, relative to the capabilities root. */
-export const SOURCES_DIR = "catalog/sources";
 
 function assertString(value: unknown, field: string, file: string): string {
   if (typeof value !== "string" || value.trim() === "") {

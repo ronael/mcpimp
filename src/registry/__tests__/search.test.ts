@@ -17,28 +17,39 @@ function file(capabilityId: string, path: string, text: string, type: Capability
   };
 }
 
+function capability(id: string, namespace: string, slug: string, name: string, description: string, files: CapabilityFile[]): Capability {
+  return {
+    id,
+    namespace,
+    slug,
+    name,
+    description,
+    components: {
+      skill: files.some((f) => f.path === "SKILL.md"),
+      mcp: files.some((f) => f.path === "mcp.json"),
+    },
+    files,
+  };
+}
+
 const CAPABILITIES: Capability[] = [
-  {
-    id: "landing-page",
-    name: "landing-page",
-    description: "Concevoir des landing pages premium et orientées conversion.",
-    tags: ["landing", "conversion"],
-    files: [
-      file("landing-page", "SKILL.md", "# Landing\n\nOrchestre la conception d'une page.", "skill"),
-      file(
-        "landing-page",
-        "shared/design-principles.md",
-        "# Direction artistique\n\nNarration visuelle pour des marques d'hôtellerie haut de gamme, imagerie forte.",
-        "shared",
-      ),
-      file("landing-page", "BUNDLE.md", "Narration visuelle imagerie hôtellerie accessibilité motion tokens", "bundle"),
-    ],
-  },
-  {
-    id: "ui-skills-fixing-accessibility",
-    name: "fixing-accessibility",
-    description: "Fix accessibility issues: contrast, focus order, labels.",
-    files: [
+  capability("landing-page", "local", "landing-page", "landing-page", "Concevoir des landing pages premium et orientées conversion.", [
+    file("landing-page", "SKILL.md", "# Landing\n\nOrchestre la conception d'une page.", "skill"),
+    file(
+      "landing-page",
+      "shared/design-principles.md",
+      "# Direction artistique\n\nNarration visuelle pour des marques d'hôtellerie haut de gamme, imagerie forte.",
+      "shared",
+    ),
+    file("landing-page", "BUNDLE.md", "Narration visuelle imagerie hôtellerie accessibilité motion tokens", "bundle"),
+  ]),
+  capability(
+    "ui-skills-fixing-accessibility",
+    "ui-skills",
+    "fixing-accessibility",
+    "fixing-accessibility",
+    "Fix accessibility issues: contrast, focus order, labels.",
+    [
       file(
         "ui-skills-fixing-accessibility",
         "SKILL.md",
@@ -47,16 +58,18 @@ const CAPABILITIES: Capability[] = [
       ),
       file("ui-skills-fixing-accessibility", "LICENSE.md", "MIT License\n\nImported by MCPIMP from acme/x", "other"),
     ],
-  },
-  {
-    id: "ui-skills-motion",
-    name: "fixing-motion-performance",
-    description: "Fix janky animation and motion performance.",
-    files: [
+  ),
+  capability(
+    "ui-skills-motion",
+    "ui-skills",
+    "motion",
+    "fixing-motion-performance",
+    "Fix janky animation and motion performance.",
+    [
       file("ui-skills-motion", "SKILL.md", "# Motion\n\nAvoid layout thrash during animation.", "skill"),
       file("ui-skills-motion", "scripts/measure.py", "# animation performance contrast motion", "script"),
     ],
-  },
+  ),
 ];
 
 function ids(query: string): string[] {
@@ -123,14 +136,11 @@ describe("searchCapabilities", () => {
 
   it("caps how many files a single capability may contribute", () => {
     const noisy: Capability[] = [
-      {
-        id: "noisy",
-        name: "noisy",
-        description: "",
-        files: Array.from({ length: 8 }, (_, index) =>
+      capability("noisy", "local", "noisy", "noisy", "", [
+        ...Array.from({ length: 8 }, (_, index) =>
           file("noisy", `shared/note-${index}.md`, "contrast contrast contrast", "shared"),
         ),
-      },
+      ]),
     ];
 
     expect(searchCapabilities(noisy, "contrast")).toHaveLength(3);
@@ -144,18 +154,13 @@ describe("searchCapabilities", () => {
 
   it("skips files that have no indexable text", () => {
     const withBinary: Capability[] = [
-      {
-        id: "assets",
-        name: "assets",
-        description: "",
-        files: [
-          {
-            ...file("assets", "assets/logo.png", "", "asset"),
-            text: undefined,
-            binary: true,
-          },
-        ],
-      },
+      capability("assets", "local", "assets", "assets", "", [
+        {
+          ...file("assets", "assets/logo.png", "", "asset"),
+          text: undefined,
+          binary: true,
+        },
+      ]),
     ];
 
     expect(searchCapabilities(withBinary, "logo")).toEqual([]);

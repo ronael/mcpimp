@@ -88,7 +88,7 @@ const { apply, json, targets } = parseArgs(process.argv.slice(2));
 
 await loadDotenv();
 
-const root = resolve(process.env.CAPABILITIES_ROOT || ".");
+const root = resolve(process.env.MCPIMP_ROOT || ".");
 const sources = await loadSourceDefinitions(root);
 
 if (sources.length === 0) {

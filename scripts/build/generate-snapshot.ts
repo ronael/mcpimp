@@ -1,10 +1,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { CAPABILITIES_DIR, CAPABILITY_SNAPSHOT_FILE } from "../../src/core/paths";
 import { FileSystemCapabilityRegistry } from "../../src/registry/filesystem";
 
-const root = resolve(process.env.CAPABILITIES_ROOT || "catalog/capabilities/skills");
-const outFile = resolve("generated/capability-snapshot.ts");
-const registry = await FileSystemCapabilityRegistry.scan(root);
+const root = resolve(process.env.MCPIMP_ROOT || process.cwd());
+const outFile = resolve(CAPABILITY_SNAPSHOT_FILE);
+const registry = await FileSystemCapabilityRegistry.scan(join(root, CAPABILITIES_DIR));
 const capabilities = registry.listCapabilities().map((capability) => ({
   ...capability,
   rootPath: undefined,

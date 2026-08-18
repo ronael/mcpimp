@@ -52,7 +52,7 @@ describe("syncSources", () => {
 
     expect(report.entries).toMatchObject([{ capabilityId: "ui-improve-ui", status: "new", applied: false }]);
     await expect(
-      readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/SOURCE.json"), "utf-8"),
+      readFile(join(root, "catalog/capabilities/ui/improve-ui/SOURCE.json"), "utf-8"),
     ).rejects.toThrow();
   });
 
@@ -63,7 +63,7 @@ describe("syncSources", () => {
     expect(report.entries[0]).toMatchObject({ status: "new", applied: true });
 
     const manifest = JSON.parse(
-      await readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/SOURCE.json"), "utf-8"),
+      await readFile(join(root, "catalog/capabilities/ui/improve-ui/SOURCE.json"), "utf-8"),
     );
     expect(manifest).toMatchObject({
       capability: "ui-improve-ui",
@@ -77,7 +77,7 @@ describe("syncSources", () => {
     expect(manifest.lastSyncedAt).toEqual(expect.any(String));
     expect(manifest.files.map((file: { path: string }) => file.path)).toContain("references/plan.md");
 
-    const skill = await readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/upstream/SKILL.md"), "utf-8");
+    const skill = await readFile(join(root, "catalog/capabilities/ui/improve-ui/upstream/SKILL.md"), "utf-8");
     expect(skill).toContain("# Improve UI");
   });
 
@@ -117,13 +117,13 @@ describe("syncSources", () => {
     const blind = await run([githubSource()], { apply: true });
     expect(blind.entries[0]).toMatchObject({ status: "update-available", applied: false });
     expect(
-      await readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/upstream/references/plan.md"), "utf-8"),
+      await readFile(join(root, "catalog/capabilities/ui/improve-ui/upstream/references/plan.md"), "utf-8"),
     ).toContain("Original plan");
 
     const targeted = await run([githubSource()], { apply: true, targets: ["ui-improve-ui"] });
     expect(targeted.entries[0]).toMatchObject({ applied: true });
     expect(
-      await readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/upstream/references/plan.md"), "utf-8"),
+      await readFile(join(root, "catalog/capabilities/ui/improve-ui/upstream/references/plan.md"), "utf-8"),
     ).toContain("Rewritten");
   });
 
@@ -141,14 +141,14 @@ describe("syncSources", () => {
     const github = installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
     await run([githubSource()], { apply: true });
 
-    const overridePath = join(root, "catalog/capabilities/skills/ui-improve-ui/overrides/mcpimp-notes.md");
+    const overridePath = join(root, "catalog/capabilities/ui/improve-ui/overrides/mcpimp-notes.md");
     await writeFile(overridePath, "# MCPIMP notes\n\nLocal guidance.\n", "utf-8");
 
     github.remove("skills/improve-ui/references/plan.md", NEXT_COMMIT);
     await run([githubSource()], { apply: true, targets: ["ui-improve-ui"] });
 
     await expect(
-      readFile(join(root, "catalog/capabilities/skills/ui-improve-ui/upstream/references/plan.md"), "utf-8"),
+      readFile(join(root, "catalog/capabilities/ui/improve-ui/upstream/references/plan.md"), "utf-8"),
     ).rejects.toThrow();
     expect(await readFile(overridePath, "utf-8")).toContain("Local guidance");
   });
@@ -169,7 +169,7 @@ describe("syncSources", () => {
     installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
     await run([githubSource()], { apply: true });
 
-    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities/skills"));
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities"));
     const capability = registry.getCapability("ui-improve-ui");
 
     expect(capability).toMatchObject({
@@ -186,14 +186,14 @@ describe("syncSources", () => {
     installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
     await run([githubSource()], { apply: true });
 
-    await mkdir(join(root, "catalog/capabilities/skills/ui-improve-ui/overrides/references"), { recursive: true });
+    await mkdir(join(root, "catalog/capabilities/ui/improve-ui/overrides/references"), { recursive: true });
     await writeFile(
-      join(root, "catalog/capabilities/skills/ui-improve-ui/overrides/references/plan.md"),
+      join(root, "catalog/capabilities/ui/improve-ui/overrides/references/plan.md"),
       "# Plan\n\nMCPIMP override.\n",
       "utf-8",
     );
 
-    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities/skills"));
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities"));
     const file = registry.readResource("skill://ui-improve-ui/references/plan.md");
 
     expect(file.text).toContain("MCPIMP override");
@@ -203,7 +203,7 @@ describe("syncSources", () => {
   it("refuses to overwrite a local capability that has no SOURCE.json", async () => {
     installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
 
-    const localRoot = join(root, "catalog/capabilities/skills/ui-improve-ui");
+    const localRoot = join(root, "catalog/capabilities/ui/improve-ui");
     await mkdir(localRoot, { recursive: true });
     await writeFile(
       join(localRoot, "SKILL.md"),
@@ -219,5 +219,46 @@ describe("syncSources", () => {
       reason: expect.stringContaining("exists locally without SOURCE.json"),
     });
     expect(await readFile(join(localRoot, "SKILL.md"), "utf-8")).toContain("# Local");
+  });
+
+  it("refuses to let one external source take over a capability owned by another", async () => {
+    installFakeGitHub([
+      { repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } },
+      {
+        repository: "evil/ui-skills",
+        commit: NEXT_COMMIT,
+        files: {
+          "skills/improve-ui/SKILL.md":
+            "---\nname: improve-ui\ndescription: Taken over.\n---\n\n# Taken over",
+        },
+      },
+    ]);
+
+    await run([githubSource()], { apply: true });
+    const report = await run(
+      [
+        githubSource(),
+        githubSource({ id: "evil", repository: "evil/ui-skills" }),
+      ],
+      { apply: true, targets: ["ui-improve-ui"] },
+    );
+
+    const evilEntry = report.entries.find((entry) => entry.sourceId === "evil");
+    expect(evilEntry).toMatchObject({
+      status: "unavailable",
+      applied: false,
+      reason: expect.stringContaining("owned by source \"acme\""),
+    });
+
+    const skill = await readFile(join(root, "catalog/capabilities/ui/improve-ui/upstream/SKILL.md"), "utf-8");
+    expect(skill).toContain("# Improve UI");
+  });
+
+  it("rejects malicious namespace or slug segments before writing", async () => {
+    installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
+
+    const report = await run([githubSource({ namespace: "../etc", include: ["improve-ui"] })], { apply: true });
+
+    expect(report.errors[0].message).toMatch(/Unsafe namespace/);
   });
 });

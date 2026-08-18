@@ -75,9 +75,11 @@
       <h2 class="text-2xl font-semibold border-b border-line pb-3 mb-6">1 · L'idée en une image</h2>
 
       <p class="text-muted leading-relaxed mb-5">
-        MCPIMP expose des « capacités » (des dossiers contenant un <code class="text-accent">SKILL.md</code>)
-        à une IA cliente. Jusqu'ici tu les écrivais à la main. La couche d'ingestion ajoute
-        une deuxième manière de les remplir : les rapatrier depuis Internet.
+        MCPIMP expose des <strong class="text-cream">capabilities</strong> à une IA cliente.
+        Une capability est une unité logique qui peut contenir plusieurs <strong class="text-cream">composants</strong> :
+        un <code class="text-accent">SKILL.md</code>, un <code class="text-accent">mcp.json</code>, des ressources, etc.
+        Jusqu'ici tu écrivais tout à la main. La couche d'ingestion ajoute une deuxième manière
+        de remplir le catalogue : rapatrier des capabilities depuis Internet.
       </p>
 
       <div class="border border-line bg-panel p-5 font-mono text-[13px] leading-relaxed overflow-x-auto mb-6">
@@ -97,7 +99,7 @@
         │        ↓                                 │
         │   normalisation       provenance, licence│
         │        ↓                                 │
-        │   catalog/capabilities/skills/&lt;id&gt;/      sur DISQUE         │
+        │   catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/  sur DISQUE       │
         └──────────────────┬───────────────────────┘
                            │
         ┌──────────────────▼───────────────────────┐
@@ -126,24 +128,24 @@
     <section id="anatomie" class="mb-16 scroll-mt-20">
       <h2 class="text-2xl font-semibold border-b border-line pb-3 mb-6">2 · Anatomie d'une capacité</h2>
 
-      <p class="text-muted leading-relaxed mb-5">Il y a deux formes, et le runtime ne les distingue pas.</p>
+      <p class="text-muted leading-relaxed mb-5">Il y a deux formes, et le runtime ne les distingue pas. Sur disque, une capability vit sous <code class="text-accent">catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code>.</p>
 
       <div class="grid md:grid-cols-2 gap-5 mb-8">
         <div class="border border-line bg-panel p-5">
           <div class="text-sm font-semibold mb-3">Locale — écrite par toi</div>
-          <pre class="font-mono text-[12px] text-muted leading-relaxed">landing-page/
+          <pre class="font-mono text-[12px] text-muted leading-relaxed">catalog/capabilities/local/landing-page/
   SKILL.md</pre>
-          <p class="text-xs text-muted mt-3">Un dossier à la racine avec un <code>SKILL.md</code>. C'est tout.</p>
+          <p class="text-xs text-muted mt-3">Un dossier sous le namespace <code>local</code> avec au moins un composant supporté (ici un <code>SKILL.md</code>).</p>
         </div>
         <div class="border border-line bg-panel p-5">
           <div class="text-sm font-semibold mb-3">Importée — écrite par la sync</div>
-          <pre class="font-mono text-[12px] text-muted leading-relaxed">catalog/capabilities/skills/ui-skills-improve-ui/
+          <pre class="font-mono text-[12px] text-muted leading-relaxed">catalog/capabilities/ui-skills/improve-ui/
   SOURCE.json    ← provenance
   upstream/      ← contenu amont
     SKILL.md
     references/
   overrides/     ← tes ajouts</pre>
-          <p class="text-xs text-muted mt-3">Trois zones aux rôles très différents.</p>
+          <p class="text-xs text-muted mt-3">Trois zones aux rôles très différents. L'id public reste <code>ui-skills-improve-ui</code>.</p>
         </div>
       </div>
 
@@ -229,23 +231,28 @@
         </table>
       </div>
 
-      <h3 class="text-lg font-semibold mb-3">Comment l'id de capacité est fabriqué</h3>
+      <h3 class="text-lg font-semibold mb-3">Namespace, slug et id public</h3>
       <p class="text-muted leading-relaxed mb-3">
-        <code class="text-accent">namespace</code> + <code class="text-accent">slug</code>, avec
-        déduplication si le slug répète déjà le namespace — voir
-        <code>capabilityIdFor()</code> dans <code>src/ingestion/normalize.ts</code>.
+        Sur disque : <code class="text-accent">catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code>.
+        L'id public est dérivé de namespace + slug, avec déduplication si le slug répète déjà le
+        namespace — voir <code>capabilityIdFor()</code> dans <code>src/core/names.ts</code>.
+        Les capabilities locales utilisent le namespace réservé <code>local</code> ; leur id public
+        est simplement le slug.
       </p>
       <div class="border border-line bg-[#0b0c0a] p-4 font-mono text-[13px] overflow-x-auto mb-6">
-<pre>skills/improve-ui/SKILL.md   + namespace "ui-skills"  →  ui-skills-improve-ui
-skills/ui-skills-root/…      + namespace "ui-skills"  →  ui-skills-root  <span class="text-muted">(pas de doublon)</span></pre>
+<pre>local/landing-page/               →  landing-page
+ui-skills/improve-ui/             →  ui-skills-improve-ui
+matt-pocock/codebase-design/      →  matt-pocock-codebase-design
+ui-skills/ui-skills-root/…        →  ui-skills-root  <span class="text-muted">(pas de doublon)</span></pre>
       </div>
 
       <div class="border-l-2 border-warn bg-panel/60 p-5">
-        <div class="font-semibold text-warn mb-2">Collision d'ids</div>
+        <div class="font-semibold text-warn mb-2">Collisions et ownership</div>
         <p class="text-muted text-sm leading-relaxed">
-          Si une capacité <strong>locale</strong> porte le même id qu'une importée, la locale gagne
-          et l'importée est ignorée silencieusement. Utilise un <code>namespace</code> distinctif
-          pour ne pas avoir à y penser.
+          Une source externe ne peut jamais écraser une capacité locale (dossier sans
+          <code>SOURCE.json</code>) ni prendre le contrôle d'une capacité appartenant à une autre
+          source. La synchronisation vérifie le <code>sourceId</code> et l'id de capability avant
+          toute écriture, et refuse explicitement en cas de conflit.
         </p>
       </div>
     </section>
@@ -434,8 +441,8 @@ skills/ui-skills-root/…      + namespace "ui-skills"  →  ui-skills-root  <sp
           <summary class="p-4 cursor-pointer font-semibold hover:text-accent">H · Retirer une source</summary>
           <div class="px-4 pb-4 border-t border-line pt-4">
             <p class="text-sm text-muted mb-3">Deux gestes, aucun automatisme :</p>
-            <pre class="font-mono text-[12px] bg-[#0b0c0a] p-4 overflow-x-auto border border-line">rm sources/ma-source.json
-rm -rf catalog/capabilities/skills/ma-capacite</pre>
+            <pre class="font-mono text-[12px] bg-[#0b0c0a] p-4 overflow-x-auto border border-line">rm catalog/sources/ma-source.json
+rm -rf catalog/capabilities/local/ma-capacite</pre>
             <p class="text-xs text-muted mt-3">
               La sync ne supprime jamais rien d'elle-même. Si un skill disparaît en amont, sa
               capacité locale cesse simplement d'apparaître dans le rapport — elle reste sur disque.
@@ -452,7 +459,7 @@ rm -rf catalog/capabilities/skills/ma-capacite</pre>
 
       <h3 class="text-lg font-semibold mb-3">Ce qui se passe à chaque run</h3>
       <div class="border border-line bg-panel p-5 font-mono text-[13px] leading-relaxed overflow-x-auto mb-6">
-<pre>1. lire sources/*.json                       (disque)
+<pre>1. lire catalog/sources/*.json                    (disque)
 2. pour chaque source GitHub :
      GET /repos/{owner}/{repo}                → branche par défaut, licence
      GET /repos/{owner}/{repo}/commits/{ref}  → LE commit
@@ -780,7 +787,7 @@ rm -rf catalog/capabilities/skills/ma-capacite</pre>
         <div class="p-4"><strong class="text-cream">Aucune interprétation à l'ingestion.</strong><span class="text-muted"> L'ingester lit des octets et des chemins. Il ne « suit » jamais ce qui est écrit dans un fichier.</span></div>
         <div class="p-4"><strong class="text-cream">Bannière de provenance.</strong><span class="text-muted"> <code>load-capability</code> préfixe tout contenu importé d'un rappel : ce texte est une référence, pas une autorité. Une IA qui lit « ignore previous instructions » dedans a le contexte pour le refuser.</span></div>
         <div class="p-4"><strong class="text-cream">Réseau contraint.</strong><span class="text-muted"> HTTPS obligatoire, liste blanche d'hôtes, plafonds de taille, timeouts.</span></div>
-        <div class="p-4"><strong class="text-cream">Écritures confinées.</strong><span class="text-muted"> Chemins validés contre la traversée, et chaque écriture re-vérifiée comme étant sous <code>catalog/capabilities/skills/</code>.</span></div>
+        <div class="p-4"><strong class="text-cream">Écritures confinées.</strong><span class="text-muted"> Chemins validés contre la traversée, segments <code>namespace</code>/<code>slug</code> validés, et chaque écriture re-vérifiée comme étant sous <code>catalog/capabilities/</code>.</span></div>
         <div class="p-4"><strong class="text-cream">Aucun secret exposé.</strong><span class="text-muted"> Un <code>GITHUB_TOKEN</code> n'est envoyé qu'à <code>api.github.com</code>, jamais à un hôte tiers.</span></div>
       </div>
 
@@ -822,7 +829,7 @@ rm -rf catalog/capabilities/skills/ma-capacite</pre>
         </div>
         <div class="p-4">
           <code class="text-warn">Une capacité n'apparaît pas après l'import</code>
-          <p class="text-muted mt-1.5">Le registry exige un <code>SKILL.md</code> dans <code>upstream/</code> (ou <code>overrides/</code>). Vérifie aussi qu'aucune capacité locale ne porte le même id — la locale gagne.</p>
+          <p class="text-muted mt-1.5">Le registry requiert au moins un composant supporté (aujourd'hui <code>SKILL.md</code> ou <code>mcp.json</code>) dans <code>upstream/</code> (ou <code>overrides/</code>). Vérifie aussi qu'aucune capacité locale ne porte le même id — la locale gagne.</p>
         </div>
         <div class="p-4">
           <code class="text-warn">Mes modifications ont disparu</code>
@@ -840,7 +847,7 @@ rm -rf catalog/capabilities/skills/ma-capacite</pre>
         Code de référence : <code class="text-accent">src/ingestion/</code> (ingestion),
         <code class="text-accent">src/registry/</code> (index et recherche),
         <code class="text-accent">catalog/sources/</code> (déclarations),
-        <code class="text-accent">catalog/capabilities/skills/</code> (résultat).
+        <code class="text-accent">catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code> (résultat).
       </p>
       <p class="mt-3">
         Validation : <code>pnpm run test</code> · <code>pnpm run typecheck</code> · <code>pnpm run build</code>.
