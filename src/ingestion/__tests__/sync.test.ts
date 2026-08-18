@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSystemCapabilityRegistry } from "../../registry/filesystem";
-import { syncSources } from "../sync";
-import type { GitHubSourceDefinition, SourceDefinition } from "../types";
+import { buildManifest, syncSources, writeCapability } from "../sync";
+import type { DiscoveredCapability, GitHubSourceDefinition, SourceDefinition } from "../types";
 import { installFakeGitHub } from "./fake-github";
 
 const COMMIT = "a".repeat(40);
@@ -324,4 +324,107 @@ describe("syncSources", () => {
       reason: expect.stringContaining("is already owned at"),
     });
   });
+
+  it("preserves both components of a skill + mcp capability through sync into the registry", async () => {
+    installFakeGitHub([
+      {
+        repository: "acme/ui-skills",
+        commit: COMMIT,
+        files: {
+          ...FILES,
+          "skills/improve-ui/mcp.json": JSON.stringify({
+            type: "mcp",
+            transport: "streamable-http",
+            url: "https://example.com/nocodb/mcp",
+          }),
+        },
+      },
+    ]);
+
+    const report = await run([githubSource()], { apply: true });
+    expect(report.entries[0]).toMatchObject({ capabilityId: "ui-improve-ui", applied: true });
+
+    const manifest = JSON.parse(
+      await readFile(join(root, "catalog/capabilities/ui/improve-ui/SOURCE.json"), "utf-8"),
+    );
+    expect(manifest.files.map((file: { path: string }) => file.path)).toContain("mcp.json");
+
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities"));
+    expect(registry.getCapability("ui-improve-ui")?.components).toEqual({ skill: true, mcp: true });
+    expect(registry.readResource("skill://ui-improve-ui/SKILL.md").text).toContain("# Improve UI");
+    expect(registry.readResource("skill://ui-improve-ui/mcp.json").text).toContain("streamable-http");
+    expect(registry.listUpstreamMcpServers().some((server) => server.capabilityId === "ui-improve-ui")).toBe(true);
+  });
+
+  it("builds an MCP-only manifest without a SKILL.md", () => {
+    const capability = mcpOnlyDiscovered();
+    const manifest = buildManifest(
+      capability,
+      "review",
+      undefined,
+      [{ path: "mcp.json", bytes: new TextEncoder().encode(MCP_CONFIG) }],
+    );
+
+    expect(manifest).toMatchObject({
+      capability: "crm-connector",
+      namespace: "local",
+      slug: "crm-connector",
+      update: "review",
+    });
+    expect(manifest.skillKind).toBeUndefined();
+    expect(manifest.skillTraits).toBeUndefined();
+    expect(manifest.files.map((file) => file.path)).toEqual(["mcp.json"]);
+  });
+
+  it("writes an MCP-only capability that the registry serves with components {skill, false} {mcp, true}", async () => {
+    const capability = mcpOnlyDiscovered();
+    const files = [{ path: "mcp.json", bytes: new TextEncoder().encode(MCP_CONFIG) }];
+    const manifest = buildManifest(capability, "review", undefined, files);
+
+    await writeCapability(root, capability, files, manifest);
+
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities"));
+    expect(registry.getCapability("crm-connector")).toMatchObject({
+      namespace: "local",
+      slug: "crm-connector",
+      components: { skill: false, mcp: true },
+    });
+    expect(registry.readResource("skill://crm-connector/mcp.json").text).toContain("example.com/mcp");
+    expect(registry.listUpstreamMcpServers().some((server) => server.capabilityId === "crm-connector")).toBe(true);
+  });
 });
+
+const MCP_CONFIG = JSON.stringify(
+  { type: "mcp", transport: "streamable-http", url: "https://example.com/mcp" },
+  null,
+  2,
+);
+
+function mcpOnlyDiscovered(): DiscoveredCapability {
+  return {
+    namespace: "local",
+    slug: "crm-connector",
+    capabilityId: "crm-connector",
+    components: { skill: false, mcp: true },
+    files: [
+      {
+        path: "mcp.json",
+        bytes: new TextEncoder().encode(MCP_CONFIG).length,
+        binary: false,
+        sha: "abc",
+        url: "https://example.com/upstream/mcp.json",
+      },
+    ],
+    contentHash: "sha256:test",
+    license: { spdxId: "MIT" },
+    skippedAssets: [],
+    origin: {
+      type: "github",
+      sourceId: "demo-source",
+      repository: "acme/demo",
+      path: ".",
+      ref: "main",
+      commit: COMMIT,
+    },
+  };
+}

@@ -42,18 +42,51 @@ describe("GitHubSourceAdapter", () => {
     expect(revision).toMatchObject({ kind: "git-commit", value: COMMIT });
   });
 
-  it("discovers every SKILL.md in a multi-skill repository", async () => {
+  it("discovers every SKILL.md in a multi-skill repository as skill-only capabilities", async () => {
     installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: MULTI_SKILL_FILES }]);
 
     const adapter = new GitHubSourceAdapter();
     const definition = source();
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
 
-    expect(skills.map((skill) => skill.capabilityId)).toEqual([
+    expect(capabilities.map((capability) => capability.capabilityId)).toEqual([
       "ui-baseline-ui",
       "ui-executable-one",
       "ui-improve-ui",
     ]);
+    expect(capabilities.map((capability) => capability.components)).toEqual([
+      { skill: true, mcp: false },
+      { skill: true, mcp: false },
+      { skill: true, mcp: false },
+    ]);
+  });
+
+  it("announces an mcp component when mcp.json belongs to the same capability root", async () => {
+    installFakeGitHub([
+      {
+        repository: "acme/composite",
+        commit: COMMIT,
+        files: {
+          "skills/composite/SKILL.md": "---\nname: composite\ndescription: skill + mcp\n---\n\n# Composite",
+          "skills/composite/mcp.json": JSON.stringify({
+            type: "mcp",
+            transport: "streamable-http",
+            url: "https://example.com/mcp",
+          }),
+        },
+      },
+    ]);
+
+    const adapter = new GitHubSourceAdapter();
+    const definition = source({ repository: "acme/composite" });
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
+
+    expect(capabilities).toHaveLength(1);
+    expect(capabilities[0]).toMatchObject({
+      capabilityId: "ui-composite",
+      components: { skill: true, mcp: true },
+    });
+    expect(capabilities[0].files.map((file) => file.path)).toEqual(["SKILL.md", "mcp.json"]);
   });
 
   it("pins provenance to the exact commit and path", async () => {
@@ -61,8 +94,8 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source();
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
-    const improve = skills.find((skill) => skill.slug === "improve-ui");
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
+    const improve = capabilities.find((capability) => capability.slug === "improve-ui");
 
     expect(improve?.origin).toMatchObject({
       type: "github",
@@ -80,8 +113,8 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source();
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
-    const improve = skills.find((skill) => skill.slug === "improve-ui");
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
+    const improve = capabilities.find((capability) => capability.slug === "improve-ui");
 
     expect(improve?.files.map((file) => file.path)).toEqual(["SKILL.md", "references/plan.md"]);
     expect(improve?.skippedAssets).toMatchObject([{ path: "assets/preview.png", reason: "binary" }]);
@@ -92,13 +125,13 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source();
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
 
-    expect(skills.find((skill) => skill.slug === "executable-one")).toMatchObject({
+    expect(capabilities.find((capability) => capability.slug === "executable-one")).toMatchObject({
       skillKind: "executable",
       skillTraits: ["scripts"],
     });
-    expect(skills.find((skill) => skill.slug === "baseline-ui")).toMatchObject({ skillKind: "portable" });
+    expect(capabilities.find((capability) => capability.slug === "baseline-ui")).toMatchObject({ skillKind: "portable" });
   });
 
   it("honours include filters", async () => {
@@ -106,9 +139,9 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source({ include: ["improve-ui"] });
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
 
-    expect(skills.map((skill) => skill.slug)).toEqual(["improve-ui"]);
+    expect(capabilities.map((capability) => capability.slug)).toEqual(["improve-ui"]);
   });
 
   it("gives a stable content hash that moves only when content moves", async () => {

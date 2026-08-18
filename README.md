@@ -194,8 +194,9 @@ headers nécessaires sont résolus.
 > Guide détaillé, avec recettes par cas d'usage et points d'extension du code :
 > ouvre [`site/docs/sources.html`](site/docs/sources.html) dans un navigateur.
 
-MCPIMP peut importer des skills publiés ailleurs (repos GitHub, catalogues web)
-et les maintenir à jour. L'ingestion est une couche **en amont** du registry :
+MCPIMP peut importer des capabilities publiées ailleurs (aujourd'hui des skills
+de dépôts GitHub, via des catalogues web) et les maintenir à jour. L'ingestion
+est une couche **en amont** du registry :
 
 ```txt
 sources externes
@@ -295,7 +296,7 @@ Statuts :
 ```
 
 La détection de changement se fait sur les SHA de blobs de l'arbre Git, agrégés
-en un `contentHash` par skill. Une capacité inchangée ne déclenche **aucun**
+en un `contentHash` par capability. Une capacité inchangée ne déclenche **aucun**
 téléchargement et n'est jamais réécrite. Découverte = 3 appels API par dépôt.
 
 ### Politique d'update
@@ -424,9 +425,9 @@ La dernière est classée `executable` (elle embarque `scripts/*.py` et
 - La recherche reste lexicale. Pas d'embeddings, pas de vector store.
 - Pas de résolution de conflit sur les overrides : un override remplace le
   fichier amont, sans fusion à trois voies.
-- Si un skill disparaît en amont, sa capacité locale n'apparaît simplement plus
-  dans le rapport : elle n'est ni signalée ni supprimée. Le dossier reste sur
-  disque jusqu'à suppression manuelle.
+- Si une capability disparaît en amont, sa capacité locale n'apparaît simplement
+  plus dans le rapport : elle n'est ni signalée ni supprimée. Le dossier reste
+  sur disque jusqu'à suppression manuelle.
 - GitHub non authentifié est limité à 60 requêtes/heure. Définis `GITHUB_TOKEN`
   pour lever la limite.
 

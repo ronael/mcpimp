@@ -11,13 +11,14 @@ import type {
 /**
  * A catalogue is a discovery surface, not a content source.
  *
- * It is read to find out *where* skills actually live, then the import runs
- * against that original repository. The catalogue URL is kept as
+ * It is read to find out *where* capabilities actually live, then the import
+ * runs against that original repository. The catalogue URL is kept as
  * `discoverySource` on every capability it led to. Nothing is scraped into the
  * registry, so the catalogue's HTML never becomes capability content.
  *
- * Importing is opt-in per repository (`allowedRepositories`): a catalogue can
- * publish anything, and a page edit must never be able to add a capability.
+ * Importing is entirely opt-in per repository (`allowedRepositories`): a
+ * catalogue can publish anything, and a page edit must never be able to add a
+ * capability.
  */
 
 const REPO_PATTERN = /https:\/\/github\.com\/([A-Za-z0-9][A-Za-z0-9-_.]*)\/([A-Za-z0-9][A-Za-z0-9-_.]*)/g;

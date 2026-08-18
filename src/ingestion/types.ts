@@ -1,4 +1,5 @@
 import type {
+  CapabilityComponents,
   CapabilityDiscoverySource,
   CapabilityLicense,
   CapabilityOrigin,
@@ -27,7 +28,7 @@ export interface SourceDefinitionBase {
   update?: UpdatePolicy;
   /** Prefix for generated capability ids. Defaults to a slug of the source. */
   namespace?: string;
-  /** Skill slugs to import. Empty or absent means "everything discovered". */
+  /** Capability slugs to import. Empty or absent means "everything discovered". */
   include?: string[];
   exclude?: string[];
   /** Files larger than this are skipped and recorded. Defaults to 512 KiB. */
@@ -71,9 +72,9 @@ export interface SourceRevision {
   fetchedAt: string;
 }
 
-/** One file belonging to a discovered skill, known before any download. */
+/** One file belonging to a discovered capability, known before any download. */
 export interface DiscoveredFileRef {
-  /** Relative to the skill root. Always validated before use. */
+  /** Relative to the capability root. Always validated before use. */
   path: string;
   bytes: number;
   binary: boolean;
@@ -82,18 +83,32 @@ export interface DiscoveredFileRef {
   url: string;
 }
 
-export interface DiscoveredSkill {
+/**
+ * The normalized unit produced by an ingestion adapter.
+ *
+ * Adapters decide how they discover capabilities (a GitHub skill source can
+ * look for `SKILL.md`; a future adapter may announce an MCP-only or skill+mcp
+ * capability). The sync engine consumes this shape and never assumes a
+ * specific component is present.
+ */
+export interface DiscoveredCapability {
   /** Namespace for grouping on disk, e.g. `ui-skills`. */
   namespace: string;
   /** Slug within the namespace, e.g. `improve-ui`. */
   slug: string;
   /** Public stable id, e.g. `ui-skills-improve-ui`. */
   capabilityId: string;
+  /** Components the adapter detected/announced for this capability. */
+  components: CapabilityComponents;
   files: DiscoveredFileRef[];
   /** Deterministic hash of the selected file set at this revision. */
   contentHash: string;
-  skillKind: SkillKind;
-  skillTraits: string[];
+  /**
+   * Skill-specific metadata, present only when the capability has a skill
+   * component (a SKILL.md). Absent for capabilities without a skill.
+   */
+  skillKind?: SkillKind;
+  skillTraits?: string[];
   license?: CapabilityLicense;
   /** Files present upstream but deliberately not downloaded. */
   skippedAssets: { path: string; bytes: number; reason: string; url?: string; sha?: string }[];
@@ -109,9 +124,9 @@ export interface ContentSourceAdapter<D extends SourceDefinition = SourceDefinit
   readonly type: string;
   /** Cheap call that identifies the current upstream state. */
   getRevision(source: D): Promise<SourceRevision>;
-  discover(source: D, revision: SourceRevision): Promise<DiscoveredSkill[]>;
+  discover(source: D, revision: SourceRevision): Promise<DiscoveredCapability[]>;
   /** Only called when the content actually changed. */
-  fetch(source: D, skill: DiscoveredSkill): Promise<FetchedFile[]>;
+  fetch(source: D, capability: DiscoveredCapability): Promise<FetchedFile[]>;
 }
 
 /** A content source found through a catalogue. */

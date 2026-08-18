@@ -4,8 +4,8 @@ import { fetchBytes, fetchJson, SourceUnavailableError } from "./http";
 import { assertSafeRelativePath, capabilityIdFor, classifySkill, hashFileSet } from "./normalize";
 import type {
   ContentSourceAdapter,
+  DiscoveredCapability,
   DiscoveredFileRef,
-  DiscoveredSkill,
   FetchedFile,
   GitHubSourceDefinition,
   SourceRevision,
@@ -114,8 +114,13 @@ export class GitHubSourceAdapter implements ContentSourceAdapter<GitHubSourceDef
    * holding their `SKILL.md`. A repository with many skills therefore costs one
    * API call, and every file already carries its blob SHA, so change detection
    * needs no download at all.
+   *
+   * `SKILL.md` drives discovery for this GitHub skill adapter. Component
+   * detection stays scoped to the discovered capability roots: if a `mcp.json`
+   * belongs to the same root it is announced as an `mcp` component, but MCPIM
+   * never scans globally for `mcp.json` outside those roots.
    */
-  async discover(source: GitHubSourceDefinition, revision: SourceRevision): Promise<DiscoveredSkill[]> {
+  async discover(source: GitHubSourceDefinition, revision: SourceRevision): Promise<DiscoveredCapability[]> {
     const { owner, name } = repoParts(source.repository);
     const repo = await this.getRepo(source.repository);
     const ref = source.ref || repo.default_branch;
@@ -137,12 +142,12 @@ export class GitHubSourceAdapter implements ContentSourceAdapter<GitHubSourceDef
       .filter((root, index, all) => all.indexOf(root) === index)
       .sort((a, b) => a.localeCompare(b));
 
-    const license = readLicense(repo, source.repository, revision.value);
     const namespace = source.namespace || name;
+    const license = readLicense(repo, source.repository, revision.value);
     const maxFileBytes = source.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
     const maxFiles = source.maxFiles ?? DEFAULT_MAX_FILES;
 
-    const skills: DiscoveredSkill[] = [];
+    const capabilities: DiscoveredCapability[] = [];
 
     for (const root of skillRoots) {
       const slug = root.split("/").filter(Boolean).at(-1) || name;
@@ -159,7 +164,7 @@ export class GitHubSourceAdapter implements ContentSourceAdapter<GitHubSourceDef
       );
 
       const files: DiscoveredFileRef[] = [];
-      const skippedAssets: DiscoveredSkill["skippedAssets"] = [];
+      const skippedAssets: DiscoveredCapability["skippedAssets"] = [];
 
       for (const entry of entries) {
         const relative = entry.path.slice(prefix.length);
@@ -190,22 +195,26 @@ export class GitHubSourceAdapter implements ContentSourceAdapter<GitHubSourceDef
       if (!files.some((file) => file.path === "SKILL.md")) continue;
       if (files.length > maxFiles) {
         throw new SourceUnavailableError(
-          `Skill ${source.repository}/${root} has ${files.length} files (cap ${maxFiles})`,
+          `Capability ${source.repository}/${root} has ${files.length} files (cap ${maxFiles})`,
         );
       }
 
-      // Classified from paths alone: discovery must stay download-free so an
-      // unchanged capability costs nothing. The manifest refines this with the
-      // SKILL.md text once the content is actually fetched.
+      // Skill-specific metadata, classified from paths alone: discovery must stay
+      // download-free so an unchanged capability costs nothing. The manifest
+      // refines this with the SKILL.md text once the content is actually fetched.
       const classification = classifySkill(
         [...files, ...skippedAssets.map((asset) => ({ path: asset.path, binary: true }))],
         "",
       );
 
-      skills.push({
+      capabilities.push({
         namespace,
         slug,
         capabilityId: capabilityIdFor(namespace, slug),
+        components: {
+          skill: true,
+          mcp: files.some((file) => file.path === "mcp.json"),
+        },
         files,
         contentHash: hashFileSet(files),
         skillKind: classification.kind,
@@ -230,14 +239,14 @@ export class GitHubSourceAdapter implements ContentSourceAdapter<GitHubSourceDef
       });
     }
 
-    return skills;
+    return capabilities;
   }
 
-  async fetch(source: GitHubSourceDefinition, skill: DiscoveredSkill): Promise<FetchedFile[]> {
+  async fetch(source: GitHubSourceDefinition, capability: DiscoveredCapability): Promise<FetchedFile[]> {
     const maxFileBytes = source.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
 
     return Promise.all(
-      skill.files.map(async (file) => ({
+      capability.files.map(async (file) => ({
         path: assertSafeRelativePath(file.path),
         bytes: await fetchBytes(file.url, { maxBytes: maxFileBytes }),
       })),

@@ -12,7 +12,7 @@ import type { CapabilityDiscoverySource, CapabilityOrigin, UpdatePolicy } from "
 import { GitHubSourceAdapter } from "./github";
 import { assertSafeSegment, capabilityIdFor } from "../core/names";
 import { assertSafeRelativePath, classifySkill, sha256 } from "./normalize";
-import { updatePolicyOf, type DiscoveredSkill, type SourceDefinition } from "./types";
+import { updatePolicyOf, type DiscoveredCapability, type SourceDefinition } from "./types";
 import { WebCatalogSourceAdapter } from "./web-catalog";
 
 export type SyncStatus = "new" | "up-to-date" | "update-available" | "unavailable";
@@ -219,7 +219,7 @@ async function checkOwnership(
   return { ok: true };
 }
 
-function diffFiles(previous: SyncFileRecord[] | undefined, next: DiscoveredSkill["files"]) {
+function diffFiles(previous: SyncFileRecord[] | undefined, next: DiscoveredCapability["files"]) {
   const before = new Map((previous || []).map((file) => [file.path, file.sha || String(file.bytes)]));
   const after = new Map(next.map((file) => [file.path, file.sha || String(file.bytes)]));
 
@@ -248,15 +248,28 @@ function mayWrite(status: SyncStatus, policy: UpdatePolicy, targeted: boolean): 
   return targeted;
 }
 
-async function writeSkill(
+/**
+ * Writes the effective content of one capability to disk:
+ *
+ *   <capabilityRoot>/
+ *   ├── upstream/<files>      # verbatim upstream content
+ *   ├── overrides/            # local additions, never touched by sync
+ *   └── SOURCE.json           # provenance + file set
+ *
+ * The write path is generic: nothing here assumes a SKILL.md exists, so an
+ * adapter that one day produces an MCP-only capability flows through unchanged.
+ * Exported so a non-skill capability can be proven to pass through the write
+ * path; sync itself only ever writes capabilities produced by adapters.
+ */
+export async function writeCapability(
   root: string,
-  skill: DiscoveredSkill,
+  capability: DiscoveredCapability,
   files: { path: string; bytes: Uint8Array }[],
   manifest: SourceManifest,
 ): Promise<void> {
   const capabilityRoot = assertInsideCapabilities(
     root,
-    capabilityRootFor(root, skill.namespace, skill.slug),
+    capabilityRootFor(root, capability.namespace, capability.slug),
   );
   const upstreamDir = assertInsideCapabilities(root, join(capabilityRoot, UPSTREAM_DIR));
   const stagingDir = assertInsideCapabilities(root, `${upstreamDir}.staging`);
@@ -302,33 +315,45 @@ async function writeSkill(
   );
 }
 
-function buildManifest(
-  skill: DiscoveredSkill,
+/**
+ * Builds the `SOURCE.json` manifest for a capability. Exported so a non-skill
+ * capability (e.g. MCP-only) can be proven to pass through the generic
+ * pipeline; sync itself only ever sees capabilities produced by adapters.
+ *
+ * Skill-specific classification (`skillKind`/`skillTraits`) is recorded only
+ * when the capability actually has a skill component.
+ */
+export function buildManifest(
+  capability: DiscoveredCapability,
   policy: UpdatePolicy,
   discoverySource: CapabilityDiscoverySource | undefined,
   files: { path: string; bytes: Uint8Array }[],
 ): SourceManifest {
   const written = new Map(files.map((file) => [file.path, file.bytes]));
 
-  // Discovery classifies from paths only. Now that the content is here, refine it:
-  // only the manifest text can reveal a platform dependency such as a plugin root.
+  // Discovery classifies from paths only. Now that the content is here, refine
+  // it: only the SKILL.md text can reveal a platform dependency such as a plugin
+  // root. This is skill-specific; a capability without a skill gets no skillKind.
   const skillBytes = written.get("SKILL.md");
-  const classification = classifySkill(
-    [...skill.files, ...skill.skippedAssets.map((asset) => ({ path: asset.path, binary: true }))],
-    skillBytes ? new TextDecoder("utf-8").decode(skillBytes) : "",
-  );
+  const hasSkill = capability.components.skill === true || skillBytes !== undefined;
+  const classification = hasSkill
+    ? classifySkill(
+        [...capability.files, ...capability.skippedAssets.map((asset) => ({ path: asset.path, binary: true }))],
+        skillBytes ? new TextDecoder("utf-8").decode(skillBytes) : "",
+      )
+    : undefined;
 
   return {
-    ...skill.origin,
-    capability: skill.capabilityId,
-    namespace: skill.namespace,
-    slug: skill.slug,
+    ...capability.origin,
+    capability: capability.capabilityId,
+    namespace: capability.namespace,
+    slug: capability.slug,
     discoverySource,
-    skillKind: classification.kind,
-    skillTraits: classification.traits,
+    skillKind: classification?.kind,
+    skillTraits: classification?.traits,
     update: policy,
     lastSyncedAt: new Date().toISOString(),
-    files: skill.files.map((file) => ({
+    files: capability.files.map((file) => ({
       path: file.path,
       bytes: file.bytes,
       binary: file.binary,
@@ -347,8 +372,8 @@ interface SourceRun {
  * Reports, and optionally applies, the state of every registered source.
  *
  * Discovery is always cheap: one revision call plus one tree call per repository.
- * Files are downloaded only when the per-skill content hash actually moved, so an
- * unchanged capability costs no bandwidth and is never rewritten.
+ * Files are downloaded only when the per-capability content hash actually moved,
+ * so an unchanged capability costs no bandwidth and is never rewritten.
  */
 export async function syncSources(options: SyncOptions): Promise<SyncReport> {
   const { root, sources, apply = false, targets = [] } = options;
@@ -396,10 +421,10 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
 
     const policy = updatePolicyOf(source);
 
-    let skills: DiscoveredSkill[];
+    let capabilities: DiscoveredCapability[];
     try {
       const revision = await github.getRevision(source);
-      skills = await github.discover(source, revision);
+      capabilities = await github.discover(source, revision);
     } catch (error) {
       const message = error instanceof Error ? error.message : "unknown source error";
       report.errors.push({ sourceId: source.id, message });
@@ -414,43 +439,51 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
       continue;
     }
 
-    for (const skill of skills) {
+    for (const capability of capabilities) {
       try {
-        assertSafeSegment(skill.namespace, "namespace");
-        assertSafeSegment(skill.slug, "slug");
+        assertSafeSegment(capability.namespace, "namespace");
+        assertSafeSegment(capability.slug, "slug");
 
-        const previous = await readManifest(root, skill.namespace, skill.slug);
+        const previous = await readManifest(root, capability.namespace, capability.slug);
         const status: SyncStatus = !previous
           ? "new"
-          : previous.contentHash === skill.contentHash
+          : previous.contentHash === capability.contentHash
             ? "up-to-date"
             : "update-available";
 
         const targeted =
-          targets.includes(skill.capabilityId) || targets.includes(source.id) || targets.includes(skill.slug);
+          targets.includes(capability.capabilityId) ||
+          targets.includes(source.id) ||
+          targets.includes(capability.slug);
 
         const entry: SyncEntry = {
-          capabilityId: skill.capabilityId,
+          capabilityId: capability.capabilityId,
           sourceId: source.id,
           status,
           applied: false,
           policy,
-          revision: skill.origin.commit,
+          revision: capability.origin.commit,
           previousRevision: previous?.commit,
-          changes: status === "update-available" ? diffFiles(previous?.files, skill.files) : undefined,
+          changes: status === "update-available" ? diffFiles(previous?.files, capability.files) : undefined,
         };
 
         if (status !== "up-to-date" && apply && mayWrite(status, policy, targeted)) {
-          const ownership = await checkOwnership(root, source.id, skill.namespace, skill.slug, skill.capabilityId);
+          const ownership = await checkOwnership(
+            root,
+            source.id,
+            capability.namespace,
+            capability.slug,
+            capability.capabilityId,
+          );
           if (!ownership.ok) {
             entry.status = "unavailable";
             entry.reason = ownership.reason;
             report.errors.push({ sourceId: source.id, message: entry.reason });
           } else {
             try {
-              const files = await github.fetch(source, skill);
-              const manifest = buildManifest(skill, policy, run.discoverySource, files);
-              await writeSkill(root, skill, files, manifest);
+              const files = await github.fetch(source, capability);
+              const manifest = buildManifest(capability, policy, run.discoverySource, files);
+              await writeCapability(root, capability, files, manifest);
               entry.applied = true;
             } catch (error) {
               entry.status = "unavailable";
@@ -459,15 +492,15 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
             }
           }
         } else if (status === "update-available" && apply && !targeted) {
-          entry.reason = `policy "${policy}": run sources:sync --apply ${skill.capabilityId} to accept`;
+          entry.reason = `policy "${policy}": run sources:sync --apply ${capability.capabilityId} to accept`;
         }
 
         report.entries.push(entry);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "unknown skill error";
+        const message = error instanceof Error ? error.message : "unknown capability error";
         report.errors.push({ sourceId: source.id, message });
         report.entries.push({
-          capabilityId: skill.capabilityId,
+          capabilityId: capability.capabilityId,
           sourceId: source.id,
           status: "unavailable",
           applied: false,

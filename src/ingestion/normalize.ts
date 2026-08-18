@@ -35,7 +35,7 @@ export function assertSafeRelativePath(path: string): string {
 export { capabilityIdFor, slugify };
 
 /**
- * Deterministic identity for a skill at one revision: the sorted set of
+ * Deterministic identity for a capability at one revision: the sorted set of
  * `path:contentId` pairs. Lets sync decide whether anything changed without
  * downloading a single file.
  */
