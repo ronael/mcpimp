@@ -370,6 +370,99 @@ La dernière est classée `executable` (elle embarque `scripts/*.py` et
 - GitHub non authentifié est limité à 60 requêtes/heure. Définis `GITHUB_TOKEN`
   pour lever la limite.
 
+## Se connecter en MCP
+
+MCPIMP expose deux transports sur `http://localhost:3901` :
+
+- **HTTP streamable** : `POST /message` — transport MCP moderne, préféré.
+- **SSE legacy** : `GET /sse` + `POST /message?sessionId=...` — pour les clients qui ne supportent que SSE.
+
+Lance d'abord le serveur local :
+
+```bash
+pnpm run dev
+```
+
+### Kimi Code CLI
+
+Ajoute un serveur au niveau **projet** (ce dépôt) dans `.kimi-code/mcp.json` :
+
+```json
+{
+  "mcpServers": {
+    "mcpimp": {
+      "url": "http://localhost:3901/message"
+    }
+  }
+}
+```
+
+Ou au niveau **utilisateur** dans `~/.kimi-code/mcp.json`. Relance ta session, puis tape `/mcp` pour voir l'état de connexion. Les outils sont préfixés `mcp__mcpimp__` (ex. `mcp__mcpimp__list-capabilities`).
+
+### Claude Desktop
+
+Édite `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) :
+
+```json
+{
+  "mcpServers": {
+    "mcpimp": {
+      "url": "http://localhost:3901/sse"
+    }
+  }
+}
+```
+
+Claude Desktop utilise le transport SSE.
+
+### Claude Code
+
+```bash
+claude mcp add mcpimp http://localhost:3901/sse
+```
+
+Ou édite la configuration MCP de Claude Code pour pointer vers `http://localhost:3901/sse`.
+
+### Cursor
+
+Ajoute dans `~/.cursor/mcp.json` ou `.cursor/mcp.json` :
+
+```json
+{
+  "mcpServers": {
+    "mcpimp": {
+      "url": "http://localhost:3901/sse"
+    }
+  }
+}
+```
+
+### Codex / autres clients
+
+Le format dépend de la version de Codex. Essaie le transport HTTP streamable avec `http://localhost:3901/message` ; si le client ne le supporte pas, retourne-toi sur `http://localhost:3901/sse`.
+
+### Vérifier sans client MCP
+
+```bash
+# état du serveur
+curl -sS http://localhost:3901/health
+
+# liste des outils MCP
+curl -sS http://localhost:3901/message \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+
+# liste des capacités
+curl -sS http://localhost:3901/message \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list-capabilities","arguments":{}}}'
+
+# recherche classée
+curl -sS http://localhost:3901/message \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"search-capabilities","arguments":{"query":"accessibility contrast","limit":5}}}'
+```
+
 ## Développement
 
 ```bash
@@ -382,16 +475,6 @@ pnpm run dev
 ```
 
 Le serveur local écoute par défaut sur `http://localhost:3901`.
-
-```json
-{
-  "mcpServers": {
-    "capabilities": {
-      "url": "http://localhost:3901/sse"
-    }
-  }
-}
-```
 
 ## Cloudflare
 
