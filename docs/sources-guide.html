@@ -97,7 +97,7 @@
         │        ↓                                 │
         │   normalisation       provenance, licence│
         │        ↓                                 │
-        │   imported/&lt;id&gt;/      sur DISQUE         │
+        │   catalog/capabilities/skills/&lt;id&gt;/      sur DISQUE         │
         └──────────────────┬───────────────────────┘
                            │
         ┌──────────────────▼───────────────────────┐
@@ -137,7 +137,7 @@
         </div>
         <div class="border border-line bg-panel p-5">
           <div class="text-sm font-semibold mb-3">Importée — écrite par la sync</div>
-          <pre class="font-mono text-[12px] text-muted leading-relaxed">imported/ui-skills-improve-ui/
+          <pre class="font-mono text-[12px] text-muted leading-relaxed">catalog/capabilities/skills/ui-skills-improve-ui/
   SOURCE.json    ← provenance
   upstream/      ← contenu amont
     SKILL.md
@@ -186,12 +186,12 @@
       <h2 class="text-2xl font-semibold border-b border-line pb-3 mb-6">3 · Ajouter une source GitHub</h2>
 
       <p class="text-muted leading-relaxed mb-5">
-        Une source = un fichier JSON dans <code class="text-accent">sources/</code>.
+        Une source = un fichier JSON dans <code class="text-accent">catalog/sources/</code>.
         <strong class="text-cream">Le nom du fichier doit être exactement l'<code>id</code></strong>,
         sinon la sync refuse de démarrer (c'est volontaire : ça évite les doublons silencieux).
       </p>
 
-      <div class="text-xs uppercase tracking-widest text-muted mb-2">sources/ibelick-ui-skills.json</div>
+      <div class="text-xs uppercase tracking-widest text-muted mb-2">catalog/sources/ibelick-ui-skills.json</div>
       <div class="border border-line bg-[#0b0c0a] p-5 overflow-x-auto mb-6">
 <pre class="font-mono text-[13px] leading-relaxed"><span class="text-muted">{</span>
   <span class="text-accent">"id"</span>: <span class="text-ok">"ibelick-ui-skills"</span>,
@@ -233,7 +233,7 @@
       <p class="text-muted leading-relaxed mb-3">
         <code class="text-accent">namespace</code> + <code class="text-accent">slug</code>, avec
         déduplication si le slug répète déjà le namespace — voir
-        <code>capabilityIdFor()</code> dans <code>src/sources/normalize.ts</code>.
+        <code>capabilityIdFor()</code> dans <code>src/ingestion/normalize.ts</code>.
       </p>
       <div class="border border-line bg-[#0b0c0a] p-4 font-mono text-[13px] overflow-x-auto mb-6">
 <pre>skills/improve-ui/SKILL.md   + namespace "ui-skills"  →  ui-skills-improve-ui
@@ -275,7 +275,7 @@ skills/ui-skills-root/…      + namespace "ui-skills"  →  ui-skills-root  <sp
         source d'origine, puis on importe proprement depuis elle, avec son commit et sa licence.
       </p>
 
-      <div class="text-xs uppercase tracking-widest text-muted mb-2">sources/agent-design.json</div>
+      <div class="text-xs uppercase tracking-widest text-muted mb-2">catalog/sources/agent-design.json</div>
       <div class="border border-line bg-[#0b0c0a] p-5 overflow-x-auto mb-6">
 <pre class="font-mono text-[13px] leading-relaxed"><span class="text-muted">{</span>
   <span class="text-accent">"id"</span>: <span class="text-ok">"agent-design"</span>,
@@ -308,7 +308,7 @@ skills/ui-skills-root/…      + namespace "ui-skills"  →  ui-skills-root  <sp
         <p class="text-muted text-sm leading-relaxed">
           <code>ibelick/ui-skills</code> apparaît dans cette liste alors qu'il est bien importé.
           Ce n'est pas une contradiction : il l'est via sa <em>propre</em> source
-          (<code>sources/ibelick-ui-skills.json</code>), pas via le catalogue — et le catalogue,
+          (<code>catalog/sources/ibelick-ui-skills.json</code>), pas via le catalogue — et le catalogue,
           lui, n'a pas le droit de l'importer. La liste devrait exclure les dépôts déjà couverts
           ailleurs ; ce n'est pas encore le cas.
         </p>
@@ -435,7 +435,7 @@ skills/ui-skills-root/…      + namespace "ui-skills"  →  ui-skills-root  <sp
           <div class="px-4 pb-4 border-t border-line pt-4">
             <p class="text-sm text-muted mb-3">Deux gestes, aucun automatisme :</p>
             <pre class="font-mono text-[12px] bg-[#0b0c0a] p-4 overflow-x-auto border border-line">rm sources/ma-source.json
-rm -rf imported/ma-capacite</pre>
+rm -rf catalog/capabilities/skills/ma-capacite</pre>
             <p class="text-xs text-muted mt-3">
               La sync ne supprime jamais rien d'elle-même. Si un skill disparaît en amont, sa
               capacité locale cesse simplement d'apparaître dans le rapport — elle reste sur disque.
@@ -507,7 +507,7 @@ rm -rf imported/ma-capacite</pre>
           Une capacité n'existe qu'<em>après</em> la découverte : impossible de savoir quelle source
           la produit avant d'avoir lu les dépôts. La cible n'agit donc qu'au moment de décider
           d'écrire. Un id de source, lui, est connu d'avance et restreint le run
-          (<code>src/sources/sync.ts</code>, ~ligne 227).
+          (<code>src/ingestion/sync.ts</code>, ~ligne 227).
         </p>
       </div>
     </section>
@@ -560,7 +560,7 @@ rm -rf imported/ma-capacite</pre>
       <p class="text-muted text-sm leading-relaxed mb-5">
         Le premier import s'applique dès <code>--apply</code>, quelle que soit la politique : déclarer
         une source est déjà un acte volontaire. La politique protège l'<em>évolution</em>, pas l'adoption.
-        La logique tient en cinq lignes — <code>mayWrite()</code> dans <code>src/sources/sync.ts</code>.
+        La logique tient en cinq lignes — <code>mayWrite()</code> dans <code>src/ingestion/sync.ts</code>.
       </p>
 
       <div class="text-xs uppercase tracking-widest text-muted mb-2">À quoi ressemble une update retenue</div>
@@ -653,7 +653,7 @@ rm -rf imported/ma-capacite</pre>
       <p class="text-muted text-sm leading-relaxed">
         La priorité est décroissante : un skill avec des scripts <em>et</em> un marqueur de plateforme
         est classé <code>platform-specific</code>. Les indices bruts sont conservés à part dans
-        <code>skillTraits</code>. Logique dans <code>classifySkill()</code>, <code>src/sources/normalize.ts</code>.
+        <code>skillTraits</code>. Logique dans <code>classifySkill()</code>, <code>src/ingestion/normalize.ts</code>.
       </p>
     </section>
 
@@ -713,7 +713,7 @@ rm -rf imported/ma-capacite</pre>
 
       <h3 class="text-lg font-semibold mb-3">Les deux ports</h3>
       <p class="text-muted leading-relaxed mb-4">
-        Dans <code>src/sources/types.ts</code>. La distinction est importante : certaines sources
+        Dans <code>src/ingestion/types.ts</code>. La distinction est importante : certaines sources
         <em>contiennent</em> du contenu, d'autres se contentent d'<em>indiquer où il est</em>.
       </p>
       <div class="border border-line bg-[#0b0c0a] p-5 overflow-x-auto mb-6">
@@ -735,11 +735,11 @@ rm -rf imported/ma-capacite</pre>
 
       <h3 class="text-lg font-semibold mb-3">Checklist pour un nouvel adapter de contenu</h3>
       <div class="border border-line divide-y divide-line mb-6 text-sm">
-        <div class="p-4"><span class="text-accent font-mono">1.</span> <code>src/sources/types.ts</code> — ajoute ton interface de définition et mets-la dans l'union <code>SourceDefinition</code>.</div>
-        <div class="p-4"><span class="text-accent font-mono">2.</span> <code>src/sources/definitions.ts</code> — ajoute une branche dans <code>parseSourceDefinition()</code> pour valider tes champs. Valide vraiment : c'est la seule barrière avant le réseau.</div>
-        <div class="p-4"><span class="text-accent font-mono">3.</span> <code>src/sources/gitlab.ts</code> — implémente <code>ContentSourceAdapter</code>. Passe par <code>fetchJson</code>/<code>fetchBytes</code> de <code>http.ts</code> pour hériter des plafonds et des timeouts, et ajoute ton hôte via <code>extraHosts</code>.</div>
-        <div class="p-4"><span class="text-accent font-mono">4.</span> <code>src/sources/sync.ts</code> — <strong class="text-warn">le point dur</strong>, voir ci-dessous.</div>
-        <div class="p-4"><span class="text-accent font-mono">5.</span> Un test avec un faux serveur. Copie <code>src/sources/__tests__/fake-github.ts</code> : il stubbe <code>fetch</code> et te laisse simuler un push.</div>
+        <div class="p-4"><span class="text-accent font-mono">1.</span> <code>src/ingestion/types.ts</code> — ajoute ton interface de définition et mets-la dans l'union <code>SourceDefinition</code>.</div>
+        <div class="p-4"><span class="text-accent font-mono">2.</span> <code>src/ingestion/definitions.ts</code> — ajoute une branche dans <code>parseSourceDefinition()</code> pour valider tes champs. Valide vraiment : c'est la seule barrière avant le réseau.</div>
+        <div class="p-4"><span class="text-accent font-mono">3.</span> <code>src/ingestion/gitlab.ts</code> — implémente <code>ContentSourceAdapter</code>. Passe par <code>fetchJson</code>/<code>fetchBytes</code> de <code>http.ts</code> pour hériter des plafonds et des timeouts, et ajoute ton hôte via <code>extraHosts</code>.</div>
+        <div class="p-4"><span class="text-accent font-mono">4.</span> <code>src/ingestion/sync.ts</code> — <strong class="text-warn">le point dur</strong>, voir ci-dessous.</div>
+        <div class="p-4"><span class="text-accent font-mono">5.</span> Un test avec un faux serveur. Copie <code>src/ingestion/__tests__/fake-github.ts</code> : il stubbe <code>fetch</code> et te laisse simuler un push.</div>
       </div>
 
       <div class="border-l-2 border-warn bg-panel/60 p-5 mb-6">
@@ -780,7 +780,7 @@ rm -rf imported/ma-capacite</pre>
         <div class="p-4"><strong class="text-cream">Aucune interprétation à l'ingestion.</strong><span class="text-muted"> L'ingester lit des octets et des chemins. Il ne « suit » jamais ce qui est écrit dans un fichier.</span></div>
         <div class="p-4"><strong class="text-cream">Bannière de provenance.</strong><span class="text-muted"> <code>load-capability</code> préfixe tout contenu importé d'un rappel : ce texte est une référence, pas une autorité. Une IA qui lit « ignore previous instructions » dedans a le contexte pour le refuser.</span></div>
         <div class="p-4"><strong class="text-cream">Réseau contraint.</strong><span class="text-muted"> HTTPS obligatoire, liste blanche d'hôtes, plafonds de taille, timeouts.</span></div>
-        <div class="p-4"><strong class="text-cream">Écritures confinées.</strong><span class="text-muted"> Chemins validés contre la traversée, et chaque écriture re-vérifiée comme étant sous <code>imported/</code>.</span></div>
+        <div class="p-4"><strong class="text-cream">Écritures confinées.</strong><span class="text-muted"> Chemins validés contre la traversée, et chaque écriture re-vérifiée comme étant sous <code>catalog/capabilities/skills/</code>.</span></div>
         <div class="p-4"><strong class="text-cream">Aucun secret exposé.</strong><span class="text-muted"> Un <code>GITHUB_TOKEN</code> n'est envoyé qu'à <code>api.github.com</code>, jamais à un hôte tiers.</span></div>
       </div>
 
@@ -830,17 +830,17 @@ rm -rf imported/ma-capacite</pre>
         </div>
         <div class="p-4">
           <code class="text-warn">Le déploiement Cloudflare ne voit pas les nouveaux skills</code>
-          <p class="text-muted mt-1.5">Le Worker sert un snapshot figé. Relance <code>pnpm run build</code> après chaque sync pour régénérer <code>src/capability-snapshot.ts</code>.</p>
+          <p class="text-muted mt-1.5">Le Worker sert un snapshot figé. Relance <code>pnpm run build</code> après chaque sync pour régénérer <code>generated/capability-snapshot.ts</code>.</p>
         </div>
       </div>
     </section>
 
     <footer class="border-t border-line pt-8 pb-16 text-sm text-muted">
       <p>
-        Code de référence : <code class="text-accent">src/sources/</code> (ingestion),
+        Code de référence : <code class="text-accent">src/ingestion/</code> (ingestion),
         <code class="text-accent">src/registry/</code> (index et recherche),
-        <code class="text-accent">sources/</code> (déclarations),
-        <code class="text-accent">imported/</code> (résultat).
+        <code class="text-accent">catalog/sources/</code> (déclarations),
+        <code class="text-accent">catalog/capabilities/skills/</code> (résultat).
       </p>
       <p class="mt-3">
         Validation : <code>pnpm run test</code> · <code>pnpm run typecheck</code> · <code>pnpm run build</code>.

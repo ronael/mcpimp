@@ -1,7 +1,7 @@
 # Personal Capability Registry MCP
 
-Registry personnel de capacités pour agents IA. Le serveur MCP vit à la racine
-du dépôt et expose les dossiers de capacités, comme `landing-page/`, via des
+Registry personnel de capacités pour agents IA. Le serveur MCP vit dans ce
+dépôt et expose les capacités du catalogue, comme `landing-page/`, via des
 outils et ressources MCP.
 
 ## Modèle
@@ -9,26 +9,30 @@ outils et ressources MCP.
 Une capacité est un dossier qui contient au minimum un `SKILL.md`.
 
 ```txt
-skills/
-  package.json
-  src/                    # serveur, adapter MCP, registry, ingestion
-  scripts/                # build du snapshot Cloudflare
-  worker.ts               # entrypoint Cloudflare
-  sources/                # sources externes déclarées (1 JSON par source)
-  imported/               # capacités importées, avec leur provenance
-  landing-page/           # orchestrateur local minimal
-    SKILL.md
-  nocodb/                 # capacité proxy vers un MCP personnel
-    SKILL.md
-    mcp.json
+mcpimp/
+  src/                           # code source : registry, ingestion, MCP, HTTP, CLI
+  catalog/
+    sources/                     # sources externes déclarées (1 JSON par source)
+    capabilities/
+      skills/                    # capacités utilisables (locales + synchronisées)
+        landing-page/            # orchestrateur local minimal
+          SKILL.md
+        nocodb/                  # capacité proxy vers un MCP personnel
+          SKILL.md
+          mcp.json
+  generated/                     # snapshot généré pour le Worker Cloudflare
+  scripts/                       # scripts de build et de maintenance
+  worker.ts                      # entrypoint Cloudflare
 ```
 
-Une capacité peut être **locale** (dossier à la racine) ou **importée** depuis
-une source externe. Les deux sont exposées de façon identique en MCP : le
-runtime ne fait pas la différence.
+Une capacité peut être **locale** (dossier dans `catalog/capabilities/skills/`,
+sans `SOURCE.json`) ou **synchronisée** depuis une source externe (même dossier,
+avec un `SOURCE.json` qui atteste de la provenance). Les deux sont exposées de
+façon identique en MCP : le runtime ne fait pas la différence. La provenance est
+une métadonnée, pas un principe d'organisation des dossiers.
 
-La v1 découvre automatiquement les dossiers racine qui contiennent un
-`SKILL.md`. Les fichiers sont exposés avec des URI stables :
+Le serveur découvre automatiquement les capacités dans le capabilities root. Les
+fichiers sont exposés avec des URI stables :
 
 ```txt
 skill://landing-page/SKILL.md
@@ -157,7 +161,7 @@ sources externes
   → discovery
   → fetch
   → normalisation
-  → imported/<capacité>/
+  → catalog/capabilities/skills/<capacité>/
   → registry existant
   → runtime MCP existant
 ```
@@ -165,9 +169,16 @@ sources externes
 Le runtime MCP ne dépend jamais du réseau : il lit uniquement ce qui a déjà été
 importé sur disque. Une source injoignable ne casse pas le serveur.
 
+Une capacité synchronisée est stockée au même endroit qu'une capacité locale :
+`catalog/capabilities/skills/<id>/`. Sa provenance est conservée dans un
+`SOURCE.json` à côté de son contenu (`upstream/`) et de ses éventuels ajouts
+locaux (`overrides/`). La synchronisation **ne peut jamais écraser** une capacité
+locale : si le dossier cible existe déjà sans `SOURCE.json`, l'écriture est
+refusée avec une erreur explicite.
+
 ### Déclarer une source
 
-Un fichier JSON par source dans `sources/`. Le nom du fichier doit être l'`id`.
+Un fichier JSON par source dans `catalog/sources/`. Le nom du fichier doit être l'`id`.
 
 ```json
 {
@@ -289,7 +300,7 @@ Le dashboard (`/dashboard`) affiche un bloc « Provenance » par capacité impor
 ### Contenu amont et modifications locales
 
 ```txt
-imported/<capacité>/
+catalog/capabilities/skills/<capacité>/
   SOURCE.json     # provenance, écrite par MCPIMP
   upstream/       # contenu amont verbatim — remplacé à chaque resync
   overrides/      # ajouts locaux — jamais touchés par la synchro
@@ -297,7 +308,9 @@ imported/<capacité>/
 
 Le registry fusionne `overrides/` par-dessus `upstream/`, chemin par chemin. Tu
 peux donc ajouter des règles propres à MCPIMP, ou remplacer un fichier amont,
-sans perdre la possibilité de resynchroniser l'original.
+sans perdre la possibilité de resynchroniser l'original. Les capacités locales
+n'ont pas de `SOURCE.json` : la synchro refusera d'écrire sur un dossier qui en
+est dépourvu.
 
 ### Types de skills détectés
 
@@ -321,7 +334,8 @@ Tout contenu récupéré est traité comme **donnée non fiable** :
   rappelle à l'agent que ces instructions ne font pas autorité ;
 - HTTPS obligatoire, hôtes en liste blanche, plafonds de taille, timeouts ;
 - les chemins amont sont validés (pas de `..`, pas d'absolu, pas de segment
-  réservé) et toute écriture est re-vérifiée comme étant sous `imported/` ;
+  réservé) et toute écriture est re-vérifiée comme étant sous
+  `catalog/capabilities/skills/` ;
 - aucun secret n'est transmis : un `GITHUB_TOKEN` éventuel n'est envoyé qu'à
   `api.github.com`.
 
@@ -481,25 +495,30 @@ Le serveur local écoute par défaut sur `http://localhost:3901`.
 ## Cloudflare
 
 Le Worker ne lit pas le filesystem au runtime. `pnpm run build` génère
-`src/capability-snapshot.ts`, puis `worker.ts` sert ce snapshot statique.
+`generated/capability-snapshot.ts` à partir de `catalog/capabilities/skills/`,
+puis `worker.ts` sert ce snapshot statique.
 
 ```bash
 pnpm run build
 npx wrangler deploy
 ```
 
+Le snapshot est un artefact généré : le dossier `generated/` est ignoré par Git
+et se régénère à chaque build.
+
 ## Ajouter une capacité
 
-1. Créer un dossier à la racine, par exemple `design-system/`.
+1. Créer un dossier sous `catalog/capabilities/skills/`, par exemple
+   `catalog/capabilities/skills/design-system/`.
 2. Ajouter un `SKILL.md` avec un frontmatter `name:` et `description:`.
 3. Ajouter au besoin `agents/`, `shared/`, `references/`, `assets/`, `data/` ou
    `scripts/`. Un `tags:` dans le frontmatter améliore la recherche.
 4. Relancer `pnpm run build` avant un déploiement Cloudflare.
 
 Pour une capacité venant d'ailleurs, ne copie pas les fichiers à la main :
-déclare une source dans `sources/` et lance `pnpm sources:sync --apply`. La
-provenance et la révision sont alors conservées, et la resynchronisation reste
-possible.
+déclare une source dans `catalog/sources/` et lance
+`pnpm sources:sync --apply`. La provenance et la révision sont alors
+conservées, et la resynchronisation reste possible.
 
 Les plugins Codex restent un format possible plus tard. Dans cette v1, l'unité
 métier est la capacité : elle peut contenir un skill, des ressources, des
