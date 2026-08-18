@@ -192,7 +192,7 @@ headers nécessaires sont résolus.
 ## Sources externes
 
 > Guide détaillé, avec recettes par cas d'usage et points d'extension du code :
-> ouvre [`docs/sources-guide.html`](docs/sources-guide.html) dans un navigateur.
+> ouvre [`site/docs/sources.html`](site/docs/sources.html) dans un navigateur.
 
 MCPIMP peut importer des skills publiés ailleurs (repos GitHub, catalogues web)
 et les maintenir à jour. L'ingestion est une couche **en amont** du registry :
@@ -524,6 +524,33 @@ curl -sS http://localhost:3901/message \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"search-capabilities","arguments":{"query":"accessibility contrast","limit":5}}}'
 ```
+
+## Site web public
+
+Le site statique public vit dans `site/` et est déployé sur GitHub Pages par le
+workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml), qui publie
+exactement ce dossier.
+
+```text
+site/
+├── index.html          # landing page
+└── docs/
+    └── sources.html    # guide des sources externes
+```
+
+Tout ce qui constituera le site (CSS, JS, images) ira sous `site/assets/`.
+Le dossier `docs/` à la racine reste réservé à la documentation technique du
+repository ; la documentation publique rendue en HTML vit dans `site/docs/`.
+
+Pour visualiser le site en local :
+
+```bash
+cd site && python3 -m http.server 8080
+# ouvre http://localhost:8080/
+```
+
+Le déploiement se déclenche au push sur `main`. Une seule fois, dans les réglages
+du dépôt : **Settings → Pages → Source → GitHub Actions**.
 
 ## Développement
 
