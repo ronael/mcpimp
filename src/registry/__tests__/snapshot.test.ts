@@ -30,6 +30,7 @@ const PUBLIC_IDS = [
   "taste-skill-minimalist-skill",
   "taste-skill-redesign-skill",
   "taste-skill-soft-skill",
+  "agent-tools",
   "ui-component-resources",
   "ui-skills-baseline-ui",
   "ui-skills-create-design-md",
