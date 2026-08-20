@@ -1,0 +1,11 @@
+{
+  "id": "ian-xiaohei-illustrations",
+  "type": "github",
+  "repository": "helloianneo/ian-xiaohei-illustrations",
+  "ref": "main",
+  "roots": ["ian-xiaohei-illustrations"],
+  "namespace": "ian-xiaohei",
+  "update": "review",
+  "include": ["ian-xiaohei-illustrations"],
+  "notes": "Codex Skill pour générer des illustrations Xiaohei depuis des articles chinois."
+}
