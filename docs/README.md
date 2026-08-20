@@ -1,6 +1,8 @@
-# Documentation technique
+# Technical documentation
 
-Documentation interne au repository : architecture, guides développeur,
-décisions techniques, fonctionnement de l'ingestion et du registry.
+Internal repository documentation: architecture, developer guides, technical
+decisions, and how ingestion and the registry work.
 
-La documentation publique rendue en HTML vit dans [`site/docs/`](../site/docs/).
+The public HTML documentation is in [`site/docs/`](../site/docs/).
+
+French equivalent: [README.fr.md](README.fr.md)
