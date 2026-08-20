@@ -705,18 +705,57 @@
 
     .benefit-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(12, minmax(0, 1fr));
       border-top: 1px solid var(--line);
       border-left: 1px solid var(--line);
     }
 
     .benefit-card {
+      position: relative;
+      grid-column: span 4;
       min-height: 280px;
       padding: var(--s8);
       border-right: 1px solid var(--line);
       border-bottom: 1px solid var(--line);
       background: var(--ink);
       transition: background 700ms var(--ease);
+    }
+
+    /* Tool map : la carte vedette occupe toute la première ligne */
+    .benefit-lead {
+      grid-column: 1 / -1;
+      min-height: 240px;
+    }
+
+    .benefit-lead .benefit-icon {
+      position: absolute;
+      top: var(--s8);
+      right: var(--s8);
+      margin-bottom: 0;
+    }
+
+    /* Court connecteur reliant chaque carte à la ligne-épine de la grille */
+    .benefit-card:not(.benefit-lead)::after {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      height: var(--s6);
+      border-left: 1px solid var(--line);
+    }
+
+    /* Pill mono indiquant l'outil MCP réel derrière chaque bénéfice */
+    .benefit-tool {
+      display: block;
+      width: max-content;
+      margin-bottom: var(--s6);
+      padding: var(--s2) var(--s3);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--cyan);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
     }
 
     .benefit-card:hover { background: var(--panel); }
@@ -737,6 +776,9 @@
     .benefit-card:nth-child(2) .benefit-icon { color: var(--acid); }
     .benefit-card:nth-child(3) .benefit-icon { color: var(--coral); }
     .benefit-card:nth-child(4) .benefit-icon { color: var(--violet); }
+    .benefit-card:nth-child(2) .benefit-tool { color: var(--acid); }
+    .benefit-card:nth-child(3) .benefit-tool { color: var(--coral); }
+    .benefit-card:nth-child(4) .benefit-tool { color: var(--violet); }
     .benefit-card p { max-width: 480px; color: var(--muted); }
 
     .shared-flow {
@@ -871,10 +913,36 @@
     }
 
     .steps {
+      position: relative;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 48px minmax(0, 1fr);
       gap: var(--s6);
       counter-reset: step;
+    }
+
+    /* Ligne-épine du pipeline, visible dans les interstices entre les cartes */
+    .steps::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 0;
+      left: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .step-arrow {
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 24px;
+    }
+
+    /* Fond plein derrière le glyphe pour que la spine ne le traverse pas */
+    .step-arrow i {
+      padding: var(--s2);
+      border-radius: 50%;
+      background: var(--ink);
     }
 
     .step {
@@ -888,10 +956,33 @@
       color: var(--paper);
     }
 
+    /* Tag de statut pipeline, même styling que .runtime-status du hero */
+    .step-tag {
+      position: absolute;
+      top: var(--s5);
+      right: var(--s5);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s3);
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      text-transform: uppercase;
+    }
+
+    .step-tag::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--acid);
+    }
+
     .step::before {
       content: "0" counter(step);
       display: block;
-      margin-bottom: var(--s10);
+      margin-bottom: var(--s6);
       color: var(--acid);
       font-family: "Geist Mono Variable", monospace;
       font-size: 14px;
@@ -916,16 +1007,49 @@
       overflow-wrap: anywhere;
     }
 
+    /* Barre de titre mono en première ligne du bloc code */
+    .step-code-tag {
+      display: block;
+      margin: calc(-1 * var(--s5)) calc(-1 * var(--s5)) var(--s4);
+      padding: var(--s3) var(--s5);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
     .tagline-section {
+      position: relative;
       display: grid;
       min-height: 720px;
       place-items: center;
       padding: var(--s12) var(--s6);
+      overflow: hidden;
       background: var(--cyan);
       color: var(--ink);
     }
 
+    /* Fond de la tagline : fallback pattern SVG (variante B), remplacé par le
+       canvas three.js quand WebGL est disponible. */
+    .tagline-section--b {
+      background: var(--cyan)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cpath d='M0 36h72M36 0v72' stroke='%230a0a0a' stroke-opacity='0.07' stroke-width='1'/%3E%3Ccircle cx='36' cy='36' r='1.5' fill='%230a0a0a' fill-opacity='0.10'/%3E%3C/svg%3E")
+        center / 72px 72px;
+    }
+
+    .tagline-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
     .tagline {
+      position: relative;
+      z-index: 1;
       max-width: 960px;
       margin: 0;
       font-size: 60px;
@@ -1034,7 +1158,7 @@
 
     .use-card i {
       display: block;
-      margin-bottom: var(--s10);
+      margin-bottom: var(--s6);
       color: var(--acid);
       font-size: 32px;
     }
@@ -1167,7 +1291,7 @@
     }
 
     .faq-list {
-      max-width: 880px;
+      max-width: 1280px;
       margin-inline: auto;
       border-top: 1px solid var(--line);
     }
@@ -1319,6 +1443,10 @@
       .section { padding: var(--s11) 0; }
       .section-head { margin-bottom: var(--s8); }
       .problem-grid, .benefit-grid, .steps, .use-grid { grid-template-columns: 1fr; }
+      .benefit-card, .benefit-lead { grid-column: 1 / -1; }
+      .benefit-card:not(.benefit-lead)::after { content: none; }
+      .steps::before { top: 0; right: auto; bottom: 0; left: 50%; border-top: 0; border-left: 1px solid var(--line); }
+      .step-arrow { transform: rotate(90deg); }
       .shared-flow { grid-template-columns: 1fr; gap: var(--s5); }
       .shared-flow .flow-column:last-child { grid-column: auto; }
       .shared-flow .flow-arrow { transform: rotate(90deg); }
@@ -1469,25 +1597,29 @@
           <p>Le registry transforme une collection de fichiers en outils MCP explicites, consultables et traçables.</p>
         </div>
         <div class="benefit-grid">
-          <article class="benefit-card reveal">
+          <article class="benefit-card benefit-lead reveal">
+            <span class="benefit-tool">list-capabilities</span>
             <span class="benefit-icon"><i class="ph ph-compass-tool" aria-hidden="true"></i></span>
             <h3>Découvrir avant d’inventer</h3>
-            <p><code>list-capabilities</code> montre à l’agent ce qui est réellement disponible, avec l’origine de chaque capability.</p>
+            <p>Montre à l’agent ce qui est réellement disponible, avec l’origine de chaque capability.</p>
           </article>
           <article class="benefit-card reveal">
+            <span class="benefit-tool">search-capabilities</span>
             <span class="benefit-icon"><i class="ph ph-binoculars" aria-hidden="true"></i></span>
             <h3>Trouver le bon passage</h3>
-            <p><code>search-capabilities</code> classe les résultats selon le nom, les titres, les tags et le contenu au lieu de tout renvoyer.</p>
+            <p>Classe les résultats selon le nom, les titres, les tags et le contenu au lieu de tout renvoyer.</p>
           </article>
           <article class="benefit-card reveal">
+            <span class="benefit-tool">load-capability</span>
             <span class="benefit-icon"><i class="ph ph-selection-plus" aria-hidden="true"></i></span>
             <h3>Charger seulement l’utile</h3>
-            <p><code>load-capability</code> peut lire une section ou un fichier précis. Le contexte reste centré sur la tâche en cours.</p>
+            <p>Peut lire une section ou un fichier précis. Le contexte reste centré sur la tâche en cours.</p>
           </article>
           <article class="benefit-card reveal">
+            <span class="benefit-tool">capability-info</span>
             <span class="benefit-icon"><i class="ph ph-git-commit" aria-hidden="true"></i></span>
             <h3>Garder une chaîne de confiance</h3>
-            <p><code>capability-info</code> expose la source, le commit, l’empreinte, la licence et la date de synchronisation.</p>
+            <p>Expose la source, le commit, l’empreinte, la licence et la date de synchronisation.</p>
           </article>
         </div>
       </div>
@@ -1548,23 +1680,28 @@
         </div>
         <div class="steps">
           <article class="step reveal">
+            <span class="step-tag">Déclaré</span>
             <h3>Déclare les sources</h3>
             <p>Ajoute un dépôt GitHub ou un catalogue web autorisé dans <code>catalog/sources/</code>. Les filtres déterminent les capabilities à importer.</p>
-            <div class="step-code"><span class="json-key">"repository"</span>: <span class="json-string">"elayadesign/ai-design-skills"</span>,
+            <div class="step-code"><span class="step-code-tag">Snippet — catalog/sources</span><span class="json-key">"repository"</span>: <span class="json-string">"elayadesign/ai-design-skills"</span>,
 <span class="json-key">"include"</span>: [<span class="json-string">"landing-page-design"</span>]</div>
           </article>
+          <div class="step-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
           <article class="step reveal">
+            <span class="step-tag">Synchronisé</span>
             <h3>Synchronise avec contrôle</h3>
             <p>Le rapport est en lecture seule par défaut. La politique <code>review</code> attend ton accord avant toute mise à jour.</p>
-            <div class="step-code"><span class="prompt">›</span> pnpm sources:sync
+            <div class="step-code"><span class="step-code-tag">Commande — sync</span><span class="prompt">›</span> pnpm sources:sync
 <span class="json-comment">↑ update available</span>
 
 <span class="prompt">›</span> pnpm sources:sync --apply source</div>
           </article>
+          <div class="step-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
           <article class="step reveal">
+            <span class="step-tag">Servi</span>
             <h3>Laisse l’agent choisir</h3>
             <p>L’agent liste, recherche puis charge la section utile via MCP. Le serveur lit uniquement les fichiers déjà présents.</p>
-            <div class="step-code"><span class="prompt">›</span> search-capabilities
+            <div class="step-code"><span class="step-code-tag">Requête — MCP</span><span class="prompt">›</span> search-capabilities
 <span class="json-string">"accessibilité motion landing"</span>
 
 <span class="prompt">›</span> load-capability
@@ -1574,8 +1711,9 @@
       </div>
     </section>
 
-    <section class="tagline-section" aria-label="Bénéfice principal">
-      <p class="tagline" id="tagline">Tes agents ne devinent plus. Ils découvrent ce dont ils ont besoin, puis chargent seulement l’essentiel.</p>
+    <section class="tagline-section tagline-section--b" aria-label="Bénéfice principal">
+      <canvas class="tagline-bg" id="tagline-bg" aria-hidden="true"></canvas>
+      <p class="tagline">Tes agents ne devinent plus. Ils découvrent ce dont ils ont besoin, puis chargent seulement l’essentiel.</p>
     </section>
 
     <section class="section panel" id="provenance" aria-labelledby="provenance-title">
@@ -1884,31 +2022,107 @@
       document.querySelectorAll(".reveal").forEach((element) => element.classList.add("visible"));
     }
 
-    const tagline = document.querySelector("#tagline");
-    const words = tagline.textContent.trim().split(/\s+/);
-    tagline.textContent = "";
-    words.forEach((word, index) => {
-      const span = document.createElement("span");
-      span.className = "word";
-      span.textContent = word;
-      tagline.append(span, document.createTextNode(index === words.length - 1 ? "" : " "));
-    });
-
-    if (!reduceMotion && "IntersectionObserver" in window) {
-      const wordObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const index = Number(entry.target.dataset.index);
-          window.setTimeout(() => entry.target.classList.add("active"), index * 52);
-          observer.unobserve(entry.target);
-        });
-      }, { threshold: 0.9, rootMargin: "0px 0px -18%" });
-      tagline.querySelectorAll(".word").forEach((word, index) => {
-        word.dataset.index = index;
-        wordObserver.observe(word);
+    document.querySelectorAll(".tagline").forEach((tagline) => {
+      const words = tagline.textContent.trim().split(/\s+/);
+      tagline.textContent = "";
+      words.forEach((word, index) => {
+        const span = document.createElement("span");
+        span.className = "word";
+        span.textContent = word;
+        tagline.append(span, document.createTextNode(index === words.length - 1 ? "" : " "));
       });
-    } else {
-      tagline.querySelectorAll(".word").forEach((word) => word.classList.add("active"));
+
+      if (!reduceMotion && "IntersectionObserver" in window) {
+        const wordObserver = new IntersectionObserver((entries, observer) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const index = Number(entry.target.dataset.index);
+            window.setTimeout(() => entry.target.classList.add("active"), index * 52);
+            observer.unobserve(entry.target);
+          });
+        }, { threshold: 0.9, rootMargin: "0px 0px -18%" });
+        tagline.querySelectorAll(".word").forEach((word, index) => {
+          word.dataset.index = index;
+          wordObserver.observe(word);
+        });
+      } else {
+        tagline.querySelectorAll(".word").forEach((word) => word.classList.add("active"));
+      }
+    });
+  </script>
+  <script type="module">
+    // Comparatif temporaire — Variante B : fond three.js lazy-loaded.
+    // Fallback automatique sur le pattern SVG (classe .tagline-section--b) si
+    // WebGL indisponible ou prefers-reduced-motion.
+    const canvas = document.getElementById("tagline-bg");
+    if (canvas) {
+      const prefersReducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      const lazyObserver = new IntersectionObserver(async (entries) => {
+        if (!entries[0].isIntersecting) return;
+        lazyObserver.disconnect();
+        if (prefersReducedMotion) return; // fallback = pattern SVG
+        try {
+          if (!canvas.getContext("webgl2") && !canvas.getContext("webgl")) return;
+          const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js");
+          mountTaglineBackground(THREE, canvas);
+        } catch {
+          // rester sur le pattern SVG
+        }
+      }, { rootMargin: "200px" });
+      lazyObserver.observe(canvas);
+    }
+
+    function mountTaglineBackground(THREE, canvas) {
+      const section = canvas.closest(".tagline-section");
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // cap dpr
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+      camera.position.z = 2;
+
+      // champ de points — géométrie fixe, aucune lecture DOM par frame
+      const N = 260;
+      const positions = new Float32Array(N * 3);
+      for (let i = 0; i < N; i++) {
+        positions[i * 3] = Math.random() * 2 - 1;
+        positions[i * 3 + 1] = (Math.random() * 2 - 1) * 0.6;
+        positions[i * 3 + 2] = 0;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.PointsMaterial({ size: 2, sizeAttenuation: false, color: 0x0a0a0a, transparent: true, opacity: 0.16 });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+
+      // taille : une fois par resize, pas par frame
+      const resize = () => {
+        const { width, height } = section.getBoundingClientRect();
+        renderer.setSize(width, height, false);
+      };
+      resize();
+      window.addEventListener("resize", resize, { passive: true });
+
+      // boucle active uniquement quand la section est visible
+      let inView = false;
+      new IntersectionObserver(([entry]) => (inView = entry.isIntersecting), { rootMargin: "100px" }).observe(section);
+
+      let raf;
+      const tick = (t) => {
+        raf = requestAnimationFrame(tick);
+        if (!inView) return;
+        points.rotation.z = t * 0.00002; // drift quasi imperceptible
+        renderer.render(scene, camera);
+      };
+      raf = requestAnimationFrame(tick);
+
+      window.addEventListener("pagehide", () => {
+        cancelAnimationFrame(raf);
+        geo.dispose();
+        mat.dispose();
+        renderer.dispose();
+      });
     }
   </script>
 </body>
