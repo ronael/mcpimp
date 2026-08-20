@@ -1,6 +1,14 @@
-# MCPIMP — instructions pour l'agent
+# MCPIMP — agent instructions
 
-Avant toute modification **frontend** (HTML, CSS, JS visuel, design), charge le skill
-`elaya-design-landing-page-design` via le MCP MCPIMP (`load-capability`) pour
-appliquer les règles de design Elaya (typographie, espacement, grille, motion,
-conversion).
+Before making any change to this project, inspect the capabilities available via
+the MCPIMP MCP server (`list-capabilities` / `search-capabilities`). If a
+relevant capability exists (for example, `elaya-design-landing-page-design` for
+any frontend change: HTML, visual CSS/JS, or design), load it with
+`load-capability` and follow its rules before writing code.
+
+If the capability is unavailable from MCP (server not running, stale snapshot,
+or unknown ID), inspect the corresponding files on disk instead (for example,
+`catalog/capabilities/local/…` or
+`catalog/capabilities/<namespace>/…`) to retrieve the rules to apply.
+
+French equivalent: [AGENTS.fr.md](AGENTS.fr.md)
