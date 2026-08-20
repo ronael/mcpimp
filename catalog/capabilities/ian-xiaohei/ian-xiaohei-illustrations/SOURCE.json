@@ -1,0 +1,182 @@
+{
+  "type": "github",
+  "sourceId": "ian-xiaohei-illustrations",
+  "repository": "helloianneo/ian-xiaohei-illustrations",
+  "path": "ian-xiaohei-illustrations",
+  "ref": "main",
+  "commit": "91b560849e8f883922cc2fa8a358a668caa94105",
+  "url": "https://github.com/helloianneo/ian-xiaohei-illustrations/tree/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations",
+  "revision": {
+    "kind": "git-commit",
+    "value": "91b560849e8f883922cc2fa8a358a668caa94105"
+  },
+  "contentHash": "sha256:df2f7d602353474e377a46008308b84b40a80a91f88ec010fc306d65a2320b5a",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/helloianneo/ian-xiaohei-illustrations/blob/91b560849e8f883922cc2fa8a358a668caa94105/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "resource-dependent",
+  "skillTraits": [
+    "assets",
+    "binaries",
+    "references"
+  ],
+  "skippedAssets": [
+    {
+      "path": "assets/examples/01-two-breakpoints.png",
+      "bytes": 807090,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/01-two-breakpoints.png",
+      "sha": "44c197de02f927d22ffba1bb66bad56f212c9344"
+    },
+    {
+      "path": "assets/examples/02-minimum-loop.png",
+      "bytes": 952871,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/02-minimum-loop.png",
+      "sha": "2629a08f905700b19051fc0bf37a1563d4f0e803"
+    },
+    {
+      "path": "assets/examples/03-sort-by-purpose.png",
+      "bytes": 869435,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/03-sort-by-purpose.png",
+      "sha": "80b2989610dbcbb9c1c3623ee79b03ebfdef6ef1"
+    },
+    {
+      "path": "assets/examples/04-one-fish-many-uses.png",
+      "bytes": 1121158,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/04-one-fish-many-uses.png",
+      "sha": "b87e74a08105322555e1d2848f189ce6766b0d74"
+    },
+    {
+      "path": "assets/examples/05-handoff-path.png",
+      "bytes": 740706,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/05-handoff-path.png",
+      "sha": "166b9c9ab9051a40af59062a2b4a9b529e3769f3"
+    },
+    {
+      "path": "assets/examples/06-three-sources.png",
+      "bytes": 1036312,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/06-three-sources.png",
+      "sha": "e6b51a749d6d601bbbf6e629f4238438481c0df7"
+    },
+    {
+      "path": "assets/examples/07-three-content-jobs.png",
+      "bytes": 942378,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/07-three-content-jobs.png",
+      "sha": "5ffd89feb493859101dcf71160d751379293bec1"
+    },
+    {
+      "path": "assets/examples/08-handoff-copy-toolbox.png",
+      "bytes": 924354,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/08-handoff-copy-toolbox.png",
+      "sha": "1c0ad2c0d00a001c98df5c477eaee34f7a30e717"
+    },
+    {
+      "path": "assets/examples/09-common-pits-no-title.png",
+      "bytes": 1160863,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/09-common-pits-no-title.png",
+      "sha": "6b2fcb8c5710ea90826ffe73f5729e85b5df57ad"
+    },
+    {
+      "path": "assets/examples/10-information-well.png",
+      "bytes": 1075561,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/10-information-well.png",
+      "sha": "f498931cae451d13f3e345d2eccd853fa43c1daa"
+    },
+    {
+      "path": "assets/examples/11-idea-press.png",
+      "bytes": 937104,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/11-idea-press.png",
+      "sha": "5d124836b9083034c406516c85bf0c4504568285"
+    },
+    {
+      "path": "assets/examples/12-content-fermentation.png",
+      "bytes": 915474,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/12-content-fermentation.png",
+      "sha": "c056506f8b54f8ec0dda9b5940adee8f511426a9"
+    },
+    {
+      "path": "assets/examples/13-system-bearing.png",
+      "bytes": 936889,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/13-system-bearing.png",
+      "sha": "efcae9e8133fba1d7269acaa451d8cf92b458bf5"
+    },
+    {
+      "path": "assets/examples/14-trust-bridge.png",
+      "bytes": 1164218,
+      "reason": "binary",
+      "url": "https://raw.githubusercontent.com/helloianneo/ian-xiaohei-illustrations/91b560849e8f883922cc2fa8a358a668caa94105/ian-xiaohei-illustrations/assets/examples/14-trust-bridge.png",
+      "sha": "18d3556f23101047a142cdf2586a6e0eb1c7dee9"
+    }
+  ],
+  "capability": "ian-xiaohei-illustrations",
+  "namespace": "ian-xiaohei",
+  "slug": "ian-xiaohei-illustrations",
+  "update": "review",
+  "lastSyncedAt": "2026-08-20T18:05:54.713Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 4205,
+      "binary": false,
+      "sha": "901926630f81bf049a8c38c1d551df60e310920b",
+      "sha256": "54ff046da98d9a0a4a3b6c3ddf5b9fb3c832bdee41baa97abeac0cc9c402d60b"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "bytes": 304,
+      "binary": false,
+      "sha": "611a8c544d5c4e77a1ad42a3737555751c6b917b",
+      "sha256": "c4006527abc026f66ff04e5e9cecc87b3f83f256af43e7b0993938a009d0ef2f"
+    },
+    {
+      "path": "references/composition-patterns.md",
+      "bytes": 3318,
+      "binary": false,
+      "sha": "d7ff928f302c4e22f660559761944e6f04c1850a",
+      "sha256": "95d3d352f15ecd37a0ec6368075cf56270c5414937ff98e0e8eb51ad775caf5b"
+    },
+    {
+      "path": "references/prompt-template.md",
+      "bytes": 2957,
+      "binary": false,
+      "sha": "ddfeda83998f0906d14a710c8cfde9da30800c82",
+      "sha256": "12878d39e34fa7863a4ee38b79dc646824d12e4ad5fae17ab8b421cea91635b9"
+    },
+    {
+      "path": "references/qa-checklist.md",
+      "bytes": 1799,
+      "binary": false,
+      "sha": "da5b0c4051915f2d6958ff8dd0904a0d9e20b436",
+      "sha256": "1b8f29da36752ff2c843e4a17afb0425579d9f166232ddea91c1b42e95afc596"
+    },
+    {
+      "path": "references/style-dna.md",
+      "bytes": 1854,
+      "binary": false,
+      "sha": "042f7616ca74ddf48b11ca566febafd5ebd00b21",
+      "sha256": "5325d9faefc2dc10f5ff35434189d30db0470d88431aefc2352197dd44f9f8a3"
+    },
+    {
+      "path": "references/xiaohei-ip.md",
+      "bytes": 1544,
+      "binary": false,
+      "sha": "93ac2330485a03af8dae5f470a9cea9da886f4fb",
+      "sha256": "0ceb63283816380867d034a711c2db01d6a85363827275702de4985130bff889"
+    }
+  ]
+}
