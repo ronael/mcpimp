@@ -43,8 +43,6 @@ site/
     css/
       tokens.css                # couleurs, fontes, easing, dimensions
       base.css                  # reset, body, focus, liens, code
-      components.css            # boutons, cartes, badges, navigation
-      layouts.css               # grilles et responsive partagé
       pages/
         landing.css
         sources.css
@@ -53,6 +51,8 @@ site/
     js/
       landing.js
       sources.js
+      dashboard-mock.js
+      legacy.js
 
 src/http/
   dashboard.ts                  # rendu dynamique SSR
@@ -92,7 +92,13 @@ Critères de validation :
 - `git diff --check` propre ;
 - aucun changement de HTML, d’ID ou de JavaScript.
 
-Statut : démarré ; fondations extraites, à revalider visuellement.
+Statut : terminé.
+
+Notes de validation :
+
+- `site/assets/css/tokens.css` et `site/assets/css/base.css` sont chargés par les pages concernées ;
+- les styles spécifiques restants ont été déplacés dans `site/assets/css/pages/…` ;
+- `git diff --check` est propre.
 
 ### Lot 2 — landing EN par défaut et FR
 
@@ -108,14 +114,15 @@ Livrables :
 
 Décision de contenu : l’anglais doit être une traduction éditorialisée complète, pas une traduction mot à mot ni une version raccourcie.
 
-Points restant à faire :
+Statut : terminé.
 
-- terminer la traduction de tous les contenus visibles et des données de démonstration ;
-- ajouter les liens de langue EN / FR ;
-- vérifier tous les liens et chemins relatifs ;
-- vérifier le rendu de la landing sur desktop et mobile.
+Notes de validation :
 
-Statut : en cours.
+- `site/index.html` est la landing anglaise par défaut ;
+- `site/fr/index.html` est la landing française ;
+- les liens de langue EN / FR sont présents ;
+- `site/assets/js/landing.js` choisit ses chaînes via `document.documentElement.lang` ;
+- les ancres et chemins relatifs locaux ont été validés par script.
 
 ### Lot 3 — documentation statique
 
@@ -127,6 +134,15 @@ Livrables :
 - version FR sous `site/fr/docs/sources.html` ;
 - CSS partagée ;
 - navigation localisée et liens relatifs corrects.
+
+Statut : terminé.
+
+Notes de validation :
+
+- `site/docs/sources.html` est la version anglaise par défaut ;
+- `site/fr/docs/sources.html` conserve la version française ;
+- `site/assets/css/pages/sources.css` et `site/assets/js/sources.js` sont partagés ;
+- les liens de langue et les ancres locales ont été validés par script.
 
 ### Lot 4 — dashboard dynamique
 
@@ -142,17 +158,42 @@ Livrables :
 
 À ne pas faire : remplacer `dashboard.ts` par la page statique. Une page GitHub Pages ne peut pas être le dashboard de production sans gérer séparément l’URL d’API, le CORS, le chargement et les erreurs.
 
+Statut : terminé.
+
+Notes de validation :
+
+- `GET /dashboard` rend le dashboard dynamique anglais par défaut ;
+- `GET /fr/dashboard` rend la variante française ;
+- les textes sont centralisés dans `src/http/dashboard-i18n.ts` ;
+- les styles embarqués Worker sont centralisés dans `src/http/dashboard-styles.ts` ;
+- les tests serveur couvrent les deux routes.
+
 ### Lot 5 — harmonisation et déploiement
 
 Objectif : supprimer les répétitions restantes, valider le rendu et préparer le déploiement.
 
 Livrables :
 
-- extraction CSS restante vers `components.css`, `layouts.css` et les feuilles par page ;
+- extraction CSS restante vers les feuilles par page ;
 - traitement explicite de `site/_legacy_index.html` ;
 - contrôle responsive et accessibilité ;
 - validation GitHub Pages et Cloudflare ;
 - mise à jour de la documentation technique.
+
+Statut : en cours.
+
+Terminé :
+
+- extraction de `site/index.html` et `site/fr/index.html` vers `site/assets/css/pages/landing.css` et `site/assets/js/landing.js` ;
+- extraction de `site/docs/sources.html` et `site/fr/docs/sources.html` vers `site/assets/css/pages/sources.css` et `site/assets/js/sources.js` ;
+- extraction de la maquette `site/dashboard.html` vers `site/assets/css/pages/dashboard.css` et `site/assets/js/dashboard-mock.js` ;
+- traitement explicite de `site/_legacy_index.html` avec `noindex`, canonical, `site/assets/css/pages/legacy.css` et `site/assets/js/legacy.js` ;
+- validation des chemins locaux, des ancres, de la syntaxe JavaScript et du build TypeScript.
+
+Reste :
+
+- contrôle visuel responsive desktop/mobile dans un navigateur ;
+- validation finale GitHub Pages / Cloudflare après déploiement.
 
 ## Décision Vite + React
 
