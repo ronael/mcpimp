@@ -1,5 +1,7 @@
 # Personal Capability Registry MCP
 
+![MCPIMP banner](site/assets/img/banniere-readme-en.png)
+
 [Version française](README.fr.md)
 
 MCPIMP is a personal capability registry for AI agents. This repository hosts

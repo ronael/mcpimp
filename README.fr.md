@@ -1,5 +1,7 @@
 # Personal Capability Registry MCP
 
+![Bannière MCPIMP](site/assets/img/banniere-readme-mcpimp.png)
+
 [English version](README.md)
 
 Registry personnel de capacités pour agents IA. Le serveur MCP vit dans ce
