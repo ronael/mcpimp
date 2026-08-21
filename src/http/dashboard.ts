@@ -149,11 +149,32 @@ function renderReferenceSources(capability: Capability, copy: DashboardCopy): st
 }
 
 function renderProvenance(capability: Capability, copy: DashboardCopy): string {
+  const body = provenanceRows(capability, copy)
+    .filter(([, value]) => Boolean(value))
+    .map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td><code>${escapeHtml(String(value))}</code></td></tr>`)
+    .join("");
+
+  if (!body) return "";
+
   const origin = capability.origin;
-  if (!origin) return "";
+  const skipped =
+    origin?.skippedAssets && origin.skippedAssets.length > 0
+      ? `<p>${escapeHtml(copy.skippedAssets(origin.skippedAssets.length))}</p>`
+      : "";
+
+  return `<div class="references">
+    <h3>${escapeHtml(copy.provenanceTitle)}</h3>
+    <table><tbody>${body}</tbody></table>
+    ${skipped}
+  </div>`;
+}
+
+function provenanceRows(capability: Capability, copy: DashboardCopy): [string, string | undefined][] {
+  const origin = capability.origin;
+  if (!origin) return [];
 
   const location = [origin.repository, origin.path].filter(Boolean).join("/") || origin.url || origin.sourceId;
-  const rows: [string, string | undefined][] = [
+  return [
     [copy.provenanceRows.source, `${origin.type} · ${location}`],
     [copy.provenanceRows.ref, origin.ref],
     [copy.provenanceRows.commit, origin.commit || origin.revision?.value],
@@ -164,22 +185,23 @@ function renderProvenance(capability: Capability, copy: DashboardCopy): string {
     [copy.provenanceRows.updatePolicy, origin.update],
     [copy.provenanceRows.lastSync, origin.lastSyncedAt],
   ];
+}
 
-  const body = rows
-    .filter(([, value]) => Boolean(value))
-    .map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td><code>${escapeHtml(String(value))}</code></td></tr>`)
-    .join("");
+function chipClassForKind(kind: string): string {
+  if (kind === "portable") return "ok";
+  if (kind === "resource-dependent") return "info";
+  if (kind === "executable") return "warn";
+  if (kind === "platform-specific") return "err";
+  return "plain";
+}
 
-  const skipped =
-    origin.skippedAssets && origin.skippedAssets.length > 0
-      ? `<p>${escapeHtml(copy.skippedAssets(origin.skippedAssets.length))}</p>`
-      : "";
-
-  return `<div class="references">
-    <h3>${escapeHtml(copy.provenanceTitle)}</h3>
-    <table><tbody>${body}</tbody></table>
-    ${skipped}
-  </div>`;
+function chipClassForFile(file: CapabilityFile): string {
+  if (file.binary) return "warn";
+  if (file.type === "skill") return "ok";
+  if (file.type === "reference") return "vio";
+  if (file.type === "script") return "warn";
+  if (file.type === "bundle" || file.type === "data") return "info";
+  return "plain";
 }
 
 function renderCapabilityResources(registry: CapabilityRegistry, copy: DashboardCopy): string {
@@ -219,6 +241,91 @@ function renderCapabilityResources(registry: CapabilityRegistry, copy: Dashboard
       </section>`;
     })
     .join("");
+}
+
+function renderDrawerTemplates(registry: CapabilityRegistry, copy: DashboardCopy): string {
+  return registry
+    .listCapabilities()
+    .map((capability) => {
+      const capabilityAnchor = `capability-${anchorId(capability.id)}`;
+      const kind = skillKind(capability);
+      const originChip = capability.origin
+        ? `<span class="chip info plain">${escapeHtml(copy.imported)}</span>`
+        : `<span class="chip ok plain">${escapeHtml(copy.local)}</span>`;
+      const kindChip = `<span class="chip ${chipClassForKind(kind)} plain">${escapeHtml(kind)}</span>`;
+      const fileRows = capability.files
+        .map((file) => {
+          const size = file.binary ? `${file.bytes} B` : String(file.lines);
+          const type = file.binary ? copy.binary : file.type;
+          return `<tr>
+            <td class="mono wrap">${escapeHtml(file.uri)}</td>
+            <td><span class="chip ${chipClassForFile(file)} plain">${escapeHtml(type)}</span></td>
+            <td class="num-c">${escapeHtml(size)}</td>
+          </tr>`;
+        })
+        .join("");
+
+      return `<template id="drawer-${escapeAttribute(capabilityAnchor)}" data-drawer-template>
+        <div class="d-top">
+          <span class="d-id">${escapeHtml(capability.id)}</span>
+          <button class="d-close" type="button" aria-label="${escapeAttribute(copy.close)}"><i class="ph ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="d-title">${escapeHtml(capability.name)}</div>
+        <div class="d-chips">${originChip}${kindChip}</div>
+        <p class="d-desc">${escapeHtml(capability.description || copy.noDescription)}</p>
+        <div class="d-sec">
+          <div class="cs-h"><i class="ph ph-files" aria-hidden="true"></i>${escapeHtml(copy.filesTitle)} · ${capability.files.length}</div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>${escapeHtml(copy.uri)}</th><th>Type</th><th>${escapeHtml(copy.lines)}</th></tr></thead><tbody>${fileRows}</tbody></table></div>
+        </div>
+        ${renderDrawerProvenance(capability, copy)}
+        ${renderDrawerReferences(capability, copy)}
+      </template>`;
+    })
+    .join("");
+}
+
+function renderDrawerProvenance(capability: Capability, copy: DashboardCopy): string {
+  const rows = provenanceRows(capability, copy).filter(([, value]) => Boolean(value));
+  if (rows.length === 0) return "";
+
+  const cells = rows
+    .map(([label, value]) => `<div><div class="k">${escapeHtml(label)}</div><div class="vv">${escapeHtml(String(value))}</div></div>`)
+    .join("");
+  const skipped =
+    capability.origin?.skippedAssets && capability.origin.skippedAssets.length > 0
+      ? `<div class="note-inline"><i class="ph ph-warning" aria-hidden="true"></i>${escapeHtml(copy.skippedAssets(capability.origin.skippedAssets.length))}</div>`
+      : "";
+
+  return `<div class="d-sec">
+    <div class="cs-h"><i class="ph ph-seal-check" aria-hidden="true"></i>${escapeHtml(copy.provenanceTitle)}</div>
+    <div class="prov">${cells}</div>
+    ${skipped}
+  </div>`;
+}
+
+function renderDrawerReferences(capability: Capability, copy: DashboardCopy): string {
+  const referenceFiles = capability.files.filter((file) => file.type === "reference");
+  if (referenceFiles.length === 0) return "";
+
+  const links = referenceFiles.flatMap(extractReferenceLinks);
+  const files = referenceFiles
+    .map((file) => `<tr><td class="mono wrap">${escapeHtml(file.uri)}</td><td class="num-c">${file.lines}</td></tr>`)
+    .join("");
+  const linkRows =
+    links.length > 0
+      ? links
+          .map(
+            (link) =>
+              `<tr><td><a href="${escapeAttribute(link.url)}" target="_blank" rel="noreferrer">${escapeHtml(link.title)}</a></td><td class="mono wrap">${escapeHtml(link.sourcePath)}</td></tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="2">${escapeHtml(copy.noReferenceLinks)}</td></tr>`;
+
+  return `<div class="d-sec">
+    <div class="cs-h"><i class="ph ph-link" aria-hidden="true"></i>${escapeHtml(copy.referencesTitle)}</div>
+    <div class="tbl-wrap ref-files"><table class="tbl"><thead><tr><th>${escapeHtml(copy.uri)}</th><th>${escapeHtml(copy.lines)}</th></tr></thead><tbody>${files}</tbody></table></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>${escapeHtml(copy.source)}</th><th>${escapeHtml(copy.file)}</th></tr></thead><tbody>${linkRows}</tbody></table></div>
+  </div>`;
 }
 
 function renderMobileNav(copy: DashboardCopy): string {
@@ -426,15 +533,6 @@ function renderDashboardScript(copy: DashboardCopy, totalCapabilities: number): 
   let query = "";
   let origin = "all";
 
-  function esc(value) {
-    return String(value == null ? "" : value).replace(/[&<>"]/g, (char) => {
-      if (char === "&") return "&amp;";
-      if (char === "<") return "&lt;";
-      if (char === ">") return "&gt;";
-      return "&quot;";
-    });
-  }
-
   function showView(id) {
     const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "capabilities", "upstreams", "tools"].includes(id) ? id : "overview";
     views.forEach((view) => view.classList.toggle("on", view.dataset.view === viewId));
@@ -442,14 +540,9 @@ function renderDashboardScript(copy: DashboardCopy, totalCapabilities: number): 
   }
 
   function openDrawer(targetId) {
-    const source = document.getElementById(targetId);
-    if (!source || !drawer || !drawerContent || !backdrop) return;
-    const title = source.dataset.capabilityTitle || targetId;
-    const id = source.dataset.capabilityId || targetId;
-    drawerContent.innerHTML =
-      '<div class="d-top"><span class="d-id">' + esc(id) + '</span><button class="d-close" type="button" aria-label="${escapeAttribute(copy.close)}"><i class="ph ph-x" aria-hidden="true"></i></button></div>' +
-      '<div class="d-title">' + esc(title) + '</div>' +
-      source.innerHTML;
+    const template = document.getElementById("drawer-" + targetId);
+    if (!template || !drawer || !drawerContent || !backdrop) return;
+    drawerContent.innerHTML = template.innerHTML;
     drawer.classList.add("on");
     drawer.setAttribute("aria-hidden", "false");
     backdrop.classList.add("on");
@@ -638,7 +731,7 @@ ${DASHBOARD_STYLES}
           </tbody>
         </table>
       </div>
-      <div class="cap-details">
+      <div class="cap-details" inert aria-hidden="true">
         ${renderCapabilityResources(registry, copy)}
       </div>
     </section>
@@ -689,6 +782,7 @@ ${DASHBOARD_STYLES}
   <aside class="drawer" id="drawer" aria-hidden="true" aria-live="polite">
     <div class="drawer-in" id="drawerContent"></div>
   </aside>
+  ${renderDrawerTemplates(registry, copy)}
   ${renderDashboardScript(copy, capabilities.length)}
 </body>
 </html>`;
