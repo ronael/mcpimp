@@ -53,24 +53,42 @@ function uniqueLinks(links: ReferenceLink[]): ReferenceLink[] {
   });
 }
 
+function textWithoutCode(markdown: string): string {
+  return markdown
+    .replaceAll(/```[\s\S]*?```/g, "")
+    .replaceAll(/`[^`\n]*`/g, "");
+}
+
+function cleanDetectedUrl(value: string): string | undefined {
+  const url = value.replace(/[.,;:!?]+$/, "");
+  if (/[`"'<>]/.test(url)) return undefined;
+  if (url.includes("&lt;") || url.includes("&gt;") || url.includes("&quot;")) return undefined;
+  if (url.includes("...") || url.includes("…")) return undefined;
+  return url;
+}
+
 function extractReferenceLinks(file: CapabilityFile): ReferenceLink[] {
   const links: ReferenceLink[] = [];
-  const text = file.text;
+  const text = file.text ? textWithoutCode(file.text) : undefined;
   if (!text) return links;
 
-  const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
-  const bareUrlPattern = /https?:\/\/[^\s)]+/g;
+  const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^)\s<>"'`]+)\)/g;
+  const bareUrlPattern = /https?:\/\/[^\s<>"'`)]+/g;
 
   for (const match of text.matchAll(markdownLinkPattern)) {
+    const url = cleanDetectedUrl(match[2]);
+    if (!url) continue;
+
     links.push({
       title: match[1].trim(),
-      url: match[2],
+      url,
       sourcePath: file.path,
     });
   }
 
   for (const match of text.matchAll(bareUrlPattern)) {
-    const url = match[0].replace(/[.,;:]$/, "");
+    const url = cleanDetectedUrl(match[0]);
+    if (!url) continue;
     if (links.some((link) => link.url === url)) continue;
 
     links.push({

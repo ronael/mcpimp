@@ -49,7 +49,7 @@ When imagery is needed *and* the user hasn't supplied real assets, pick from thi
 | **[Lucide](https://lucide.dev)** | `lucide.dev` | 1,600+ | Modern SaaS / dev-tool default. The 2026 baseline. Active maintenance. |
 | **[Phosphor Icons](https://phosphoricons.com)** | `phosphoricons.com` | 9,000+ across 6 weights (thin / light / regular / bold / fill / duotone) | Tonal variants without mixing sets. The right pick when you need different *weights* of the same icon for emphasis. |
 | **[Heroicons](https://heroicons.com)** | `heroicons.com` | ~300 | Tailwind / shadcn projects. Tightly curated, opinionated. |
-| **[Tabler Icons](https://tabler-icons.io)** | `tabler-icons.io` | 5,900+ on a 24×24 grid | Breadth — when neither Lucide nor Heroicons covers the symbol you need. |
+| **[Tabler Icons](https://tabler.io/icons)** | `tabler.io/icons` | 5,900+ on a 24×24 grid | Breadth — when neither Lucide nor Heroicons covers the symbol you need. |
 | **[Iconoir](https://iconoir.com)** | `iconoir.com` | ~1,500 | Hand-drawn character with a generous free tier. |
 
 ### The rules
@@ -188,7 +188,7 @@ When budget and timeline force a shortcut and even Tier C is overkill.
 | **[Storyset](https://storyset.com)** | storyset.com (Freepik) | Free with attribution; paid removes | Animated SVG illustrations with toggleable element animation and on-site colour customisation. Onboarding flows, feature explanations. |
 | **[Humaaans](https://www.humaaans.com)** | humaaans.com (Pablo Stanley) | CC0 | Mix-and-match characters with diverse poses / outfits / skin tones. Hero sections that need humans without stock-photo territory. |
 | **[unDraw](https://undraw.co)** | undraw.co | MIT | Open SVG illustrations with on-export colour swap. Still respected if customised — saturated and instantly recognisable if not. |
-| **[IRA Design](https://www.iradesign.io)** | iradesign.io (Creative Tim) | Free / paid | Moody, sophisticated, isometric scenes for B2B / enterprise. |
+| **[DrawKit](https://www.drawkit.com/)** | drawkit.com | Free / paid | Polished illustration packs and icons for product pages, onboarding, and B2B feature explanations. |
 | **[Open Peeps](https://www.openpeeps.com)** | openpeeps.com | CC0 | Hand-drawn character library, naive style. Sits between photography and illustration. |
 
 ### The rules
@@ -217,7 +217,7 @@ When budget and timeline force a shortcut and even Tier C is overkill.
 | **[Browserframe](https://browserframe.com)** | browserframe.com | Browser + mobile device frames with annotation. Built for SaaS demo screenshots. |
 | **[Ray.so](https://ray.so)** | ray.so | Code snippets in macOS window frames. Perfect for developer-tool landing pages. |
 | **[Cleanmock](https://cleanmock.com)** | cleanmock.com | Mobile device frames; minimalist; good for app-store-listing-style heroes. |
-| **[Mockup.style](https://mockup.style)** | mockup.style | Versatile device + browser builder, Figma-friendly export. |
+| **[Mockit](https://www.mockit.design/)** | mockit.design | Versatile device + browser builder, Figma-friendly export. |
 | **[Device Shots](https://deviceshots.com)** | deviceshots.com | Free device generator with multiple frame styles, fast turnaround. |
 
 ### The rules
