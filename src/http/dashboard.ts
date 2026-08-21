@@ -744,7 +744,7 @@ ${DASHBOARD_STYLES}
           <p class="sub">${copy.upstreamIntro}</p>
         </div>
       </div>
-      <section class="panel">
+      <section class="panel" style="padding:0px;">
         <div class="tbl-wrap flush">
           <table class="tbl">
             <thead><tr><th>${escapeHtml(copy.upstreamHeaders.capability)}</th><th>${escapeHtml(copy.upstreamHeaders.transport)}</th><th>${escapeHtml(copy.upstreamHeaders.status)}</th><th>${escapeHtml(copy.upstreamHeaders.url)}</th><th>${escapeHtml(copy.upstreamHeaders.missingEnv)}</th></tr></thead>
