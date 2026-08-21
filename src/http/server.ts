@@ -14,6 +14,7 @@ export interface StaticSiteProvider {
 
 export interface ServerOptions {
   staticSite?: StaticSiteProvider;
+  dashboardHome?: boolean;
 }
 
 function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) {
@@ -35,10 +36,10 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
     return options.staticSite?.serve(path);
   }
 
-  app.get("/", async (c) => (await serveStatic(c.req.path)) || c.notFound());
-  app.get("/index.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
-  app.get("/fr/", async (c) => (await serveStatic(c.req.path)) || c.notFound());
-  app.get("/fr/index.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/", async (c) => (options.dashboardHome ? c.redirect("/dashboard") : (await serveStatic(c.req.path)) || c.notFound()));
+  app.get("/index.html", async (c) => (options.dashboardHome ? c.redirect("/dashboard") : (await serveStatic(c.req.path)) || c.notFound()));
+  app.get("/fr/", async (c) => (options.dashboardHome ? c.redirect("/fr/dashboard") : (await serveStatic(c.req.path)) || c.notFound()));
+  app.get("/fr/index.html", async (c) => (options.dashboardHome ? c.redirect("/fr/dashboard") : (await serveStatic(c.req.path)) || c.notFound()));
   app.get("/docs/sources.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
   app.get("/fr/docs/sources.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
   app.get("/assets/*", async (c) => (await serveStatic(c.req.path)) || c.notFound());

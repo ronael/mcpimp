@@ -53,7 +53,7 @@ const staticSite: StaticSiteProvider = {
   },
 };
 
-const app = createServer(registry, { staticSite });
+const app = createServer(registry, { staticSite, dashboardHome: true });
 
 serve({ fetch: app.fetch, port });
 

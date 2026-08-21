@@ -140,4 +140,24 @@ describe("Hono server", () => {
     expect(css.status).toBe(200);
     expect(css.headers.get("content-type")).toContain("text/css");
   });
+
+  it("can redirect local home routes to the dashboard", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+    const app = createServer(registry, {
+      dashboardHome: true,
+      staticSite: {
+        async serve() {
+          return new Response("<h1>Home</h1>");
+        },
+      },
+    });
+
+    const home = await app.request("/");
+    expect(home.status).toBe(302);
+    expect(home.headers.get("location")).toBe("/dashboard");
+
+    const frenchHome = await app.request("/fr/");
+    expect(frenchHome.status).toBe(302);
+    expect(frenchHome.headers.get("location")).toBe("/fr/dashboard");
+  });
 });
