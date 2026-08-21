@@ -1,0 +1,2129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCPIMP, registry personnel de capabilities pour agents IA</title>
+  <meta name="description" content="MCPIMP centralise les capabilities et les serveurs MCP de plusieurs agents, puis conserve la provenance, le commit et la licence de chaque source.">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="MCPIMP, le registry personnel de capabilities">
+  <meta property="og:description" content="Un runtime MCP local pour découvrir, rechercher et charger des capabilities avec une provenance vérifiable.">
+  <meta property="og:image" content="https://opengraph.githubassets.com/1/ronael/mcpimp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c9ff3d'/%3E%3Cpath d='M7 23V9h4l5 7 5-7h4v14h-4v-8l-5 6-5-6v8z' fill='%230a0a0a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5.2.6/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist-mono@5.2.6/index.css">
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" defer></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #0a0a0a;
+      --panel: #181818;
+      --panel-strong: #1f1f1f;
+      --line: #313131;
+      --line-soft: #272727;
+      --paper: #f7f7f2;
+      --muted: #a8a8a2;
+      --acid: #c9ff3d;
+      --cyan: #63e6ff;
+      --coral: #ff7a66;
+      --violet: #bda7ff;
+      --ease: cubic-bezier(0.32, 0.72, 0, 1);
+      --s0: 0;
+      --s1: 2px;
+      --s2: 4px;
+      --s3: 8px;
+      --s4: 12px;
+      --s5: 16px;
+      --s6: 24px;
+      --s7: 32px;
+      --s8: 40px;
+      --s9: 48px;
+      --s10: 64px;
+      --s11: 80px;
+      --s12: 96px;
+      --content: 1200px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 96px;
+      background: var(--ink);
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      overflow-x: hidden;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: "Geist Variable", Geist, sans-serif;
+      font-size: 16px;
+      line-height: 24px;
+      letter-spacing: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body.menu-open { overflow: hidden; }
+
+    a { color: inherit; }
+
+    button, a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button { font: inherit; }
+
+    ::selection {
+      background: var(--acid);
+      color: var(--ink);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 4px;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: var(--s5);
+      left: var(--s5);
+      z-index: 1000;
+      padding: var(--s3) var(--s4);
+      border-radius: 4px;
+      background: var(--paper);
+      color: var(--ink);
+      font-weight: 650;
+      transform: translateY(-160%);
+      transition: transform 700ms var(--ease);
+    }
+
+    .skip-link:focus { transform: translateY(0); }
+
+    .shell {
+      width: min(calc(100% - 48px), var(--content));
+      margin-inline: auto;
+    }
+
+    .nav-wrap {
+      position: fixed;
+      top: var(--s6);
+      left: 50%;
+      z-index: 100;
+      width: min(calc(100% - 48px), var(--content));
+      transform: translateX(-50%);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      padding: var(--s2) var(--s2) var(--s2) var(--s5);
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      transition: background 700ms var(--ease), border-color 700ms var(--ease),
+        box-shadow 700ms var(--ease), backdrop-filter 700ms var(--ease);
+    }
+
+    .nav-wrap.scrolled .nav {
+      background: rgba(24, 24, 24, 0.78);
+      border-color: rgba(247, 247, 242, 0.16);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(24px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s3);
+      color: var(--paper);
+      text-decoration: none;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 700;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: 6px;
+      background: var(--acid);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 750;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--s1);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+    }
+
+    .nav-links a {
+      padding: var(--s3) var(--s4);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 700ms var(--ease), background 700ms var(--ease), transform 700ms var(--ease);
+    }
+
+    .nav-links a:hover {
+      background: var(--line-soft);
+      color: var(--paper);
+      transform: translateY(-2px);
+    }
+
+    .nav-links a:active { transform: scale(0.98); }
+
+    .nav-cta,
+    .button-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s3);
+      min-height: 40px;
+      padding: var(--s3) var(--s4);
+      border: 1px solid var(--acid);
+      border-radius: 6px;
+      background: var(--acid);
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 650;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(201, 255, 61, 0.14);
+      transition: transform 700ms var(--ease), background 700ms var(--ease), box-shadow 700ms var(--ease);
+    }
+
+    .nav-cta {
+      min-height: 40px;
+      margin-left: var(--s2);
+      padding: var(--s3) var(--s4);
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .nav-cta:hover,
+    .button-primary:hover {
+      background: #d5ff68;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(201, 255, 61, 0.2);
+    }
+
+    .nav-cta:active,
+    .button-primary:active { transform: scale(0.98); }
+
+    .menu-button {
+      display: none;
+      position: relative;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 0;
+      border-radius: 9999px;
+      background: var(--acid);
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .menu-button span {
+      position: absolute;
+      left: 11px;
+      width: 18px;
+      height: 2px;
+      border-radius: 9999px;
+      background: currentColor;
+      transition: transform 700ms var(--ease), top 700ms var(--ease);
+    }
+
+    .menu-button span:first-child { top: 15px; }
+    .menu-button span:last-child { top: 23px; }
+    .menu-button[aria-expanded="true"] span:first-child { top: 19px; transform: rotate(45deg); }
+    .menu-button[aria-expanded="true"] span:last-child { top: 19px; transform: rotate(-45deg); }
+
+    .mobile-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      visibility: hidden;
+      place-items: center;
+      padding: var(--s11) var(--s6) var(--s10);
+      background: rgba(10, 10, 10, 0.84);
+      opacity: 0;
+      backdrop-filter: blur(32px);
+      transition: opacity 700ms var(--ease), visibility 700ms var(--ease);
+    }
+
+    .mobile-menu.open { visibility: visible; opacity: 1; }
+
+    .mobile-menu nav {
+      display: grid;
+      width: min(100%, 480px);
+      gap: var(--s3);
+    }
+
+    .mobile-menu a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--s5);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--paper);
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 600;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(48px);
+      transition: opacity 700ms var(--ease), transform 700ms var(--ease), background 700ms var(--ease);
+    }
+
+    .mobile-menu.open a { opacity: 1; transform: translateY(0); }
+    .mobile-menu.open a:nth-child(1) { transition-delay: 100ms; }
+    .mobile-menu.open a:nth-child(2) { transition-delay: 150ms; }
+    .mobile-menu.open a:nth-child(3) { transition-delay: 200ms; }
+    .mobile-menu.open a:nth-child(4) { transition-delay: 250ms; }
+    .mobile-menu.open a:nth-child(5) { transition-delay: 300ms; }
+    .mobile-menu a:hover { background: var(--panel-strong); }
+
+    main { overflow: hidden; }
+
+    .hero {
+      position: relative;
+      min-height: min(860px, 88vh);
+      padding: 176px 0 var(--s11);
+      background: var(--ink);
+    }
+
+    .hero-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 0.92fr) minmax(520px, 1.08fr);
+      align-items: center;
+      gap: var(--s10);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s3);
+      margin: 0 0 var(--s6);
+      color: var(--acid);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: var(--acid);
+      box-shadow: 0 0 0 4px rgba(201, 255, 61, 0.12);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 680px;
+      margin-bottom: var(--s6);
+      background: linear-gradient(90deg, #ffffff, #9b9b9b);
+      background-clip: text;
+      color: transparent;
+      font-size: 60px;
+      line-height: 1;
+      font-weight: 650;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    .hero-copy > p {
+      max-width: 680px;
+      margin-bottom: var(--s7);
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 28px;
+      text-wrap: pretty;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--s5);
+      margin-bottom: var(--s6);
+    }
+
+    .button-primary i { font-size: 20px; }
+
+    .proof-line {
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 20px;
+      text-wrap: pretty;
+    }
+
+    .proof-line i { color: var(--cyan); font-size: 20px; }
+
+    .product-window {
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+      border: 1px solid #3c3c3c;
+      border-radius: 8px;
+      background: #111111;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.48);
+      transform: rotate(1deg);
+      transition: transform 800ms var(--ease), box-shadow 800ms var(--ease);
+    }
+
+    .product-window:hover {
+      transform: rotate(0deg) translateY(-4px);
+      box-shadow: 0 40px 96px rgba(0, 0, 0, 0.58);
+    }
+
+    .window-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      padding: var(--s4) var(--s5);
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .window-title {
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      color: var(--paper);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .window-title i { color: var(--acid); font-size: 18px; }
+
+    .runtime-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s3);
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .runtime-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: var(--acid);
+    }
+
+    .tool-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--s2);
+      padding: var(--s3);
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-strong);
+    }
+
+    .tool-tab {
+      min-width: 0;
+      padding: var(--s3) var(--s4);
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      cursor: pointer;
+      transition: color 700ms var(--ease), background 700ms var(--ease), transform 700ms var(--ease);
+    }
+
+    .tool-tab:hover { color: var(--paper); background: var(--line-soft); }
+    .tool-tab:active { transform: scale(0.98); }
+    .tool-tab[aria-selected="true"] { background: var(--acid); color: var(--ink); }
+
+    .terminal {
+      min-height: 400px;
+      padding: var(--s6);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .terminal-command {
+      display: flex;
+      gap: var(--s3);
+      margin-bottom: var(--s6);
+      color: var(--paper);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .prompt { color: var(--acid); }
+    .json-key { color: var(--cyan); }
+    .json-string { color: #f3c677; }
+    .json-value { color: var(--coral); }
+    .json-comment { color: #7b7b76; }
+
+    .terminal-output {
+      display: grid;
+      gap: var(--s3);
+      opacity: 1;
+      transition: opacity 700ms var(--ease), transform 700ms var(--ease), filter 700ms var(--ease);
+    }
+
+    .terminal-output.loading {
+      opacity: 0.24;
+      filter: blur(4px);
+      transform: translateY(8px);
+    }
+
+    .terminal-row {
+      padding: var(--s4);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--panel);
+    }
+
+    .terminal-row strong {
+      display: block;
+      margin-bottom: var(--s2);
+      color: var(--paper);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+    }
+
+    .terminal-row span { display: block; color: var(--muted); font-size: 12px; line-height: 16px; overflow-wrap: anywhere; }
+
+    .product-caption {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--s5);
+      padding: var(--s4) var(--s5);
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .product-caption span:last-child { color: var(--acid); }
+
+    .proof-strip {
+      background: var(--acid);
+      color: var(--ink);
+    }
+
+    .proof-strip .shell {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .proof-fact {
+      display: flex;
+      align-items: center;
+      gap: var(--s4);
+      min-height: 96px;
+      padding: var(--s5);
+      border-right: 1px solid rgba(10, 10, 10, 0.24);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 650;
+      text-wrap: pretty;
+    }
+
+    .proof-fact:first-child { border-left: 1px solid rgba(10, 10, 10, 0.24); }
+    .proof-fact i { flex: 0 0 auto; font-size: 24px; }
+
+    .section {
+      padding: var(--s12) 0;
+      background: var(--ink);
+    }
+
+    .section.paper { background: var(--paper); color: var(--ink); }
+    .section.panel { background: var(--panel); }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.72fr) minmax(320px, 0.42fr);
+      align-items: end;
+      gap: var(--s10);
+      margin-bottom: var(--s10);
+    }
+
+    .section-kicker {
+      margin-bottom: var(--s4);
+      color: var(--coral);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    .paper .section-kicker { color: #a02f20; }
+
+    h2 {
+      max-width: 760px;
+      margin-bottom: 0;
+      font-size: 48px;
+      line-height: 1;
+      font-weight: 620;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    .section-head > p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 28px;
+      text-wrap: pretty;
+    }
+
+    .paper .section-head > p { color: #5e5e59; }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--s5);
+    }
+
+    .problem-card {
+      position: relative;
+      min-height: 320px;
+      padding: var(--s7);
+      overflow: hidden;
+      border: 1px solid #d4d4cd;
+      border-radius: 8px;
+      background: #ffffff;
+      transition: transform 700ms var(--ease), border-color 700ms var(--ease), box-shadow 700ms var(--ease);
+    }
+
+    .problem-card:hover {
+      transform: translateY(-8px);
+      border-color: #a3a39b;
+      box-shadow: 0 24px 48px rgba(10, 10, 10, 0.1);
+    }
+
+    .problem-index {
+      display: inline-grid;
+      width: 40px;
+      height: 40px;
+      margin-bottom: var(--s8);
+      place-items: center;
+      border-radius: 6px;
+      background: var(--ink);
+      color: var(--acid);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .problem-card h3,
+    .benefit-card h3,
+    .use-card h3,
+    .step h3,
+    .security-copy h3 {
+      margin-bottom: var(--s4);
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 620;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    .problem-card p,
+    .benefit-card p,
+    .use-card p,
+    .step p,
+    .security-copy p {
+      margin-bottom: 0;
+      color: #5e5e59;
+      text-wrap: pretty;
+    }
+
+    /* .step cards live on the dark fonctionnement section: give them explicit
+       light-on-panel text instead of inheriting the page-wide light color,
+       which made titles invisible on the old white cards. */
+    .step h3 { color: var(--paper); }
+    .step p { color: var(--muted); }
+
+    .problem-card code {
+      position: absolute;
+      right: var(--s5);
+      bottom: var(--s5);
+      left: var(--s5);
+      padding: var(--s4);
+      border-radius: 4px;
+      background: #f0f0ea;
+      color: #4b4b47;
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+    }
+
+    .benefit-card {
+      position: relative;
+      grid-column: span 4;
+      min-height: 280px;
+      padding: var(--s8);
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: var(--ink);
+      transition: background 700ms var(--ease);
+    }
+
+    /* Tool map : la carte vedette occupe toute la première ligne */
+    .benefit-lead {
+      grid-column: 1 / -1;
+      min-height: 240px;
+    }
+
+    .benefit-lead .benefit-icon {
+      position: absolute;
+      top: var(--s8);
+      right: var(--s8);
+      margin-bottom: 0;
+    }
+
+    /* Court connecteur reliant chaque carte à la ligne-épine de la grille */
+    .benefit-card:not(.benefit-lead)::after {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      height: var(--s6);
+      border-left: 1px solid var(--line);
+    }
+
+    /* Pill mono indiquant l'outil MCP réel derrière chaque bénéfice */
+    .benefit-tool {
+      display: block;
+      width: max-content;
+      margin-bottom: var(--s6);
+      padding: var(--s2) var(--s3);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--cyan);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .benefit-card:hover { background: var(--panel); }
+
+    .benefit-icon {
+      display: inline-grid;
+      width: 48px;
+      height: 48px;
+      margin-bottom: var(--s8);
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--cyan);
+      font-size: 24px;
+    }
+
+    .benefit-card:nth-child(2) .benefit-icon { color: var(--acid); }
+    .benefit-card:nth-child(3) .benefit-icon { color: var(--coral); }
+    .benefit-card:nth-child(4) .benefit-icon { color: var(--violet); }
+    .benefit-card:nth-child(2) .benefit-tool { color: var(--acid); }
+    .benefit-card:nth-child(3) .benefit-tool { color: var(--coral); }
+    .benefit-card:nth-child(4) .benefit-tool { color: var(--violet); }
+    .benefit-card p { max-width: 480px; color: var(--muted); }
+
+    .shared-flow {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) 48px minmax(0, 1.1fr) 48px minmax(0, 0.8fr);
+      align-items: center;
+      gap: var(--s5);
+      margin-bottom: var(--s10);
+    }
+
+    .flow-column {
+      display: grid;
+      gap: var(--s4);
+    }
+
+    .flow-label {
+      margin-bottom: var(--s2);
+      color: #5e5e59;
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    .flow-node,
+    .hub-node {
+      padding: var(--s5);
+      border: 1px solid #d4d4cd;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .flow-node {
+      display: flex;
+      align-items: center;
+      gap: var(--s4);
+      color: #343431;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 620;
+    }
+
+    .flow-node i {
+      color: #246e43;
+      font-size: 24px;
+    }
+
+    .flow-arrow {
+      display: grid;
+      place-items: center;
+      color: #7a7a74;
+      font-size: 24px;
+    }
+
+    .hub-node {
+      padding: var(--s6);
+      border-color: var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      box-shadow: 0 24px 48px rgba(10, 10, 10, 0.16);
+    }
+
+    .hub-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s4);
+      margin-bottom: var(--s6);
+    }
+
+    .hub-head strong {
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 650;
+    }
+
+    .hub-head span {
+      color: var(--acid);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .hub-tools {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--s3);
+    }
+
+    .hub-tool {
+      min-width: 0;
+      padding: var(--s3);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--panel);
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .central-benefits {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-top: 1px solid #d4d4cd;
+      border-left: 1px solid #d4d4cd;
+    }
+
+    .central-benefit {
+      min-height: 176px;
+      padding: var(--s6);
+      border-right: 1px solid #d4d4cd;
+      border-bottom: 1px solid #d4d4cd;
+    }
+
+    .central-benefit strong {
+      display: block;
+      margin-bottom: var(--s3);
+      font-size: 18px;
+      line-height: 28px;
+      font-weight: 650;
+    }
+
+    .central-benefit p {
+      margin-bottom: 0;
+      color: #5e5e59;
+      font-size: 14px;
+      line-height: 20px;
+      text-wrap: pretty;
+    }
+
+    .steps {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 48px minmax(0, 1fr);
+      gap: var(--s6);
+      counter-reset: step;
+    }
+
+    /* Ligne-épine du pipeline, visible dans les interstices entre les cartes */
+    .steps::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 0;
+      left: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .step-arrow {
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 24px;
+    }
+
+    /* Fond plein derrière le glyphe pour que la spine ne le traverse pas */
+    .step-arrow i {
+      padding: var(--s2);
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .step {
+      counter-increment: step;
+      position: relative;
+      min-height: 440px;
+      padding: var(--s7);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--paper);
+    }
+
+    /* Tag de statut pipeline, même styling que .runtime-status du hero */
+    .step-tag {
+      position: absolute;
+      top: var(--s5);
+      right: var(--s5);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s3);
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      text-transform: uppercase;
+    }
+
+    .step-tag::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--acid);
+    }
+
+    .step::before {
+      content: "0" counter(step);
+      display: block;
+      margin-bottom: var(--s6);
+      color: var(--acid);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .step-code {
+      position: absolute;
+      right: var(--s5);
+      bottom: var(--s5);
+      left: var(--s5);
+      min-height: 112px;
+      padding: var(--s5);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #0d0d0d;
+      color: var(--paper);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    /* Barre de titre mono en première ligne du bloc code */
+    .step-code-tag {
+      display: block;
+      margin: calc(-1 * var(--s5)) calc(-1 * var(--s5)) var(--s4);
+      padding: var(--s3) var(--s5);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .tagline-section {
+      position: relative;
+      display: grid;
+      min-height: 720px;
+      place-items: center;
+      padding: var(--s12) var(--s6);
+      overflow: hidden;
+      background: var(--cyan);
+      color: var(--ink);
+    }
+
+    /* Fond de la tagline : fallback pattern SVG (variante B), remplacé par le
+       canvas three.js quand WebGL est disponible. */
+    .tagline-section--b {
+      background: var(--cyan)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cpath d='M0 36h72M36 0v72' stroke='%230a0a0a' stroke-opacity='0.07' stroke-width='1'/%3E%3Ccircle cx='36' cy='36' r='1.5' fill='%230a0a0a' fill-opacity='0.10'/%3E%3C/svg%3E")
+        center / 72px 72px;
+    }
+
+    .tagline-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .tagline {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0;
+      font-size: 60px;
+      line-height: 1;
+      font-weight: 620;
+      text-align: center;
+      text-wrap: balance;
+    }
+
+    .tagline .word {
+      color: rgba(10, 10, 10, 0.28);
+      transition: color 800ms var(--ease);
+    }
+
+    .tagline .word.active { color: var(--ink); }
+
+    .security-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(440px, 0.9fr);
+      align-items: center;
+      gap: var(--s10);
+    }
+
+    .security-copy h2 { margin-bottom: var(--s6); }
+    .security-copy > p { max-width: 580px; margin-bottom: var(--s7); color: var(--muted); font-size: 18px; line-height: 28px; }
+
+    .security-list {
+      display: grid;
+      gap: var(--s4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .security-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--s4);
+      color: var(--paper);
+    }
+
+    .security-list i { margin-top: var(--s1); color: var(--acid); font-size: 20px; }
+
+    .security-boundary {
+      margin-top: var(--s7);
+      padding: var(--s5);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-strong);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 20px;
+      text-wrap: pretty;
+    }
+
+    .security-boundary strong { color: var(--paper); }
+
+    .manifest {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #111111;
+      box-shadow: 0 32px 64px rgba(0, 0, 0, 0.32);
+    }
+
+    .manifest-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--s4) var(--s5);
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .manifest-head span:last-child { color: var(--acid); }
+
+    .manifest pre {
+      margin: 0;
+      padding: var(--s6);
+      overflow-x: auto;
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 20px;
+    }
+
+    .use-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--s5);
+    }
+
+    .use-card {
+      min-height: 300px;
+      padding: var(--s6);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      transition: transform 700ms var(--ease), background 700ms var(--ease), border-color 700ms var(--ease);
+    }
+
+    .use-card:hover { transform: translateY(-8px); background: var(--panel-strong); border-color: #4b4b4b; }
+
+    .use-card i {
+      display: block;
+      margin-bottom: var(--s6);
+      color: var(--acid);
+      font-size: 32px;
+    }
+
+    .use-card:nth-child(2) i { color: var(--cyan); }
+    .use-card:nth-child(3) i { color: var(--coral); }
+    .use-card:nth-child(4) i { color: var(--violet); }
+    .use-card:nth-child(5) i { color: var(--acid); }
+    .use-card p { color: var(--muted); }
+
+    .integration-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s3);
+      margin-bottom: var(--s6);
+      color: var(--muted);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .integration-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: var(--line);
+    }
+
+    .integration-status.active { color: var(--acid); }
+    .integration-status.active::before { background: var(--acid); }
+
+    .integration-tool {
+      display: block;
+      margin-top: var(--s6);
+      color: var(--paper);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 12px;
+      line-height: 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .integration-note {
+      max-width: 760px;
+      margin: var(--s7) 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 20px;
+      text-wrap: pretty;
+    }
+
+    .install-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.78fr) minmax(520px, 1.22fr);
+      align-items: start;
+      gap: var(--s10);
+    }
+
+    .install-copy { position: sticky; top: 128px; }
+    .install-copy h2 { margin-bottom: var(--s6); }
+    .install-copy > p { max-width: 500px; margin-bottom: var(--s7); color: #5e5e59; font-size: 18px; line-height: 28px; }
+
+    .install-note {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--s4);
+      padding: var(--s5);
+      border: 1px solid #d4d4cd;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #4b4b47;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .install-note i { flex: 0 0 auto; color: #246e43; font-size: 20px; }
+
+    .command-stack { display: grid; gap: var(--s5); }
+
+    .command-card {
+      overflow: hidden;
+      border: 1px solid #d4d4cd;
+      border-radius: 8px;
+      background: var(--ink);
+    }
+
+    .command-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s5);
+      padding: var(--s4) var(--s5);
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .copy-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s3);
+      min-height: 32px;
+      padding: var(--s2) var(--s4);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--panel-strong);
+      color: var(--paper);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 700ms var(--ease), background 700ms var(--ease), border-color 700ms var(--ease);
+    }
+
+    .copy-button:hover { background: var(--line-soft); border-color: #575757; transform: translateY(-2px); }
+    .copy-button:active { transform: scale(0.98); }
+    .copy-button.success { background: var(--acid); border-color: var(--acid); color: var(--ink); }
+
+    .command-card pre {
+      margin: 0;
+      padding: var(--s6);
+      overflow-x: auto;
+      color: var(--paper);
+      font-family: "Geist Mono Variable", monospace;
+      font-size: 14px;
+      line-height: 20px;
+      white-space: pre;
+    }
+
+    .faq-list {
+      max-width: 1280px;
+      margin-inline: auto;
+      border-top: 1px solid var(--line);
+    }
+
+    .faq-item { border-bottom: 1px solid var(--line); }
+
+    .faq-question {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s6);
+      padding: var(--s6) 0;
+      border: 0;
+      background: transparent;
+      color: var(--paper);
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .faq-question i {
+      flex: 0 0 auto;
+      font-size: 20px;
+      transition: transform 700ms var(--ease);
+    }
+
+    .faq-question[aria-expanded="true"] i { transform: rotate(45deg); }
+    .faq-answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 700ms var(--ease); }
+    .faq-answer > div { overflow: hidden; }
+    .faq-answer p { max-width: 760px; margin-bottom: 0; padding: 0 0 var(--s6); color: var(--muted); text-wrap: pretty; }
+    .faq-question[aria-expanded="true"] + .faq-answer { grid-template-rows: 1fr; }
+
+    .final-cta {
+      position: relative;
+      padding: var(--s12) 0;
+      overflow: hidden;
+      background: var(--acid);
+      color: var(--ink);
+    }
+
+    .final-cta .shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: var(--s10);
+    }
+
+    .final-cta h2 { max-width: 760px; margin-bottom: var(--s5); }
+    .final-cta p { max-width: 620px; margin-bottom: 0; color: #343431; font-size: 18px; line-height: 28px; }
+    .final-cta .button-primary { border-color: var(--ink); background: var(--ink); color: var(--paper); box-shadow: none; }
+    .final-cta .button-primary:hover { background: var(--panel-strong); }
+
+    footer {
+      padding: var(--s10) 0;
+      background: var(--ink);
+      color: var(--muted);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: var(--s6);
+    }
+
+    .footer-left p { margin: var(--s4) 0 0; font-size: 14px; line-height: 20px; }
+    .footer-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--s5); }
+
+    .footer-links a,
+    .footer-links button {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 20px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 700ms var(--ease);
+    }
+
+    .footer-links a:hover,
+    .footer-links button:hover { color: var(--paper); }
+
+    dialog {
+      width: min(calc(100% - 48px), 640px);
+      max-height: calc(100vh - 96px);
+      padding: 0;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--paper);
+      box-shadow: 0 32px 96px rgba(0, 0, 0, 0.64);
+    }
+
+    dialog::backdrop { background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(8px); }
+    .dialog-inner { padding: var(--s7); }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s5); margin-bottom: var(--s6); }
+    .dialog-head h2 { font-size: 30px; line-height: 36px; }
+    .dialog-close { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-strong); color: var(--paper); cursor: pointer; }
+    .dialog-inner p { color: var(--muted); text-wrap: pretty; }
+
+    .reveal {
+      opacity: 0;
+      filter: blur(8px);
+      transform: translateY(64px);
+      transition: opacity 900ms var(--ease), filter 900ms var(--ease), transform 900ms var(--ease);
+    }
+
+    .reveal.visible { opacity: 1; filter: blur(0); transform: translateY(0); }
+
+    @media (max-width: 1024px) {
+      .nav-links { display: none; }
+      .menu-button { display: block; }
+      .hero { min-height: auto; padding-top: 160px; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-copy { max-width: 760px; }
+      .product-window { width: 100%; transform: none; }
+      .proof-strip .shell { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .proof-fact:nth-child(3) { border-left: 1px solid rgba(10, 10, 10, 0.24); }
+      .proof-fact:nth-child(-n+2) { border-bottom: 1px solid rgba(10, 10, 10, 0.24); }
+      .section-head { grid-template-columns: 1fr; gap: var(--s6); }
+      .use-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .security-grid, .install-grid { grid-template-columns: 1fr; }
+      .install-copy { position: static; }
+      .final-cta .shell { grid-template-columns: 1fr; align-items: start; }
+    }
+
+    @media (max-width: 760px) {
+      .shell, .nav-wrap { width: min(calc(100% - 32px), var(--content)); }
+      .nav { padding-left: var(--s4); }
+      .nav-cta { display: none; }
+      .hero { padding: 144px 0 var(--s10); }
+      h1 { font-size: 48px; }
+      h2 { font-size: 36px; line-height: 40px; }
+      .hero-copy > p { font-size: 18px; line-height: 28px; }
+      .hero-actions { align-items: stretch; }
+      .button-primary { width: 100%; }
+      .terminal { min-height: 440px; padding: var(--s5); font-size: 12px; line-height: 16px; }
+      .tool-tab { padding-inline: var(--s3); font-size: 12px; }
+      .product-caption { flex-direction: column; }
+      .proof-strip .shell { width: 100%; grid-template-columns: 1fr; }
+      .proof-fact, .proof-fact:first-child, .proof-fact:nth-child(3) { border-right: 0; border-left: 0; border-bottom: 1px solid rgba(10, 10, 10, 0.24); }
+      .proof-fact:last-child { border-bottom: 0; }
+      .section { padding: var(--s11) 0; }
+      .section-head { margin-bottom: var(--s8); }
+      .problem-grid, .benefit-grid, .steps, .use-grid { grid-template-columns: 1fr; }
+      .benefit-card, .benefit-lead { grid-column: 1 / -1; }
+      .benefit-card:not(.benefit-lead)::after { content: none; }
+      .steps::before { top: 0; right: auto; bottom: 0; left: 50%; border-top: 0; border-left: 1px solid var(--line); }
+      .step-arrow { transform: rotate(90deg); }
+      .shared-flow { grid-template-columns: 1fr; gap: var(--s5); }
+      .shared-flow .flow-column:last-child { grid-column: auto; }
+      .shared-flow .flow-arrow { transform: rotate(90deg); }
+      .central-benefits { grid-template-columns: 1fr; }
+      .problem-card { min-height: 300px; padding: var(--s6); }
+      .benefit-card { min-height: 240px; padding: var(--s6); }
+      .step { min-height: 400px; padding: var(--s6); }
+      .tagline-section { min-height: 640px; padding-inline: var(--s5); }
+      .tagline { font-size: 48px; }
+      .security-grid { gap: var(--s8); }
+      .manifest pre, .command-card pre { padding: var(--s5); font-size: 12px; line-height: 20px; }
+      .use-card { min-height: 240px; }
+      .use-card i { margin-bottom: var(--s8); }
+      .footer-grid { grid-template-columns: 1fr; }
+      .footer-links { justify-content: flex-start; }
+    }
+
+    @media (max-width: 420px) {
+      h1 { font-size: 36px; line-height: 40px; }
+      .tagline { font-size: 36px; line-height: 40px; }
+      .window-title span { display: none; }
+      .runtime-status { font-size: 12px; }
+      .tool-tab { overflow: hidden; text-overflow: ellipsis; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+      .reveal { opacity: 1; filter: none; transform: none; }
+      .tagline .word { color: var(--ink); }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+  <header class="nav-wrap">
+    <nav class="nav" aria-label="Navigation principale">
+      <a class="brand" href="#top" aria-current="page">
+        <span class="brand-mark" aria-hidden="true">M</span>
+        <span>MCPIMP</span>
+      </a>
+      <div class="nav-links">
+        <a href="#centralisation">Centralisation</a>
+        <a href="#fonctionnement">Fonctionnement</a>
+        <a href="#integrations">Intégrations</a>
+        <a href="#provenance">Sécurité</a>
+      </div>
+      <div class="nav-actions">
+        <a class="nav-cta" href="#installation">Installer</a>
+        <button class="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <nav aria-label="Navigation mobile">
+      <a href="#centralisation">Centralisation <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+      <a href="#fonctionnement">Fonctionnement <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+      <a href="#integrations">Intégrations <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+      <a href="#provenance">Sécurité <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+      <a href="#installation">Installer <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+    </nav>
+  </div>
+
+  <main id="contenu">
+    <section class="hero" id="top">
+      <div class="shell hero-grid">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Capability registry pour agents IA</p>
+          <h1>Le registre personnel qui donne les bonnes capabilities à tes agents.</h1>
+          <p>MCPIMP donne à plusieurs agents un point d’entrée commun pour découvrir des capabilities et appeler des MCP amont. Tu configures le hub une fois, puis chaque client retrouve le même registre.</p>
+          <div class="hero-actions">
+            <a class="button-primary" href="#installation">Installer MCPIMP <i class="ph ph-arrow-down" aria-hidden="true"></i></a>
+          </div>
+          <div class="proof-line"><i class="ph ph-seal-check" aria-hidden="true"></i><span>Source, commit, empreinte du contenu et licence conservés dans <code>SOURCE.json</code>.</span></div>
+        </div>
+
+        <div class="product-window reveal" aria-label="Aperçu interactif du registry MCPIMP">
+          <div class="window-bar">
+            <div class="window-title"><i class="ph ph-circles-three-plus" aria-hidden="true"></i><span>personal capabilities</span></div>
+            <div class="runtime-status">runtime local</div>
+          </div>
+          <div class="tool-tabs" role="tablist" aria-label="Outils MCP">
+            <button class="tool-tab" type="button" role="tab" aria-selected="true" data-demo="discover">Découvrir</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-demo="search">Rechercher</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-demo="load">Charger</button>
+          </div>
+          <div class="terminal" aria-live="polite">
+            <div class="terminal-command"><span class="prompt">›</span><span id="demo-command">list-capabilities</span></div>
+            <div class="terminal-output" id="demo-output"></div>
+          </div>
+          <div class="product-caption"><span>Transport MCP via HTTP et SSE</span><span>capabilities lues sur disque</span></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="proof-strip" aria-label="Garanties produit">
+      <div class="shell">
+        <div class="proof-fact"><i class="ph ph-share-network" aria-hidden="true"></i><span>Un endpoint partagé par plusieurs agents compatibles MCP</span></div>
+        <div class="proof-fact"><i class="ph ph-file-lock" aria-hidden="true"></i><span>Provenance et licence lisibles par l’agent</span></div>
+        <div class="proof-fact"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span>Recherche classée dans le contenu des capabilities</span></div>
+        <div class="proof-fact"><i class="ph ph-cloud-slash" aria-hidden="true"></i><span>Capabilities importées disponibles même sans réseau</span></div>
+      </div>
+    </aside>
+
+    <section class="section paper" aria-labelledby="problemes-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <p class="section-kicker">Le problème</p>
+            <h2 id="problemes-title">Les bons workflows existent déjà. Il reste à les retrouver.</h2>
+          </div>
+          <p>Quand les capabilities vivent dans des dépôts, des catalogues et des prompts isolés, chaque nouveau projet recommence le même travail de collecte.</p>
+        </div>
+        <div class="problem-grid">
+          <article class="problem-card reveal">
+            <span class="problem-index">01</span>
+            <h3>Le contexte déborde</h3>
+            <p>Copier des guides entiers dilue la demande et charge des règles sans rapport avec la tâche.</p>
+            <code>prompt.md + design.md + notes.md + tout le reste</code>
+          </article>
+          <article class="problem-card reveal">
+            <span class="problem-index">02</span>
+            <h3>La source se perd</h3>
+            <p>Une instruction copiée ne dit plus d’où elle vient, quand elle a changé ni sous quelle licence elle existe.</p>
+            <code>origine inconnue · révision inconnue · licence inconnue</code>
+          </article>
+          <article class="problem-card reveal">
+            <span class="problem-index">03</span>
+            <h3>Chaque agent improvise</h3>
+            <p>Sans catalogue commun, Codex ou Claude Code doit deviner quel savoir mobiliser pour chaque projet.</p>
+            <code>« utilise les bonnes pratiques » ne suffit pas</code>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="avantages" aria-labelledby="avantages-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <p class="section-kicker">Ce que MCPIMP change</p>
+            <h2 id="avantages-title">Un point d’entrée clair pour les capabilities de ton environnement.</h2>
+          </div>
+          <p>Le registry transforme une collection de fichiers en outils MCP explicites, consultables et traçables.</p>
+        </div>
+        <div class="benefit-grid">
+          <article class="benefit-card benefit-lead reveal">
+            <span class="benefit-tool">list-capabilities</span>
+            <span class="benefit-icon"><i class="ph ph-compass-tool" aria-hidden="true"></i></span>
+            <h3>Découvrir avant d’inventer</h3>
+            <p>Montre à l’agent ce qui est réellement disponible, avec l’origine de chaque capability.</p>
+          </article>
+          <article class="benefit-card reveal">
+            <span class="benefit-tool">search-capabilities</span>
+            <span class="benefit-icon"><i class="ph ph-binoculars" aria-hidden="true"></i></span>
+            <h3>Trouver le bon passage</h3>
+            <p>Classe les résultats selon le nom, les titres, les tags et le contenu au lieu de tout renvoyer.</p>
+          </article>
+          <article class="benefit-card reveal">
+            <span class="benefit-tool">load-capability</span>
+            <span class="benefit-icon"><i class="ph ph-selection-plus" aria-hidden="true"></i></span>
+            <h3>Charger seulement l’utile</h3>
+            <p>Peut lire une section ou un fichier précis. Le contexte reste centré sur la tâche en cours.</p>
+          </article>
+          <article class="benefit-card reveal">
+            <span class="benefit-tool">capability-info</span>
+            <span class="benefit-icon"><i class="ph ph-git-commit" aria-hidden="true"></i></span>
+            <h3>Garder une chaîne de confiance</h3>
+            <p>Expose la source, le commit, l’empreinte, la licence et la date de synchronisation.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section paper" id="centralisation" aria-labelledby="centralisation-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <p class="section-kicker">Un MCP partagé</p>
+            <h2 id="centralisation-title">Configure le hub une fois. Tes agents partagent ensuite le même point d’entrée.</h2>
+          </div>
+          <p>Chaque client se connecte à MCPIMP. Le registry agrège ses propres outils et les outils des MCP amont sous des noms stables.</p>
+        </div>
+
+        <div class="shared-flow reveal" aria-label="Schéma de centralisation MCP">
+          <div class="flow-column">
+            <span class="flow-label">Agents connectés</span>
+            <div class="flow-node"><i class="ph ph-terminal-window" aria-hidden="true"></i><span>Codex</span></div>
+            <div class="flow-node"><i class="ph ph-code" aria-hidden="true"></i><span>Claude Code</span></div>
+            <div class="flow-node"><i class="ph ph-plugs-connected" aria-hidden="true"></i><span>Tout client MCP</span></div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
+          <div class="hub-node">
+            <div class="hub-head"><strong>MCPIMP</strong><span>endpoint commun</span></div>
+            <div class="hub-tools">
+              <span class="hub-tool">list-capabilities</span>
+              <span class="hub-tool">search-capabilities</span>
+              <span class="hub-tool">load-capability</span>
+              <span class="hub-tool">capability.tool</span>
+            </div>
+          </div>
+          <div class="flow-arrow flow-arrow-out" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
+          <div class="flow-column">
+            <span class="flow-label">Ressources centralisées</span>
+            <div class="flow-node"><i class="ph ph-file-text" aria-hidden="true"></i><span>Skills locaux</span></div>
+            <div class="flow-node"><i class="ph ph-github-logo" aria-hidden="true"></i><span>Sources synchronisées</span></div>
+            <div class="flow-node"><i class="ph ph-network" aria-hidden="true"></i><span>MCP amont</span></div>
+          </div>
+        </div>
+
+        <div class="central-benefits">
+          <div class="central-benefit reveal"><strong>Une seule configuration</strong><p>Chaque agent référence le même endpoint MCPIMP. Ajouter une intégration ne demande plus de la recopier chez chaque provider.</p></div>
+          <div class="central-benefit reveal"><strong>Les mêmes outils partout</strong><p>Les outils amont reçoivent un préfixe stable. Les agents retrouvent les mêmes noms et le même état de configuration.</p></div>
+          <div class="central-benefit reveal"><strong>Une maintenance centralisée</strong><p>Sources, variables d’environnement et politiques de synchronisation se gèrent au niveau du registry.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="fonctionnement" aria-labelledby="fonctionnement-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <p class="section-kicker">Fonctionnement</p>
+            <h2 id="fonctionnement-title">De la source externe au contexte de l’agent, en trois étapes.</h2>
+          </div>
+          <p>La synchronisation et l’exécution sont séparées. Tu décides quand le contenu amont entre sur disque.</p>
+        </div>
+        <div class="steps">
+          <article class="step reveal">
+            <span class="step-tag">Déclaré</span>
+            <h3>Déclare les sources</h3>
+            <p>Ajoute un dépôt GitHub ou un catalogue web autorisé dans <code>catalog/sources/</code>. Les filtres déterminent les capabilities à importer.</p>
+            <div class="step-code"><span class="step-code-tag">Snippet — catalog/sources</span><span class="json-key">"repository"</span>: <span class="json-string">"elayadesign/ai-design-skills"</span>,
+<span class="json-key">"include"</span>: [<span class="json-string">"landing-page-design"</span>]</div>
+          </article>
+          <div class="step-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
+          <article class="step reveal">
+            <span class="step-tag">Synchronisé</span>
+            <h3>Synchronise avec contrôle</h3>
+            <p>Le rapport est en lecture seule par défaut. La politique <code>review</code> attend ton accord avant toute mise à jour.</p>
+            <div class="step-code"><span class="step-code-tag">Commande — sync</span><span class="prompt">›</span> pnpm sources:sync
+<span class="json-comment">↑ update available</span>
+
+<span class="prompt">›</span> pnpm sources:sync --apply source</div>
+          </article>
+          <div class="step-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
+          <article class="step reveal">
+            <span class="step-tag">Servi</span>
+            <h3>Laisse l’agent choisir</h3>
+            <p>L’agent liste, recherche puis charge la section utile via MCP. Le serveur lit uniquement les fichiers déjà présents.</p>
+            <div class="step-code"><span class="step-code-tag">Requête — MCP</span><span class="prompt">›</span> search-capabilities
+<span class="json-string">"accessibilité motion landing"</span>
+
+<span class="prompt">›</span> load-capability
+<span class="json-string">"elaya-design-landing-page-design"</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="tagline-section tagline-section--b" aria-label="Bénéfice principal">
+      <canvas class="tagline-bg" id="tagline-bg" aria-hidden="true"></canvas>
+      <p class="tagline">Tes agents ne devinent plus. Ils découvrent ce dont ils ont besoin, puis chargent seulement l’essentiel.</p>
+    </section>
+
+    <section class="section panel" id="provenance" aria-labelledby="provenance-title">
+      <div class="shell security-grid">
+        <div class="security-copy reveal">
+          <p class="section-kicker">Sécurité et provenance</p>
+          <h2 id="provenance-title">Chaque import garde ses papiers.</h2>
+          <p>MCPIMP traite le contenu externe comme une donnée non fiable. Il le conserve avec son identité technique, sans exécuter les scripts importés.</p>
+          <ul class="security-list">
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Commit, empreinte et licence enregistrés à l’import</span></li>
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Catalogues limités par <code>allowedRepositories</code> et mises à jour contrôlées par <code>review</code></span></li>
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Overrides locaux conservés séparément du contenu amont</span></li>
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Scripts externes indexés comme texte inerte</span></li>
+            <li><i class="ph ph-check-circle" aria-hidden="true"></i><span>Secrets référencés par variables d’environnement plutôt qu’écrits dans <code>mcp.json</code></span></li>
+          </ul>
+          <p class="security-boundary"><strong>Périmètre actuel.</strong> MCPIMP ne fournit pas encore de permissions par agent, de journal d’audit persistant ni de coffre chiffré. Ces fonctions ne sont donc pas présentées comme disponibles.</p>
+        </div>
+        <figure class="manifest reveal">
+          <figcaption class="manifest-head"><span>SOURCE.json</span><span>vérifié sur disque</span></figcaption>
+          <pre><code>{
+  <span class="json-key">"repository"</span>: <span class="json-string">"elayadesign/ai-design-skills"</span>,
+  <span class="json-key">"path"</span>: <span class="json-string">"skills/landing-page-design"</span>,
+  <span class="json-key">"commit"</span>: <span class="json-string">"1c1e97cb9878e236..."</span>,
+  <span class="json-key">"contentHash"</span>: <span class="json-string">"sha256:394067354f47..."</span>,
+  <span class="json-key">"license"</span>: {
+    <span class="json-key">"spdxId"</span>: <span class="json-string">"MIT"</span>
+  },
+  <span class="json-key">"update"</span>: <span class="json-string">"review"</span>,
+  <span class="json-key">"skillKind"</span>: <span class="json-string">"portable"</span>
+}</code></pre>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="integrations" aria-labelledby="usages-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <p class="section-kicker">Exemples d’intégrations</p>
+            <h2 id="usages-title">Le proxy MCP ne s’arrête pas à NocoDB.</h2>
+          </div>
+          <p>NocoDB est l’exemple présent dans le dépôt. Le même mécanisme peut exposer tout serveur compatible avec le transport HTTP pris en charge.</p>
+        </div>
+        <div class="use-grid">
+          <article class="use-card reveal"><span class="integration-status active">Dans le dépôt</span><i class="ph ph-database" aria-hidden="true"></i><h3>NocoDB</h3><p>Lister des tables, lire des enregistrements et déclencher les outils du MCP NocoDB depuis un préfixe commun.</p><code class="integration-tool">nocodb.*</code></article>
+          <article class="use-card reveal"><span class="integration-status">Configuration possible</span><i class="ph ph-github-logo" aria-hidden="true"></i><h3>GitHub</h3><p>Donner aux agents un accès centralisé aux issues, aux pull requests et aux informations des dépôts autorisés.</p><code class="integration-tool">github.*</code></article>
+          <article class="use-card reveal"><span class="integration-status">Configuration possible</span><i class="ph ph-notepad" aria-hidden="true"></i><h3>Notion</h3><p>Rechercher la documentation interne et charger une page utile sans configurer le même serveur dans chaque agent.</p><code class="integration-tool">notion.*</code></article>
+          <article class="use-card reveal"><span class="integration-status">Configuration possible</span><i class="ph ph-warning-circle" aria-hidden="true"></i><h3>Sentry</h3><p>Consulter des incidents, des traces et des releases depuis un MCP amont géré au même endroit.</p><code class="integration-tool">sentry.*</code></article>
+          <article class="use-card reveal"><span class="integration-status">Configuration possible</span><i class="ph ph-cylinder" aria-hidden="true"></i><h3>PostgreSQL</h3><p>Exposer un serveur MCP de données avec les droits définis par l’intégration amont et les secrets fournis par l’environnement.</p><code class="integration-tool">postgres.*</code></article>
+        </div>
+        <p class="integration-note">Les quatre derniers cas sont des exemples de projection. Ils ne sont pas livrés dans le dépôt et les noms d’outils affichés sont illustratifs.</p>
+      </div>
+    </section>
+
+    <section class="section paper" id="installation" aria-labelledby="installation-title">
+      <div class="shell install-grid">
+        <div class="install-copy reveal">
+          <p class="section-kicker">Installation locale</p>
+          <h2 id="installation-title">Branche le registry à ton agent.</h2>
+          <p>Clone le projet, lance le serveur puis déclare son endpoint MCP dans tes clients. Les agents partagent ensuite le même registre et les mêmes intégrations.</p>
+          <div class="install-note"><i class="ph ph-shield-check" aria-hidden="true"></i><span>Aucun compte ni service distant ne sont requis pour utiliser le registry et ses capabilities locales.</span></div>
+        </div>
+        <div class="command-stack reveal">
+          <div class="command-card">
+            <div class="command-head"><span>Terminal</span><button class="copy-button" type="button" data-copy="git clone https://github.com/ronael/mcpimp.git&#10;cd mcpimp&#10;pnpm install&#10;pnpm run dev"><i class="ph ph-copy" aria-hidden="true"></i><span>Copier</span></button></div>
+            <pre><code><span class="prompt">›</span> git clone https://github.com/ronael/mcpimp.git
+<span class="prompt">›</span> cd mcpimp
+<span class="prompt">›</span> pnpm install
+<span class="prompt">›</span> pnpm run dev</code></pre>
+          </div>
+          <div class="command-card">
+            <div class="command-head"><span>Configuration MCP</span><button class="copy-button" type="button" data-copy='{&#10;  "mcpServers": {&#10;    "capabilities": {&#10;      "url": "http://localhost:3901/sse"&#10;    }&#10;  }&#10;}'><i class="ph ph-copy" aria-hidden="true"></i><span>Copier</span></button></div>
+            <pre><code>{
+  <span class="json-key">"mcpServers"</span>: {
+    <span class="json-key">"capabilities"</span>: {
+      <span class="json-key">"url"</span>: <span class="json-string">"http://localhost:3901/sse"</span>
+    }
+  }
+}</code></pre>
+          </div>
+          <div class="command-card">
+            <div class="command-head"><span>Snapshot Cloudflare</span><button class="copy-button" type="button" data-copy="pnpm run build&#10;npx wrangler deploy"><i class="ph ph-copy" aria-hidden="true"></i><span>Copier</span></button></div>
+            <pre><code><span class="prompt">›</span> pnpm run build
+<span class="prompt">›</span> npx wrangler deploy</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <p class="section-kicker">Questions fréquentes</p>
+            <h2 id="faq-title">Ce qu’il faut savoir avant de brancher MCPIMP.</h2>
+          </div>
+          <p>Le projet privilégie les mécanismes simples, lisibles et réversibles.</p>
+        </div>
+        <div class="faq-list reveal">
+          <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>Comment plusieurs agents partagent le même MCP ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p>Chaque client MCP pointe vers le même endpoint MCPIMP. Le serveur publie ses outils de registry et ajoute les outils des MCP amont avec un préfixe stable. Une nouvelle intégration se configure donc dans le hub, sans recopier sa configuration chez chaque provider.</p></div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>MCPIMP fonctionne sans réseau ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p>Oui pour les capabilities déjà présentes sur disque. La synchronisation des sources externes et les appels vers un MCP amont distant nécessitent naturellement le réseau.</p></div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>Quelles sources sont compatibles ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p>La version actuelle prend en charge les dépôts GitHub et les catalogues web. Pour un catalogue, seuls les dépôts explicitement présents dans <code>allowedRepositories</code> peuvent être importés.</p></div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>Une mise à jour externe peut modifier mon registry seule ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p>Pas avec la politique recommandée <code>review</code>. La commande de synchronisation montre les changements, puis attend que tu cibles la source ou la capability pour les appliquer.</p></div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>MCPIMP exécute les scripts importés ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p>Non. Ils sont indexés comme du texte inerte. MCPIMP n’interprète pas les instructions récupérées pendant l’ingestion.</p></div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>Comment ajouter mes propres règles à une capability importée ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p>Ajoute les fichiers concernés dans <code>overrides/</code>. Ce dossier est fusionné par dessus le contenu amont et n’est jamais touché par la synchronisation.</p></div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>La recherche repose sur des embeddings ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p>Non. La recherche actuelle est lexicale, classée et enrichie par une table de synonymes légère. Aucun vector store n’est requis.</p></div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" type="button" aria-expanded="false"><span>Comment le déployer sur Cloudflare Worker ?</span><i class="ph ph-plus" aria-hidden="true"></i></button>
+            <div class="faq-answer"><div><p><code>pnpm run build</code> génère un snapshot statique des capabilities, puis Wrangler déploie le Worker. Il faut reconstruire le snapshot après une synchronisation.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta" aria-labelledby="final-title">
+      <div class="shell reveal">
+        <div>
+          <h2 id="final-title">Donne à tes agents un registre qu’ils peuvent réellement interroger.</h2>
+          <p>Commence en local, relie tes agents au même endpoint, puis ajoute des capabilities et des MCP amont depuis un seul endroit.</p>
+        </div>
+        <a class="button-primary" href="#installation">Installer MCPIMP <i class="ph ph-arrow-up" aria-hidden="true"></i></a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-grid">
+      <div class="footer-left">
+        <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">M</span><span>MCPIMP</span></a>
+        <p>Capability registry personnel pour agents IA.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/ronael/mcpimp" target="_blank" rel="noreferrer">GitHub</a>
+        <button type="button" data-dialog="privacy-dialog">Confidentialité</button>
+        <button type="button" data-dialog="terms-dialog">Conditions</button>
+      </div>
+    </div>
+  </footer>
+
+  <dialog id="privacy-dialog" aria-labelledby="privacy-title">
+    <div class="dialog-inner">
+      <div class="dialog-head"><h2 id="privacy-title">Confidentialité</h2><button class="dialog-close" type="button" aria-label="Fermer"><i class="ph ph-x" aria-hidden="true"></i></button></div>
+      <p>Cette page autonome ne dépose aucun cookie, ne contient aucun formulaire et ne collecte aucune donnée personnelle. Les polices et les icônes sont chargées depuis des CDN publics lorsque le réseau est disponible.</p>
+      <p>MCPIMP fonctionne localement par défaut. Consulte le dépôt pour vérifier la configuration avant tout déploiement public.</p>
+    </div>
+  </dialog>
+
+  <dialog id="terms-dialog" aria-labelledby="terms-title">
+    <div class="dialog-inner">
+      <div class="dialog-head"><h2 id="terms-title">Conditions</h2><button class="dialog-close" type="button" aria-label="Fermer"><i class="ph ph-x" aria-hidden="true"></i></button></div>
+      <p>Cette page présente un projet logiciel fourni via son dépôt GitHub. Les conditions applicables au code et aux contenus importés dépendent des licences indiquées dans le dépôt et dans chaque fichier <code>SOURCE.json</code>.</p>
+      <p>Vérifie la provenance et la licence de chaque capability avant redistribution.</p>
+    </div>
+  </dialog>
+
+  <script>
+    const demos = {
+      discover: {
+        command: "list-capabilities",
+        rows: [
+          ["landing-page", "locale · SKILL.md"],
+          ["elaya-design-landing-page-design", "importée · elayadesign/ai-design-skills"],
+          ["ui-skills-fixing-accessibility", "importée · ibelick/ui-skills"]
+        ]
+      },
+      search: {
+        command: 'search-capabilities  "landing accessibilité motion"',
+        rows: [
+          ["elaya-design-landing-page-design · Hero", "score classé · SKILL.md"],
+          ["ui-skills-fixing-accessibility · Focus states", "résultat ciblé · SKILL.md"],
+          ["ui-skills-fixing-motion-performance · Scroll", "résultat ciblé · SKILL.md"]
+        ]
+      },
+      load: {
+        command: 'load-capability  "elaya-design-landing-page-design"  section: "skill"',
+        rows: [
+          ["Section chargée", "skill · 380 lignes utiles"],
+          ["Provenance", "commit 1c1e97cb · licence MIT"],
+          ["Contexte", "référence importée · autorité limitée"]
+        ]
+      }
+    };
+
+    const demoCommand = document.querySelector("#demo-command");
+    const demoOutput = document.querySelector("#demo-output");
+
+    function renderDemo(name) {
+      const demo = demos[name];
+      demoOutput.classList.add("loading");
+      window.setTimeout(() => {
+        demoCommand.textContent = demo.command;
+        demoOutput.replaceChildren(...demo.rows.map(([title, detail]) => {
+          const row = document.createElement("div");
+          row.className = "terminal-row";
+          const strong = document.createElement("strong");
+          strong.textContent = title;
+          const span = document.createElement("span");
+          span.textContent = detail;
+          row.append(strong, span);
+          return row;
+        }));
+        demoOutput.classList.remove("loading");
+      }, 240);
+    }
+
+    document.querySelectorAll(".tool-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tool-tab").forEach((item) => item.setAttribute("aria-selected", "false"));
+        tab.setAttribute("aria-selected", "true");
+        renderDemo(tab.dataset.demo);
+      });
+    });
+
+    renderDemo("discover");
+
+    const menuButton = document.querySelector(".menu-button");
+    const mobileMenu = document.querySelector("#mobile-menu");
+
+    function setMenu(open) {
+      menuButton.setAttribute("aria-expanded", String(open));
+      menuButton.setAttribute("aria-label", open ? "Fermer le menu" : "Ouvrir le menu");
+      mobileMenu.classList.toggle("open", open);
+      mobileMenu.setAttribute("aria-hidden", String(!open));
+      document.body.classList.toggle("menu-open", open);
+    }
+
+    menuButton.addEventListener("click", () => setMenu(menuButton.getAttribute("aria-expanded") !== "true"));
+    mobileMenu.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => setMenu(false)));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setMenu(false);
+    });
+
+    const navWrap = document.querySelector(".nav-wrap");
+    const updateHeader = () => navWrap.classList.toggle("scrolled", window.scrollY > 24);
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    updateHeader();
+
+    document.querySelectorAll(".copy-button").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const label = button.querySelector("span");
+        try {
+          await navigator.clipboard.writeText(button.dataset.copy);
+          button.classList.add("success");
+          label.textContent = "Copié";
+          window.setTimeout(() => {
+            button.classList.remove("success");
+            label.textContent = "Copier";
+          }, 1600);
+        } catch {
+          label.textContent = "Copie refusée";
+          window.setTimeout(() => { label.textContent = "Copier"; }, 1600);
+        }
+      });
+    });
+
+    document.querySelectorAll(".faq-question").forEach((button) => {
+      button.addEventListener("click", () => {
+        const nextState = button.getAttribute("aria-expanded") !== "true";
+        button.setAttribute("aria-expanded", String(nextState));
+      });
+    });
+
+    document.querySelectorAll("[data-dialog]").forEach((button) => {
+      button.addEventListener("click", () => document.querySelector(`#${button.dataset.dialog}`).showModal());
+    });
+
+    document.querySelectorAll("dialog").forEach((dialog) => {
+      dialog.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+    });
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reduceMotion && "IntersectionObserver" in window) {
+      const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.14, rootMargin: "0px 0px -48px" });
+      document.querySelectorAll(".reveal").forEach((element) => revealObserver.observe(element));
+    } else {
+      document.querySelectorAll(".reveal").forEach((element) => element.classList.add("visible"));
+    }
+
+    document.querySelectorAll(".tagline").forEach((tagline) => {
+      const words = tagline.textContent.trim().split(/\s+/);
+      tagline.textContent = "";
+      words.forEach((word, index) => {
+        const span = document.createElement("span");
+        span.className = "word";
+        span.textContent = word;
+        tagline.append(span, document.createTextNode(index === words.length - 1 ? "" : " "));
+      });
+
+      if (!reduceMotion && "IntersectionObserver" in window) {
+        const wordObserver = new IntersectionObserver((entries, observer) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const index = Number(entry.target.dataset.index);
+            window.setTimeout(() => entry.target.classList.add("active"), index * 52);
+            observer.unobserve(entry.target);
+          });
+        }, { threshold: 0.9, rootMargin: "0px 0px -18%" });
+        tagline.querySelectorAll(".word").forEach((word, index) => {
+          word.dataset.index = index;
+          wordObserver.observe(word);
+        });
+      } else {
+        tagline.querySelectorAll(".word").forEach((word) => word.classList.add("active"));
+      }
+    });
+  </script>
+  <script type="module">
+    // Comparatif temporaire — Variante B : fond three.js lazy-loaded.
+    // Fallback automatique sur le pattern SVG (classe .tagline-section--b) si
+    // WebGL indisponible ou prefers-reduced-motion.
+    const canvas = document.getElementById("tagline-bg");
+    if (canvas) {
+      const prefersReducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      const lazyObserver = new IntersectionObserver(async (entries) => {
+        if (!entries[0].isIntersecting) return;
+        lazyObserver.disconnect();
+        if (prefersReducedMotion) return; // fallback = pattern SVG
+        try {
+          if (!canvas.getContext("webgl2") && !canvas.getContext("webgl")) return;
+          const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js");
+          mountTaglineBackground(THREE, canvas);
+        } catch {
+          // rester sur le pattern SVG
+        }
+      }, { rootMargin: "200px" });
+      lazyObserver.observe(canvas);
+    }
+
+    function mountTaglineBackground(THREE, canvas) {
+      const section = canvas.closest(".tagline-section");
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // cap dpr
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+      camera.position.z = 2;
+
+      // champ de points — géométrie fixe, aucune lecture DOM par frame
+      const N = 260;
+      const positions = new Float32Array(N * 3);
+      for (let i = 0; i < N; i++) {
+        positions[i * 3] = Math.random() * 2 - 1;
+        positions[i * 3 + 1] = (Math.random() * 2 - 1) * 0.6;
+        positions[i * 3 + 2] = 0;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.PointsMaterial({ size: 2, sizeAttenuation: false, color: 0x0a0a0a, transparent: true, opacity: 0.16 });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+
+      // taille : une fois par resize, pas par frame
+      const resize = () => {
+        const { width, height } = section.getBoundingClientRect();
+        renderer.setSize(width, height, false);
+      };
+      resize();
+      window.addEventListener("resize", resize, { passive: true });
+
+      // boucle active uniquement quand la section est visible
+      let inView = false;
+      new IntersectionObserver(([entry]) => (inView = entry.isIntersecting), { rootMargin: "100px" }).observe(section);
+
+      let raf;
+      const tick = (t) => {
+        raf = requestAnimationFrame(tick);
+        if (!inView) return;
+        points.rotation.z = t * 0.00002; // drift quasi imperceptible
+        renderer.render(scene, camera);
+      };
+      raf = requestAnimationFrame(tick);
+
+      window.addEventListener("pagehide", () => {
+        cancelAnimationFrame(raf);
+        geo.dispose();
+        mat.dispose();
+        renderer.dispose();
+      });
+    }
+  </script>
+</body>
+</html>
