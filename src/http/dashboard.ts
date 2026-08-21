@@ -17,6 +17,11 @@ import {
 import { DASHBOARD_COPY, type DashboardCopy, type DashboardLanguage } from "./dashboard-i18n";
 import { DASHBOARD_STYLES } from "./dashboard-styles";
 
+export interface DashboardLinks {
+  sourceGuidePath?: string;
+  sitePath?: string;
+}
+
 interface DashboardData {
   capabilities: Capability[];
   resources: ReturnType<CapabilityRegistry["listResources"]>;
@@ -225,12 +230,15 @@ function renderMobileNav(copy: DashboardCopy): string {
   </nav>`;
 }
 
-function renderSidebar(data: DashboardData, copy: DashboardCopy, language: DashboardLanguage): string {
+function renderSidebar(data: DashboardData, copy: DashboardCopy, language: DashboardLanguage, links: DashboardLinks): string {
   const sourceGuidePath =
-    language === "fr"
+    links.sourceGuidePath ||
+    (language === "fr"
       ? "https://github.com/ronael/mcpimp/blob/main/site/fr/docs/sources.html"
-      : "https://github.com/ronael/mcpimp/blob/main/site/docs/sources.html";
-  const sitePath = language === "fr" ? "/fr/" : "/";
+      : "https://github.com/ronael/mcpimp/blob/main/site/docs/sources.html");
+  const sitePath = links.sitePath || (language === "fr" ? "/fr/" : "/");
+  const sourceGuideExternal = sourceGuidePath.startsWith("http://") || sourceGuidePath.startsWith("https://");
+  const sourceGuideTarget = sourceGuideExternal ? ` target="_blank" rel="noreferrer"` : "";
 
   return `<aside class="side">
     <a class="side-brand" href="#overview"><span class="brand-mark">M</span>MCPIMP<span class="sub">console</span></a>
@@ -248,7 +256,7 @@ function renderSidebar(data: DashboardData, copy: DashboardCopy, language: Dashb
     </nav>
     <div class="snav-label">${escapeHtml(copy.linksLabel)}</div>
     <nav class="snav">
-      <a href="${escapeAttribute(sourceGuidePath)}" target="_blank" rel="noreferrer"><i class="ph ph-book-open" aria-hidden="true"></i>${escapeHtml(copy.sourceGuide)}</a>
+      <a href="${escapeAttribute(sourceGuidePath)}"${sourceGuideTarget}><i class="ph ph-book-open" aria-hidden="true"></i>${escapeHtml(copy.sourceGuide)}</a>
       <a href="${escapeAttribute(sitePath)}"><i class="ph ph-arrow-up-right" aria-hidden="true"></i>${escapeHtml(copy.backToSite)}</a>
     </nav>
     <div class="side-foot">
@@ -389,7 +397,7 @@ function renderKindOptions(capabilities: Capability[]): string {
 }
 
 
-export function renderDashboard(registry: CapabilityRegistry, language: DashboardLanguage = "en"): string {
+export function renderDashboard(registry: CapabilityRegistry, language: DashboardLanguage = "en", links: DashboardLinks = {}): string {
   const capabilities = registry.listCapabilities();
   const resources = registry.listResources();
   const upstreams = new UpstreamMcpGateway(registry).listUpstreams();
@@ -412,7 +420,7 @@ ${DASHBOARD_STYLES}
 </head>
 <body>
   ${renderMobileNav(copy)}
-  ${renderSidebar(data, copy, language)}
+  ${renderSidebar(data, copy, language, links)}
 
   <main class="main">
     <section class="view on" id="overview" data-view="overview">

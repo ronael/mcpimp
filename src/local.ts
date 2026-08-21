@@ -1,7 +1,9 @@
 import { serve } from "@hono/node-server";
-import { join, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { extname, join, normalize, resolve, sep } from "node:path";
 import { CAPABILITIES_DIR } from "./core/paths";
 import { loadDotenv } from "./env/load-dotenv";
+import type { StaticSiteProvider } from "./http/server";
 import { createServer } from "./http/server";
 import { FileSystemCapabilityRegistry } from "./registry/filesystem";
 
@@ -10,7 +12,48 @@ await loadDotenv();
 const port = Number(process.env.PORT || 3901);
 const root = resolve(process.env.MCPIMP_ROOT || process.cwd());
 const registry = await FileSystemCapabilityRegistry.scan(join(root, CAPABILITIES_DIR));
-const app = createServer(registry);
+const siteRoot = join(root, "site");
+
+const MIME_TYPES: Record<string, string> = {
+  ".css": "text/css; charset=utf-8",
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+};
+
+function siteFileForPath(requestPath: string): string | undefined {
+  const cleanPath = decodeURIComponent(requestPath.split("?")[0] || "/");
+  const normalizedPath = cleanPath.endsWith("/") ? `${cleanPath}index.html` : cleanPath;
+  const relativePath = normalize(normalizedPath.replace(/^\/+/, ""));
+  if (relativePath.startsWith("..") || relativePath.includes(`${sep}..${sep}`)) return undefined;
+
+  const filePath = join(siteRoot, relativePath);
+  if (filePath !== siteRoot && !filePath.startsWith(`${siteRoot}${sep}`)) return undefined;
+  return filePath;
+}
+
+const staticSite: StaticSiteProvider = {
+  async serve(requestPath) {
+    const filePath = siteFileForPath(requestPath);
+    if (!filePath) return undefined;
+
+    const body = await readFile(filePath).catch(() => undefined);
+    if (!body) return undefined;
+
+    return new Response(body, {
+      headers: {
+        "content-type": MIME_TYPES[extname(filePath)] || "application/octet-stream",
+      },
+    });
+  },
+};
+
+const app = createServer(registry, { staticSite });
 
 serve({ fetch: app.fetch, port });
 

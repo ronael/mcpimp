@@ -107,4 +107,37 @@ describe("Hono server", () => {
     expect(html).toContain("Le serveur scanne");
     expect(html).toContain("Sources &amp; références");
   });
+
+  it("serves static docs through the same server when configured", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+    const app = createServer(registry, {
+      staticSite: {
+        async serve(path) {
+          if (path === "/docs/sources.html") {
+            return new Response("<h1>Sources</h1>", {
+              headers: { "content-type": "text/html; charset=utf-8" },
+            });
+          }
+          if (path === "/assets/css/pages/sources.css") {
+            return new Response("body{}", {
+              headers: { "content-type": "text/css; charset=utf-8" },
+            });
+          }
+          return undefined;
+        },
+      },
+    });
+
+    const dashboard = await app.request("/dashboard");
+    await expect(dashboard.text()).resolves.toContain('href="/docs/sources.html"');
+
+    const docs = await app.request("/docs/sources.html");
+    expect(docs.status).toBe(200);
+    expect(docs.headers.get("content-type")).toContain("text/html");
+    await expect(docs.text()).resolves.toContain("Sources");
+
+    const css = await app.request("/assets/css/pages/sources.css");
+    expect(css.status).toBe(200);
+    expect(css.headers.get("content-type")).toContain("text/css");
+  });
 });

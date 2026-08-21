@@ -8,11 +8,40 @@ interface SseSession {
   send(payload: unknown): void;
 }
 
-export function createServer(registry: CapabilityRegistry) {
+export interface StaticSiteProvider {
+  serve(path: string): Promise<Response | undefined>;
+}
+
+export interface ServerOptions {
+  staticSite?: StaticSiteProvider;
+}
+
+function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) {
+  if (!staticSite) return {};
+
+  return {
+    sourceGuidePath: language === "fr" ? "/fr/docs/sources.html" : "/docs/sources.html",
+    sitePath: language === "fr" ? "/fr/" : "/",
+  };
+}
+
+export function createServer(registry: CapabilityRegistry, options: ServerOptions = {}) {
   const app = new Hono();
   const handleMcpMessage = createMcpHandler(registry);
   const sessions = new Map<string, SseSession>();
   const encoder = new TextEncoder();
+
+  async function serveStatic(path: string) {
+    return options.staticSite?.serve(path);
+  }
+
+  app.get("/", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/index.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/fr/", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/fr/index.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/docs/sources.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/fr/docs/sources.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/assets/*", async (c) => (await serveStatic(c.req.path)) || c.notFound());
 
   app.get("/health", (c) => {
     return c.json({
@@ -79,11 +108,11 @@ export function createServer(registry: CapabilityRegistry) {
   });
 
   app.get("/dashboard", (c) => {
-    return c.html(renderDashboard(registry));
+    return c.html(renderDashboard(registry, "en", dashboardLinks("en", options.staticSite)));
   });
 
   app.get("/fr/dashboard", (c) => {
-    return c.html(renderDashboard(registry, "fr"));
+    return c.html(renderDashboard(registry, "fr", dashboardLinks("fr", options.staticSite)));
   });
 
   return app;
