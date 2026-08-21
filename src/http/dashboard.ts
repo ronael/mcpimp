@@ -226,7 +226,10 @@ function renderMobileNav(copy: DashboardCopy): string {
 }
 
 function renderSidebar(data: DashboardData, copy: DashboardCopy, language: DashboardLanguage): string {
-  const sourceGuidePath = language === "fr" ? "/fr/docs/sources.html" : "/docs/sources.html";
+  const sourceGuidePath =
+    language === "fr"
+      ? "https://github.com/ronael/mcpimp/blob/main/site/fr/docs/sources.html"
+      : "https://github.com/ronael/mcpimp/blob/main/site/docs/sources.html";
   const sitePath = language === "fr" ? "/fr/" : "/";
 
   return `<aside class="side">
@@ -245,7 +248,7 @@ function renderSidebar(data: DashboardData, copy: DashboardCopy, language: Dashb
     </nav>
     <div class="snav-label">${escapeHtml(copy.linksLabel)}</div>
     <nav class="snav">
-      <a href="${escapeAttribute(sourceGuidePath)}"><i class="ph ph-book-open" aria-hidden="true"></i>${escapeHtml(copy.sourceGuide)}</a>
+      <a href="${escapeAttribute(sourceGuidePath)}" target="_blank" rel="noreferrer"><i class="ph ph-book-open" aria-hidden="true"></i>${escapeHtml(copy.sourceGuide)}</a>
       <a href="${escapeAttribute(sitePath)}"><i class="ph ph-arrow-up-right" aria-hidden="true"></i>${escapeHtml(copy.backToSite)}</a>
     </nav>
     <div class="side-foot">
