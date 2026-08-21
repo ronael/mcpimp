@@ -84,7 +84,7 @@ describe("Hono server", () => {
     const response = await app.request("/dashboard");
     const html = await response.text();
 
-    expect(html).toContain("Le serveur scanne");
+    expect(html).toContain("The server scans");
     expect(html).toContain("/health");
     expect(html).toContain("/message");
     expect(html).toContain('href="#discovery"');
@@ -94,7 +94,17 @@ describe("Hono server", () => {
     expect(html).toContain("list-capabilities");
     expect(html).toContain("search-capabilities");
     expect(html).toContain("skill://landing-page/SKILL.md");
-    expect(html).toContain("Sources & références");
+    expect(html).toContain("Sources and references");
     expect(html).toContain("https://example.com/source");
+  });
+
+  it("renders the French dashboard at /fr/dashboard", async () => {
+    const app = await createApp();
+    const response = await app.request("/fr/dashboard");
+    const html = await response.text();
+
+    expect(html).toContain('<html lang="fr">');
+    expect(html).toContain("Le serveur scanne");
+    expect(html).toContain("Sources &amp; références");
   });
 });

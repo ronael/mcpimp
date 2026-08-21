@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MCPIMP — Guide des sources externes</title>
-<meta name="description" content="Comment MCPIMP importe des skills depuis GitHub ou un catalogue web : sync, politiques d'update, overrides, sécurité.">
+<title>MCPIMP — External Sources Guide</title>
+<meta name="description" content="How MCPIMP imports skills from GitHub or a web catalog: sync, update policies, overrides, and security.">
 <meta name="theme-color" content="#0a0a0a">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c9ff3d'/%3E%3Cpath d='M7 23V9h4l5 7 5-7h4v14h-4v-8l-5 6-5-6v8z' fill='%230a0a0a'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -162,12 +162,13 @@ footer p{margin-bottom:10px;line-height:1.7}
 <body>
 
 <div class="nav-wrap">
-  <nav class="nav" aria-label="Navigation principale">
+  <nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../index.html">
       <span class="brand-mark">M</span>MCPIMP<span class="sub">docs / sources</span>
     </a>
     <div class="nav-links">
-      <a href="../index.html">← Retour au site</a>
+      <a href="../index.html">← Back to site</a>
+      <a href="../fr/docs/sources.html" hreflang="fr" lang="fr">Français</a>
       <a class="nav-cta" href="https://github.com/ronael/mcpimp" target="_blank" rel="noreferrer"><i class="ph ph-github-logo" aria-hidden="true"></i>GitHub</a>
     </div>
   </nav>
@@ -176,122 +177,122 @@ footer p{margin-bottom:10px;line-height:1.7}
 <div class="layout">
 
   <aside class="side">
-    <a class="side-back" href="../index.html"><i class="ph ph-arrow-left" aria-hidden="true"></i>Retour au site</a>
-    <div class="side-label">Sources externes</div>
-    <nav aria-label="Sommaire">
-      <a href="#idee"><span class="n">01</span>L'idée</a>
-      <a href="#anatomie"><span class="n">02</span>Anatomie d'une capacité</a>
-      <a href="#github"><span class="n">03</span>Source GitHub</a>
-      <a href="#catalogue"><span class="n">04</span>Catalogue web</a>
-      <a href="#recettes"><span class="n">05</span>Recettes par cas</a>
-      <a href="#cycle"><span class="n">06</span>Le cycle de sync</a>
-      <a href="#policy"><span class="n">07</span>Politique d'update</a>
-      <a href="#overrides"><span class="n">08</span>Modifier sans casser</a>
-      <a href="#binaires"><span class="n">09</span>Binaires &amp; types</a>
-      <a href="#recherche"><span class="n">10</span>Régler la recherche</a>
-      <a href="#etendre"><span class="n">11</span>Étendre le code</a>
-      <a href="#securite"><span class="n">12</span>Sécurité</a>
-      <a href="#depannage"><span class="n">13</span>Dépannage</a>
+    <a class="side-back" href="../index.html"><i class="ph ph-arrow-left" aria-hidden="true"></i>Back to site</a>
+    <div class="side-label">External sources</div>
+    <nav aria-label="Table of contents">
+      <a href="#idee"><span class="n">01</span>The idea</a>
+      <a href="#anatomie"><span class="n">02</span>Capability anatomy</a>
+      <a href="#github"><span class="n">03</span>GitHub source</a>
+      <a href="#catalogue"><span class="n">04</span>Web catalog</a>
+      <a href="#recettes"><span class="n">05</span>Recipes</a>
+      <a href="#cycle"><span class="n">06</span>Sync cycle</a>
+      <a href="#policy"><span class="n">07</span>Update policy</a>
+      <a href="#overrides"><span class="n">08</span>Override safely</a>
+      <a href="#binaires"><span class="n">09</span>Binaries &amp; types</a>
+      <a href="#recherche"><span class="n">10</span>Tune search</a>
+      <a href="#etendre"><span class="n">11</span>Extend code</a>
+      <a href="#securite"><span class="n">12</span>Security</a>
+      <a href="#depannage"><span class="n">13</span>Troubleshooting</a>
     </nav>
   </aside>
 
   <main>
     <header class="doc-head rv on">
-      <div class="kicker">Documentation · Sources externes</div>
-      <h1>Importer des skills depuis l'extérieur.</h1>
-      <p class="lede">Ce guide explique la couche d'ingestion de MCPIMP : comment elle va chercher des skills sur <strong>GitHub</strong> ou dans un <strong>catalogue</strong>, comment elle les garde à jour sans jamais se laisser modifier en douce, et où toucher le code quand ton cas n'est pas prévu.</p>
-      <div class="doc-note"><i class="ph ph-folder-notch-open" aria-hidden="true"></i>Les chemins cités sont réels, relatifs à la racine du dépôt.</div>
+      <div class="kicker">Documentation · External sources</div>
+      <h1>Import skills from outside the repository.</h1>
+      <p class="lede">This guide explains MCPIMP's ingestion layer: how it fetches skills from <strong>GitHub</strong> or a <strong>web catalog</strong>, how it keeps them up to date without silent changes, and where to touch the code when your source is not covered yet.</p>
+      <div class="doc-note"><i class="ph ph-folder-notch-open" aria-hidden="true"></i>All referenced paths are real and relative to the repository root.</div>
     </header>
 
     <!-- 01 -->
     <section id="idee" class="doc-sec rv">
-      <h2><span class="num">01</span>L'idée en une image</h2>
-      <p>MCPIMP expose des <strong>capabilities</strong> à une IA cliente. Une capability est une unité logique qui peut contenir plusieurs <strong>composants</strong> : un <code>SKILL.md</code>, un <code>mcp.json</code>, des ressources, etc. Jusqu'ici tu écrivais tout à la main. La couche d'ingestion ajoute une deuxième manière de remplir le catalogue : rapatrier des capabilities depuis Internet.</p>
+      <h2><span class="num">01</span>The idea in one picture</h2>
+      <p>MCPIMP exposes <strong>capabilities</strong> to an AI client. A capability is a logical unit that can contain several <strong>components</strong>: a <code>SKILL.md</code>, a <code>mcp.json</code>, resources, and more. Previously, everything was written by hand. The ingestion layer adds a second way to fill the catalog: fetch capabilities from the Internet.</p>
 
       <div class="codecard">
 <pre>  Internet
      │
      │  ┌──────────────────────────────────────────┐
-     │  │  <span class="jp">COUCHE D'INGESTION</span>  (hors ligne, à la   │
-     └──┤  demande, via <span class="jk">`pnpm sources:sync`</span>)       │
+     │  │  <span class="jp">INGESTION LAYER</span>  (offline, explicit,       │
+     └──┤  run through <span class="jk">`pnpm sources:sync`</span>)       │
         │                                          │
-        │   <span class="jvi">catalog/sources/*.json</span>  déclarations │
+        │   <span class="jvi">catalog/sources/*.json</span>  declarations  │
         │        ↓                                 │
         │   <span class="jvi">adapters</span>            github, web-catalog│
         │        ↓                                 │
-        │   <span class="jvi">discovery</span>           quels skills ?     │
+        │   <span class="jvi">discovery</span>           which skills?      │
         │        ↓                                 │
-        │   <span class="jvi">fetch</span>               seulement si changé│
+        │   <span class="jvi">fetch</span>               only if changed   │
         │        ↓                                 │
-        │   <span class="jvi">normalisation</span>       provenance, licence│
+        │   <span class="jvi">normalization</span>      provenance, license│
         │        ↓                                 │
-        │   <span class="jvi">catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</span>  sur DISQUE       │
+        │   <span class="jvi">catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</span>  on DISK         │
         └──────────────────┬───────────────────────┘
                            │
         ┌──────────────────▼───────────────────────┐
-        │  <span class="jp">RUNTIME MCP</span>  (déjà existant, inchangé)  │
-        │   registry → tools MCP → IA cliente      │
+        │  <span class="jp">MCP RUNTIME</span>  (existing, unchanged)       │
+        │   registry → MCP tools → AI client       │
         └──────────────────────────────────────────┘</pre>
       </div>
 
       <div class="callout">
         <i class="ph ph-seal-check" aria-hidden="true"></i>
         <div>
-          <div class="c-t">La règle d'or</div>
-          <p>Le runtime MCP ne fait <strong>jamais</strong> d'appel réseau. Il lit uniquement ce qui est déjà sur le disque. Si GitHub tombe, si tu es dans un train sans connexion, ton serveur MCP fonctionne exactement pareil. La synchronisation est une opération séparée que <em>tu</em> déclenches.</p>
+          <div class="c-t">The golden rule</div>
+          <p>The MCP runtime <strong>never</strong> performs network calls. It only reads content already present on disk. If GitHub is down, or if you are offline, your MCP server behaves the same. Synchronization is a separate operation that <em>you</em> trigger.</p>
         </div>
       </div>
 
-      <p>Conséquence pratique : une capacité importée est un dossier normal, committé dans Git, que tu peux lire, differ et annuler. Rien de magique au runtime.</p>
+      <p>Practical consequence: an imported capability is a normal folder, committed in Git, readable, diffable, and reversible. Nothing magical happens at runtime.</p>
     </section>
 
     <!-- 02 -->
     <section id="anatomie" class="doc-sec rv">
-      <h2><span class="num">02</span>Anatomie d'une capacité</h2>
-      <p>Il y a deux formes, et le runtime ne les distingue pas. Sur disque, une capability vit sous <code>catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code>.</p>
+      <h2><span class="num">02</span>Capability anatomy</h2>
+      <p>There are two forms, and the runtime treats them the same. On disk, a capability lives under <code>catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code>.</p>
 
       <div class="grid2">
         <div class="mini">
-          <div class="m-t"><i class="ph ph-pencil-line" aria-hidden="true"></i>Locale — écrite par toi</div>
+          <div class="m-t"><i class="ph ph-pencil-line" aria-hidden="true"></i>Local · written by you</div>
           <pre>catalog/capabilities/local/landing-page/
   <span class="jp">SKILL.md</span></pre>
-          <p class="m-p">Un dossier sous le namespace <code>local</code> avec au moins un composant supporté (ici un <code>SKILL.md</code>).</p>
+          <p class="m-p">A folder under the <code>local</code> namespace with at least one supported component, here a <code>SKILL.md</code>.</p>
         </div>
         <div class="mini">
-          <div class="m-t"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i>Importée — écrite par la sync</div>
+          <div class="m-t"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i>Imported · written by sync</div>
           <pre>catalog/capabilities/ui-skills/improve-ui/
   <span class="jp">SOURCE.json</span>    <span class="jc">← provenance</span>
-  <span class="jvi">upstream/</span>      <span class="jc">← contenu amont</span>
+  <span class="jvi">upstream/</span>      <span class="jc">← upstream content</span>
     SKILL.md
     references/
-  <span class="jp">overrides/</span>     <span class="jc">← tes ajouts</span></pre>
-          <p class="m-p">Trois zones aux rôles très différents. L'id public reste <code>ui-skills-improve-ui</code>.</p>
+  <span class="jp">overrides/</span>     <span class="jc">← your additions</span></pre>
+          <p class="m-p">Three zones with very different roles. The public id remains <code>ui-skills-improve-ui</code>.</p>
         </div>
       </div>
 
-      <h3>Les trois zones, et pourquoi elles existent</h3>
+      <h3>The three zones and why they exist</h3>
       <div class="rows">
         <div class="row">
           <span class="mono">SOURCE.json</span>
-          <p>La carte d'identité. Dépôt, chemin, branche, <strong>commit exact</strong>, hash du contenu, licence détectée, date de dernière synchro, et le hash de chaque fichier. C'est ce qui permet de savoir plus tard si quelque chose a bougé — et de prouver d'où vient chaque octet.</p>
+          <p>The identity card. Repository, path, branch, <strong>exact commit</strong>, content hash, detected license, last sync date, and every file hash. This is what lets you detect later changes and prove where each byte came from.</p>
         </div>
         <div class="row">
           <span class="mono" style="color:var(--coral)">upstream/</span>
-          <p>Le contenu amont, tel quel. <strong>Entièrement remplacé</strong> à chaque resync. Ne modifie jamais un fichier ici : ta modification serait écrasée sans avertissement.</p>
+          <p>The upstream content as received. It is <strong>fully replaced</strong> on every resync. Never edit files here: your change would be overwritten without warning.</p>
         </div>
         <div class="row">
           <span class="mono">overrides/</span>
-          <p>Ta zone. <strong>Jamais touchée</strong> par la sync. Le registry la fusionne par-dessus <code>upstream/</code>, chemin par chemin : même chemin = ton fichier gagne, nouveau chemin = fichier ajouté.</p>
+          <p>Your zone. <strong>Never touched</strong> by sync. The registry merges it over <code>upstream/</code>, path by path: same path means your file wins, new path means an added file.</p>
         </div>
       </div>
 
-      <p>Résultat : les deux formes produisent les mêmes URIs <code>skill://&lt;id&gt;/&lt;chemin&gt;</code>. Une IA qui consomme MCPIMP ne voit aucune différence — elle voit juste un champ <code>origin</code> en plus sur les capacités importées.</p>
+      <p>Result: both forms produce the same <code>skill://&lt;id&gt;/&lt;path&gt;</code> URIs. An AI consuming MCPIMP sees no behavioral difference, only an extra <code>origin</code> field on imported capabilities.</p>
     </section>
 
     <!-- 03 -->
     <section id="github" class="doc-sec rv">
-      <h2><span class="num">03</span>Ajouter une source GitHub</h2>
-      <p>Une source = un fichier JSON dans <code>catalog/sources/</code>. <strong>Le nom du fichier doit être exactement l'<code>id</code></strong>, sinon la sync refuse de démarrer (c'est volontaire : ça évite les doublons silencieux).</p>
+      <h2><span class="num">03</span>Add a GitHub source</h2>
+      <p>A source is a JSON file in <code>catalog/sources/</code>. <strong>The filename must exactly match the <code>id</code></strong>, otherwise sync refuses to start. That is intentional: it prevents silent duplicates.</p>
 
       <div class="code-label"><i class="ph ph-file-json" aria-hidden="true"></i>catalog/sources/ibelick-ui-skills.json</div>
       <div class="codecard">
@@ -307,62 +308,62 @@ footer p{margin-bottom:10px;line-height:1.7}
 <span class="jc">}</span></pre>
       </div>
 
-      <h3>Tous les champs, un par un</h3>
+      <h3>Every field, one by one</h3>
       <div class="tbl-wrap">
         <table class="tbl">
-          <thead><tr><th>Champ</th><th>Défaut</th><th>À quoi ça sert</th></tr></thead>
+          <thead><tr><th>Field</th><th>Default</th><th>Purpose</th></tr></thead>
           <tbody>
-            <tr><td class="f">id</td><td>—</td><td>Obligatoire. Doit égaler le nom du fichier.</td></tr>
-            <tr><td class="f">type</td><td>—</td><td><code>"github"</code> ou <code>"web-catalog"</code>.</td></tr>
-            <tr><td class="f">repository</td><td>—</td><td>Format <code>owner/nom</code>. Rejeté sinon, avant tout appel réseau.</td></tr>
-            <tr><td class="f">ref</td><td>branche par défaut</td><td>Branche <em>ou tag</em>. Épingler un tag = figer la version.</td></tr>
-            <tr><td class="f">roots</td><td>tout le dépôt</td><td>Sous-dossiers où chercher des <code>SKILL.md</code>. Réduit le bruit et évite les faux positifs.</td></tr>
-            <tr><td class="f">namespace</td><td>nom du dépôt</td><td>Préfixe des ids générés. Évite qu'un <code>design-system</code> de deux dépôts se percute.</td></tr>
-            <tr><td class="f">include</td><td>tout</td><td>Liste blanche de slugs. Le slug = nom du dossier contenant le <code>SKILL.md</code>.</td></tr>
-            <tr><td class="f">exclude</td><td>rien</td><td>Liste noire. Prioritaire sur <code>include</code>.</td></tr>
-            <tr><td class="f">update</td><td><code>"review"</code></td><td>Voir §07.</td></tr>
-            <tr><td class="f">maxFileBytes</td><td>524288</td><td>Plafond par fichier. Au-delà : ignoré et consigné dans <code>skippedAssets</code>.</td></tr>
-            <tr><td class="f">maxFiles</td><td>200</td><td>Garde-fou. Un skill au-delà fait échouer la source plutôt que d'aspirer un monorepo.</td></tr>
-            <tr><td class="f">downloadBinaries</td><td><code>false</code></td><td>Voir §09.</td></tr>
-            <tr><td class="f">notes</td><td>—</td><td>Libre. Pour ton futur toi : pourquoi cette source existe.</td></tr>
+            <tr><td class="f">id</td><td>—</td><td>Required. Must match the filename.</td></tr>
+            <tr><td class="f">type</td><td>—</td><td><code>"github"</code> or <code>"web-catalog"</code>.</td></tr>
+            <tr><td class="f">repository</td><td>—</td><td><code>owner/name</code> format. Rejected before any network call if invalid.</td></tr>
+            <tr><td class="f">ref</td><td>default branch</td><td>Branch <em>or tag</em>. Pinning a tag freezes the version.</td></tr>
+            <tr><td class="f">roots</td><td>whole repository</td><td>Subfolders where <code>SKILL.md</code> files are searched. Reduces noise and false positives.</td></tr>
+            <tr><td class="f">namespace</td><td>repository name</td><td>Prefix for generated ids. Prevents two repositories with a <code>design-system</code> skill from colliding.</td></tr>
+            <tr><td class="f">include</td><td>all</td><td>Slug allowlist. The slug is the folder containing <code>SKILL.md</code>.</td></tr>
+            <tr><td class="f">exclude</td><td>none</td><td>Slug denylist. Takes priority over <code>include</code>.</td></tr>
+            <tr><td class="f">update</td><td><code>"review"</code></td><td>See section 07.</td></tr>
+            <tr><td class="f">maxFileBytes</td><td>524288</td><td>Per file cap. Larger files are skipped and recorded in <code>skippedAssets</code>.</td></tr>
+            <tr><td class="f">maxFiles</td><td>200</td><td>Guardrail. A larger skill fails the source instead of absorbing a monorepo.</td></tr>
+            <tr><td class="f">downloadBinaries</td><td><code>false</code></td><td>See section 09.</td></tr>
+            <tr><td class="f">notes</td><td>—</td><td>Free text. Explain to your future self why this source exists.</td></tr>
           </tbody>
         </table>
       </div>
 
-      <h3>Namespace, slug et id public</h3>
-      <p>Sur disque : <code>catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code>. L'id public est dérivé de namespace + slug, avec déduplication si le slug répète déjà le namespace — voir <code>capabilityIdFor()</code> dans <code>src/core/names.ts</code>. Les capabilities locales utilisent le namespace réservé <code>local</code> ; leur id public est simplement le slug.</p>
+      <h3>Namespace, slug, and public id</h3>
+      <p>On disk: <code>catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code>. The public id is derived from namespace plus slug, with deduplication when the slug already repeats the namespace. See <code>capabilityIdFor()</code> in <code>src/core/names.ts</code>. Local capabilities use the reserved <code>local</code> namespace; their public id is simply the slug.</p>
       <div class="codecard sm">
 <pre>local/landing-page/               →  <span class="jp">landing-page</span>
 ui-skills/improve-ui/             →  <span class="jp">ui-skills-improve-ui</span>
 matt-pocock/codebase-design/      →  <span class="jp">matt-pocock-codebase-design</span>
-ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span>  <span class="jc">(pas de doublon)</span></pre>
+ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span>  <span class="jc">(no duplicate)</span></pre>
       </div>
 
       <div class="callout c-coral">
         <i class="ph ph-warning" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Collisions et ownership</div>
-          <p>Une source externe ne peut jamais écraser une capacité locale (dossier sans <code>SOURCE.json</code>) ni prendre le contrôle d'une capacité appartenant à une autre source. La synchronisation vérifie le <code>sourceId</code> et l'id de capability avant toute écriture, et refuse explicitement en cas de conflit.</p>
+          <div class="c-t">Collisions and ownership</div>
+          <p>An external source can never overwrite a local capability, meaning a folder without <code>SOURCE.json</code>, or take control of a capability owned by another source. Sync checks <code>sourceId</code> and the capability id before any write and refuses conflicts explicitly.</p>
         </div>
       </div>
     </section>
 
     <!-- 04 -->
     <section id="catalogue" class="doc-sec rv">
-      <h2><span class="num">04</span>Ajouter un catalogue web</h2>
-      <p>Un catalogue (agent-design.com, une page « awesome-skills », un annuaire) ne contient pas les skills — il contient des <em>liens</em> vers eux. MCPIMP le traite donc comme une source de <strong>découverte</strong>, pas de contenu.</p>
+      <h2><span class="num">04</span>Add a web catalog</h2>
+      <p>A catalog such as agent-design.com, an awesome skills page, or a directory does not contain the skills. It contains <em>links</em> to them. MCPIMP treats it as a <strong>discovery</strong> source, not a content source.</p>
 
       <div class="codecard">
-<pre>  page du catalogue
+<pre>  catalog page
         │
-        │  on extrait les liens <span class="jk">github.com/owner/repo</span>
+        │  extract links <span class="jk">github.com/owner/repo</span>
         ▼
-  <span class="jvi">owner/repo</span>  ──────► le contenu est importé <span class="jp">DEPUIS GITHUB</span>
+  <span class="jvi">owner/repo</span>  ──────► content imported <span class="jp">FROM GITHUB</span>
         │
-        └──► le catalogue est conservé comme <span class="jk">`discoverySource`</span></pre>
+        └──► the catalog is retained as <span class="jk">`discoverySource`</span></pre>
       </div>
 
-      <p>On ne scrape jamais le HTML du catalogue dans le registry. On s'en sert pour trouver la source d'origine, puis on importe proprement depuis elle, avec son commit et sa licence.</p>
+      <p>The catalog HTML is never scraped into the registry. It is only used to find the original source, then content is imported cleanly from there with its commit and license.</p>
 
       <div class="code-label"><i class="ph ph-file-json" aria-hidden="true"></i>catalog/sources/agent-design.json</div>
       <div class="codecard">
@@ -370,9 +371,9 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
   <span class="jk">"id"</span>: <span class="js">"agent-design"</span>,
   <span class="jk">"type"</span>: <span class="js">"web-catalog"</span>,
   <span class="jk">"url"</span>: <span class="js">"https://agent-design.com/skills"</span>,
-  <span class="jk">"roots"</span>: [<span class="js">".claude/skills"</span>],       <span class="jc">← appliqué à CHAQUE dépôt délégué</span>
+  <span class="jk">"roots"</span>: [<span class="js">".claude/skills"</span>],       <span class="jc">← applied to EACH delegated repository</span>
   <span class="jk">"namespace"</span>: <span class="js">"ui-ux-pro-max"</span>,
-  <span class="jk">"include"</span>: [<span class="js">"ui-ux-pro-max"</span>],      <span class="jc">← idem</span>
+  <span class="jk">"include"</span>: [<span class="js">"ui-ux-pro-max"</span>],      <span class="jc">← same</span>
   <span class="jk">"allowedRepositories"</span>: [<span class="js">"nextlevelbuilder/ui-ux-pro-max-skill"</span>]
 <span class="jc">}</span></pre>
       </div>
@@ -380,31 +381,31 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
       <div class="callout c-coral">
         <i class="ph ph-shield-warning" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Pourquoi <code>allowedRepositories</code> est obligatoire</div>
-          <p>Sans ça, n'importe qui capable de faire ajouter son dépôt au catalogue pourrait injecter une capacité dans ton MCPIMP. La page est un contenu tiers que tu ne contrôles pas. Liste vide = <strong>découverte seule</strong> : la sync te dit ce qu'elle a trouvé, et n'importe rien.</p>
+          <div class="c-t">Why <code>allowedRepositories</code> is required</div>
+          <p>Without it, anyone who gets their repository listed in the catalog could inject a capability into your MCPIMP. The page is third party content you do not control. An empty list means <strong>discovery only</strong>: sync reports what it found and imports nothing.</p>
         </div>
       </div>
 
-      <h3>La liste des « non autorisés » qui revient à chaque run</h3>
-      <p>C'est le mode découverte qui fait son travail : il te montre le catalogue d'options. Pour en adopter un, tu l'ajoutes à <code>allowedRepositories</code> et tu relances.</p>
+      <h3>The unauthorized list that comes back on every run</h3>
+      <p>That is discovery mode doing its job: it shows the option catalog. To adopt one, add it to <code>allowedRepositories</code> and run sync again.</p>
       <div class="callout c-violet">
         <i class="ph ph-eye" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Piège d'affichage connu</div>
-          <p><code>ibelick/ui-skills</code> apparaît dans cette liste alors qu'il est bien importé. Ce n'est pas une contradiction : il l'est via sa <em>propre</em> source (<code>catalog/sources/ibelick-ui-skills.json</code>), pas via le catalogue — et le catalogue, lui, n'a pas le droit de l'importer. La liste devrait exclure les dépôts déjà couverts ailleurs ; ce n'est pas encore le cas.</p>
+          <div class="c-t">Known display trap</div>
+          <p><code>ibelick/ui-skills</code> appears in this list even though it is imported. This is not a contradiction: it is imported through its <em>own</em> source (<code>catalog/sources/ibelick-ui-skills.json</code>), not through the catalog. The catalog is not allowed to import it. The list should exclude repositories already covered elsewhere; it does not yet.</p>
         </div>
       </div>
     </section>
 
     <!-- 05 -->
     <section id="recettes" class="doc-sec rv">
-      <h2><span class="num">05</span>Recettes par cas d'usage</h2>
-      <p>Les situations que tu vas réellement rencontrer.</p>
+      <h2><span class="num">05</span>Recipes by use case</h2>
+      <p>The situations you will actually run into.</p>
 
       <details class="acc" open>
-        <summary><span><span class="tag">A</span>Un dépôt = un seul skill, à la racine</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <summary><span><span class="tag">A</span>One repository = one skill at the root</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
         <div class="acc-body">
-          <p>Le <code>SKILL.md</code> est à la racine. Pas de <code>roots</code>, pas d'<code>include</code>.</p>
+          <p>The <code>SKILL.md</code> is at the root. No <code>roots</code>, no <code>include</code>.</p>
           <div class="codecard sm">
 <pre><span class="jc">{</span>
   <span class="jk">"id"</span>: <span class="js">"emilkowalski-skill"</span>,
@@ -413,14 +414,14 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
   <span class="jk">"namespace"</span>: <span class="js">"emil"</span>
 <span class="jc">}</span></pre>
           </div>
-          <div class="hint"><i class="ph ph-info" aria-hidden="true"></i><span>Le slug devient le nom du dépôt → id <code>emil-skill</code>.</span></div>
+          <div class="hint"><i class="ph ph-info" aria-hidden="true"></i><span>The slug becomes the repository name → id <code>emil-skill</code>.</span></div>
         </div>
       </details>
 
       <details class="acc">
-        <summary><span><span class="tag">B</span>Un dépôt multi-skills</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <summary><span><span class="tag">B</span>A multi skill repository</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
         <div class="acc-body">
-          <p>Chaque sous-dossier avec un <code>SKILL.md</code> devient une capacité. Rien à coder par skill.</p>
+          <p>Each subfolder with a <code>SKILL.md</code> becomes a capability. Nothing needs to be coded per skill.</p>
           <div class="codecard sm">
 <pre><span class="jc">{</span>
   <span class="jk">"id"</span>: <span class="js">"addyosmani-agent-skills"</span>,
@@ -430,39 +431,39 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
   <span class="jk">"namespace"</span>: <span class="js">"addy"</span>
 <span class="jc">}</span></pre>
           </div>
-          <div class="hint"><i class="ph ph-info" aria-hidden="true"></i><span>Lance d'abord sans <code>--apply</code> : tu verras la liste complète de ce qui serait importé, et tu pourras affiner avec <code>include</code>.</span></div>
+          <div class="hint"><i class="ph ph-info" aria-hidden="true"></i><span>Run first without <code>--apply</code>: you will see the full list of what would be imported, then refine it with <code>include</code>.</span></div>
         </div>
       </details>
 
       <details class="acc">
-        <summary><span><span class="tag">C</span>Les skills sont dans un dossier caché</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <summary><span><span class="tag">C</span>Skills live in a hidden folder</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
         <div class="acc-body">
-          <p>Fréquent avec les plugins Claude Code : <code>.claude/skills/</code>. Ça marche, il faut juste le déclarer explicitement.</p>
+          <p>Common with Claude Code plugins: <code>.claude/skills/</code>. It works, you just need to declare it explicitly.</p>
           <div class="codecard sm">
 <pre><span class="jc">{</span>
   <span class="jk">"roots"</span>: [<span class="js">".claude/skills"</span>]
 <span class="jc">}</span></pre>
           </div>
-          <div class="hint"><i class="ph ph-warning" aria-hidden="true"></i><span>Ces skills sont souvent <code>platform-specific</code> (ils attendent <code>${CLAUDE_PLUGIN_ROOT}</code>). C'est détecté et consigné, mais à toi de juger si c'est utilisable hors de Claude Code.</span></div>
+          <div class="hint"><i class="ph ph-warning" aria-hidden="true"></i><span>These skills are often <code>platform-specific</code> because they expect <code>${CLAUDE_PLUGIN_ROOT}</code>. That is detected and recorded, but you decide whether it is useful outside Claude Code.</span></div>
         </div>
       </details>
 
       <details class="acc">
-        <summary><span><span class="tag">D</span>Je ne veux que 2 skills sur 12</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <summary><span><span class="tag">D</span>I only want 2 skills out of 12</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
         <div class="acc-body">
           <div class="codecard sm" style="margin-top:16px">
 <pre><span class="jc">{</span>
   <span class="jk">"include"</span>: [<span class="js">"improve-ui"</span>, <span class="js">"fixing-accessibility"</span>]
 <span class="jc">}</span></pre>
           </div>
-          <div class="hint"><i class="ph ph-info" aria-hidden="true"></i><span>Les slugs sont les <strong>noms de dossiers</strong>, pas les <code>name:</code> du frontmatter. En cas de doute, fais un run à blanc : les ids affichés te donnent les slugs.</span></div>
+          <div class="hint"><i class="ph ph-info" aria-hidden="true"></i><span>Slugs are <strong>folder names</strong>, not frontmatter <code>name:</code> values. When unsure, do a dry run: displayed ids tell you the slugs.</span></div>
         </div>
       </details>
 
       <details class="acc">
-        <summary><span><span class="tag">E</span>Figer une version précise</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <summary><span><span class="tag">E</span>Freeze a precise version</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
         <div class="acc-body">
-          <p>Un tag au lieu d'une branche : la source ne bougera plus jamais toute seule.</p>
+          <p>Use a tag instead of a branch: the source will never move by itself.</p>
           <div class="codecard sm">
 <pre><span class="jc">{</span>
   <span class="jk">"ref"</span>: <span class="js">"v2.1.0"</span>,
@@ -473,121 +474,120 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
       </details>
 
       <details class="acc">
-        <summary><span><span class="tag">F</span>Le skill embarque des images ou des polices</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <summary><span><span class="tag">F</span>The skill includes images or fonts</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
         <div class="acc-body">
-          <p>Par défaut, les binaires ne sont pas téléchargés : ils sont recensés dans <code>skippedAssets</code> avec leur taille, leur SHA et leur URL. Tu gardes la trace sans alourdir le dépôt.</p>
-          <p>Si tu en as vraiment besoin localement :</p>
+          <p>By default, binaries are not downloaded: they are recorded in <code>skippedAssets</code> with size, SHA, and URL. You keep traceability without bloating the repository.</p>
+          <p>If you really need them locally:</p>
           <div class="codecard sm">
 <pre><span class="jc">{</span>
   <span class="jk">"downloadBinaries"</span>: <span class="jv">true</span>,
   <span class="jk">"maxFileBytes"</span>: <span class="jv">2097152</span>
 <span class="jc">}</span></pre>
           </div>
-          <div class="hint"><i class="ph ph-warning" aria-hidden="true"></i><span>Pense au poids : le skill <code>ui-styling</code> d'ui-ux-pro-max embarque 80+ polices <code>.ttf</code>.</span></div>
+          <div class="hint"><i class="ph ph-warning" aria-hidden="true"></i><span>Mind the weight: the <code>ui-styling</code> skill from ui-ux-pro-max includes 80+ <code>.ttf</code> fonts.</span></div>
         </div>
       </details>
 
       <details class="acc">
-        <summary><span><span class="tag">G</span>Le skill contient des scripts</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <summary><span><span class="tag">G</span>The skill contains scripts</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
         <div class="acc-body">
-          <p>Ils sont importés comme du <strong>texte inerte</strong>, indexés, cherchables — et jamais exécutés par MCPIMP, à aucun moment. La capacité est classée <code>executable</code> pour que l'IA le sache.</p>
-          <p>Si tu veux réellement en exécuter un un jour, ça devra passer par un tool MCP dédié et explicite. Ce n'est pas dans le périmètre actuel.</p>
+          <p>They are imported as <strong>inert text</strong>, indexed, searchable, and never executed by MCPIMP at any point. The capability is classified as <code>executable</code> so the AI knows it contains code.</p>
+          <p>If you ever want to execute one, it should go through a dedicated, explicit MCP tool. That is outside the current scope.</p>
         </div>
       </details>
 
       <details class="acc">
-        <summary><span><span class="tag">H</span>Retirer une source</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <summary><span><span class="tag">H</span>Remove a source</span><i class="ph ph-plus" aria-hidden="true"></i></summary>
         <div class="acc-body">
-          <p>Deux gestes, aucun automatisme :</p>
+          <p>Two explicit steps, no automation:</p>
           <div class="codecard sm">
-<pre><span class="jp">rm</span> catalog/sources/ma-source.json
-<span class="jp">rm</span> -rf catalog/capabilities/local/ma-capacite</pre>
+<pre><span class="jp">rm</span> catalog/sources/my-source.json
+<span class="jp">rm</span> -rf catalog/capabilities/local/my-capability</pre>
           </div>
-          <div class="hint"><i class="ph ph-info" aria-hidden="true"></i><span>La sync ne supprime jamais rien d'elle-même. Si un skill disparaît en amont, sa capacité locale cesse simplement d'apparaître dans le rapport — elle reste sur disque.</span></div>
+          <div class="hint"><i class="ph ph-info" aria-hidden="true"></i><span>Sync never deletes anything by itself. If a skill disappears upstream, its local capability simply stops appearing in the report; it remains on disk.</span></div>
         </div>
       </details>
     </section>
 
     <!-- 06 -->
     <section id="cycle" class="doc-sec rv">
-      <h2><span class="num">06</span>Le cycle de synchronisation</h2>
+      <h2><span class="num">06</span>The sync cycle</h2>
 
-      <h3 style="margin-top:0">Ce qui se passe à chaque run</h3>
+      <h3 style="margin-top:0">What happens on every run</h3>
       <div class="codecard">
-<pre><span class="jp">1.</span> lire <span class="jvi">catalog/sources/*.json</span>                    <span class="jc">(disque)</span>
-<span class="jp">2.</span> pour chaque source GitHub :
-     GET <span class="jk">/repos/{owner}/{repo}</span>                → branche par défaut, licence
-     GET <span class="jk">/repos/{owner}/{repo}/commits/{ref}</span>  → LE commit
-     GET <span class="jk">/git/trees/{commit}?recursive=1</span>      → tout l'arbre, avec un SHA
-                                                 par fichier
-<span class="jp">3.</span> regrouper les fichiers par dossier contenant un SKILL.md
-<span class="jp">4.</span> contentHash = sha256( chemin+SHA de chaque fichier, trié )
-<span class="jp">5.</span> comparer au contentHash du SOURCE.json local
+<pre><span class="jp">1.</span> read <span class="jvi">catalog/sources/*.json</span>                    <span class="jc">(disk)</span>
+<span class="jp">2.</span> for each GitHub source:
+     GET <span class="jk">/repos/{owner}/{repo}</span>                → default branch, license
+     GET <span class="jk">/repos/{owner}/{repo}/commits/{ref}</span>  → THE commit
+     GET <span class="jk">/git/trees/{commit}?recursive=1</span>      → the whole tree, with one SHA per file
+<span class="jp">3.</span> group files by folder containing SKILL.md
+<span class="jp">4.</span> contentHash = sha256( path+SHA of each file, sorted )
+<span class="jp">5.</span> compare with the local SOURCE.json contentHash
         │
-        ├── identique  → <span class="jp">✓ up-to-date</span>        AUCUN téléchargement
-        └── différent  → <span class="jv">↑ update-available</span>  + liste des fichiers changés
-<span class="jp">6.</span> si (et seulement si) l'écriture est autorisée :
-     télécharger les fichiers, écrire upstream/, réécrire SOURCE.json</pre>
+        ├── same  → <span class="jp">✓ up-to-date</span>        NO download
+        └── different  → <span class="jv">↑ update-available</span>  + list of changed files
+<span class="jp">6.</span> if and only if writing is allowed :
+     download files, write upstream/, rewrite SOURCE.json</pre>
       </div>
 
       <div class="callout c-cyan">
         <i class="ph ph-lightning" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Le truc malin : 3 requêtes par dépôt</div>
-          <p>L'arbre Git renvoie le SHA de <em>chaque</em> fichier sans télécharger leur contenu. On peut donc savoir précisément ce qui a changé — et même <em>quels fichiers</em> — sans transférer un seul octet de contenu. Un dépôt inchangé coûte 3 requêtes, point.</p>
+          <div class="c-t">The clever bit: 3 requests per repository</div>
+          <p>The Git tree returns the SHA of <em>every</em> file without downloading file contents. You can know precisely what changed, including <em>which files</em>, without transferring a single byte of content. An unchanged repository costs 3 requests, period.</p>
         </div>
       </div>
 
-      <h3>Les statuts</h3>
+      <h3>Statuses</h3>
       <div class="tbl-wrap">
         <table class="tbl">
-          <thead><tr><th>Symbole</th><th>Statut</th><th>Signification</th></tr></thead>
+          <thead><tr><th>Symbol</th><th>Status</th><th>Meaning</th></tr></thead>
           <tbody>
-            <tr><td class="f c-ok">✓</td><td class="f" style="color:var(--paper)">up-to-date</td><td>Rien n'a bougé. Aucun réseau de contenu, aucune écriture.</td></tr>
-            <tr><td class="f c-warn">↑</td><td class="f" style="color:var(--paper)">update-available</td><td>Nouvelle révision. Les fichiers ajoutés / modifiés / supprimés sont listés.</td></tr>
-            <tr><td class="f c-cyan">+</td><td class="f" style="color:var(--paper)">new</td><td>Jamais importée. S'applique dès <code>--apply</code>.</td></tr>
-            <tr><td class="f c-bad">✗</td><td class="f" style="color:var(--paper)">unavailable</td><td>Injoignable, invalide, ou refusée par un garde-fou. N'interrompt pas les autres sources.</td></tr>
+            <tr><td class="f c-ok">✓</td><td class="f" style="color:var(--paper)">up-to-date</td><td>Nothing moved. No content network call, no write.</td></tr>
+            <tr><td class="f c-warn">↑</td><td class="f" style="color:var(--paper)">update-available</td><td>New revision. Added, modified, and deleted files are listed.</td></tr>
+            <tr><td class="f c-cyan">+</td><td class="f" style="color:var(--paper)">new</td><td>Never imported before. Applied as soon as <code>--apply</code> is used.</td></tr>
+            <tr><td class="f c-bad">✗</td><td class="f" style="color:var(--paper)">unavailable</td><td>Unreachable, invalid, or rejected by a guardrail. Does not interrupt other sources.</td></tr>
           </tbody>
         </table>
       </div>
 
-      <h3>Les commandes</h3>
+      <h3>Commands</h3>
       <div class="rows">
-        <div class="row"><span class="mono">pnpm sources:sync</span><p>Lecture seule. N'écrit jamais rien. À lancer sans crainte.</p></div>
-        <div class="row"><span class="mono">pnpm sources:sync --apply</span><p>Écrit les nouveaux imports et les updates en politique <code>auto</code>.</p></div>
-        <div class="row"><span class="mono">pnpm sources:sync --apply &lt;capacité&gt;</span><p>Accepte une mise à jour retenue par <code>review</code>.</p></div>
-        <div class="row"><span class="mono">pnpm sources:sync --apply &lt;source&gt;</span><p>Idem pour toutes les capacités de cette source. <strong>Cibler la source limite aussi le parcours réseau</strong> ; cibler une capacité ne le peut pas.</p></div>
-        <div class="row"><span class="mono">pnpm sources:sync --json</span><p>Sortie machine, pour scripter ou brancher sur une CI.</p></div>
+        <div class="row"><span class="mono">pnpm sources:sync</span><p>Read only. Never writes anything. Safe to run.</p></div>
+        <div class="row"><span class="mono">pnpm sources:sync --apply</span><p>Writes new imports and updates under the <code>auto</code> policy.</p></div>
+        <div class="row"><span class="mono">pnpm sources:sync --apply &lt;capability&gt;</span><p>Accepts an update held back by <code>review</code>.</p></div>
+        <div class="row"><span class="mono">pnpm sources:sync --apply &lt;source&gt;</span><p>Same for every capability from that source. <strong>Targeting the source also limits the network traversal</strong>; targeting a capability cannot.</p></div>
+        <div class="row"><span class="mono">pnpm sources:sync --json</span><p>Machine output, for scripts or CI.</p></div>
       </div>
 
       <div class="callout c-violet">
         <i class="ph ph-crosshair" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Pourquoi cibler une capacité ne réduit pas le scan</div>
-          <p>Une capacité n'existe qu'<em>après</em> la découverte : impossible de savoir quelle source la produit avant d'avoir lu les dépôts. La cible n'agit donc qu'au moment de décider d'écrire. Un id de source, lui, est connu d'avance et restreint le run (<code>src/ingestion/sync.ts</code>, ~ligne 227).</p>
+          <div class="c-t">Why targeting a capability does not reduce the scan</div>
+          <p>A capability only exists <em>after</em> discovery: you cannot know which source produces it before reading repositories. The target only applies when deciding whether to write. A source id is known ahead of time and restricts the run (<code>src/ingestion/sync.ts</code>, around line 227).</p>
         </div>
       </div>
     </section>
 
     <!-- 07 -->
     <section id="policy" class="doc-sec rv">
-      <h2><span class="num">07</span>Politique d'update</h2>
-      <p>Le problème qu'on résout : un dépôt tiers peut modifier son <code>SKILL.md</code> du jour au lendemain. Si MCPIMP avalait ça automatiquement, le comportement de ton IA changerait sans que tu l'aies décidé. D'où trois niveaux.</p>
+      <h2><span class="num">07</span>Update policy</h2>
+      <p>The problem: a third party repository can change its <code>SKILL.md</code> overnight. If MCPIMP swallowed that automatically, your AI behavior would change without your decision. That is why there are three levels.</p>
 
       <div class="tbl-wrap">
         <table class="tbl">
-          <thead><tr><th>Politique</th><th>Premier import</th><th>Mise à jour</th><th>Pour quoi</th></tr></thead>
+          <thead><tr><th>Policy</th><th>First import</th><th>Update</th><th>Use case</th></tr></thead>
           <tbody>
-            <tr><td class="f c-ok">auto</td><td><code>--apply</code></td><td><code>--apply</code></td><td>Une source que tu contrôles (ton propre dépôt).</td></tr>
-            <tr><td class="f c-warn">review <span style="color:var(--muted);font-size:11px">(défaut)</span></td><td><code>--apply</code></td><td><code>--apply</code> <strong>+ nommer la cible</strong></td><td>Tout le reste. Tu vois le diff avant d'accepter.</td></tr>
-            <tr><td class="f c-bad">manual</td><td><code>--apply</code></td><td>idem <code>review</code></td><td>Marqueur d'intention : « ne touche pas sans réfléchir ».</td></tr>
+            <tr><td class="f c-ok">auto</td><td><code>--apply</code></td><td><code>--apply</code></td><td>A source you control, such as your own repository.</td></tr>
+            <tr><td class="f c-warn">review <span style="color:var(--muted);font-size:11px">(default)</span></td><td><code>--apply</code></td><td><code>--apply</code> <strong>+ name the target</strong></td><td>Everything else. You see the diff before accepting.</td></tr>
+            <tr><td class="f c-bad">manual</td><td><code>--apply</code></td><td>same as <code>review</code></td><td>Intent marker: do not touch without thinking.</td></tr>
           </tbody>
         </table>
       </div>
 
-      <p>Le premier import s'applique dès <code>--apply</code>, quelle que soit la politique : déclarer une source est déjà un acte volontaire. La politique protège l'<em>évolution</em>, pas l'adoption. La logique tient en cinq lignes — <code>mayWrite()</code> dans <code>src/ingestion/sync.ts</code>.</p>
+      <p>The first import applies as soon as <code>--apply</code> is used, regardless of policy: declaring a source is already a deliberate act. The policy protects <em>evolution</em>, not adoption. The logic fits in five lines: <code>mayWrite()</code> in <code>src/ingestion/sync.ts</code>.</p>
 
-      <div class="code-label"><i class="ph ph-terminal" aria-hidden="true"></i>À quoi ressemble une update retenue</div>
+      <div class="code-label"><i class="ph ph-terminal" aria-hidden="true"></i>What a held update looks like</div>
       <div class="codecard">
 <pre><span style="color:#f3c677">↑ ui-skills-improve-ui               update-available</span>
     revision fdc667270f → 9a3f21c8e0
@@ -600,112 +600,112 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
 
     <!-- 08 -->
     <section id="overrides" class="doc-sec rv">
-      <h2><span class="num">08</span>Modifier un skill sans casser la resync</h2>
-      <p>Le réflexe naturel — éditer <code>upstream/SKILL.md</code> — est le piège : la prochaine sync remplace tout <code>upstream/</code> et ta modification disparaît. Utilise <code>overrides/</code>.</p>
+      <h2><span class="num">08</span>Modify a skill without breaking resync</h2>
+      <p>The natural reflex, editing <code>upstream/SKILL.md</code>, is the trap: the next sync replaces all of <code>upstream/</code> and your change disappears. Use <code>overrides/</code>.</p>
 
       <div class="grid2">
         <div class="mini">
-          <div class="m-t"><i class="ph ph-file-plus" aria-hidden="true"></i>Ajouter un fichier</div>
+          <div class="m-t"><i class="ph ph-file-plus" aria-hidden="true"></i>Add a file</div>
           <pre>overrides/
   <span class="jp">mcpimp-notes.md</span></pre>
-          <p class="m-p">Nouveau chemin → s'ajoute à la capacité.</p>
+          <p class="m-p">New path → added to the capability.</p>
         </div>
         <div class="mini">
-          <div class="m-t"><i class="ph ph-file-arrow-up" aria-hidden="true"></i>Remplacer un fichier</div>
+          <div class="m-t"><i class="ph ph-file-arrow-up" aria-hidden="true"></i>Replace a file</div>
           <pre>overrides/
   <span class="jp">references/plan.md</span></pre>
-          <p class="m-p">Même chemin qu'en amont → ta version gagne.</p>
+          <p class="m-p">Same path as upstream → your version wins.</p>
         </div>
       </div>
 
-      <p>Le champ <code>layer</code> de chaque fichier (visible via <code>capability-info</code>) te dit d'où il vient : <code>upstream</code> ou <code>override</code>. Utile pour auditer ce que tu as dévié.</p>
+      <p>The <code>layer</code> field on each file, visible through <code>capability-info</code>, tells you where it comes from: <code>upstream</code> or <code>override</code>. Useful when auditing local deviations.</p>
 
       <div class="callout c-coral">
         <i class="ph ph-scales" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Limite assumée</div>
-          <p>Un override <strong>remplace</strong> le fichier amont, il ne fusionne pas. Si l'amont améliore un fichier que tu as override, tu ne récupères pas ses changements automatiquement — la sync te signalera qu'il a bougé, à toi de reporter. C'est le prix de la simplicité ; une fusion à trois voies serait disproportionnée ici.</p>
+          <div class="c-t">Known tradeoff</div>
+          <p>An override <strong>replaces</strong> the upstream file; it does not merge it. If upstream improves a file you override, you do not receive those changes automatically. Sync tells you it moved, then you decide what to port. That is the price of simplicity; a three way merge would be disproportionate here.</p>
         </div>
       </div>
     </section>
 
     <!-- 09 -->
     <section id="binaires" class="doc-sec rv">
-      <h2><span class="num">09</span>Binaires et types de skills</h2>
+      <h2><span class="num">09</span>Binaries and skill types</h2>
 
-      <h3 style="margin-top:0">Pourquoi c'était un vrai problème</h3>
-      <p>Le registry lisait tous les fichiers en UTF-8. Une image ou une police dans un skill externe, et l'index se remplissait de charabia — voire plantait. Maintenant, trois tests en cascade : extension connue comme binaire, présence d'un octet NUL, validation UTF-8 stricte. Au moindre doute, le fichier n'est pas décodé.</p>
+      <h3 style="margin-top:0">Why this was a real problem</h3>
+      <p>The registry used to read every file as UTF-8. One image or font inside an external skill could fill the index with garbage or crash it. Now three checks run in sequence: known binary extension, NUL byte presence, and strict UTF-8 validation. When in doubt, the file is not decoded.</p>
 
       <div class="rows">
-        <div class="row"><strong>Fichier texte</strong> — indexé, cherchable, lisible via <code>resources/read</code>.</div>
-        <div class="row"><strong>Fichier binaire</strong> — métadonnées conservées (taille, type MIME, sha256), exclu des ressources lisibles ; <code>resources/read</code> renvoie une erreur explicite plutôt qu'un contenu corrompu.</div>
+        <div class="row"><strong>Text file</strong> — indexed, searchable, readable through <code>resources/read</code>.</div>
+        <div class="row"><strong>Binary file</strong> — metadata retained (size, MIME type, sha256), excluded from readable resources; <code>resources/read</code> returns an explicit error instead of corrupted content.</div>
       </div>
 
-      <h3>Les 4 types de skills détectés</h3>
-      <p>Déterminé à l'import, consigné dans <code>SOURCE.json</code>, purement informatif — ça ne bloque jamais un chargement.</p>
+      <h3>The 4 detected skill types</h3>
+      <p>Determined during import, recorded in <code>SOURCE.json</code>, purely informational. It never blocks loading.</p>
       <div class="tbl-wrap">
         <table class="tbl">
-          <thead><tr><th>Type</th><th>Déclencheur</th><th>Ce que ça implique</th></tr></thead>
+          <thead><tr><th>Type</th><th>Trigger</th><th>What it implies</th></tr></thead>
           <tbody>
-            <tr><td class="f c-ok">portable</td><td><code>SKILL.md</code> + <code>references/</code></td><td>Utilisable partout, sans condition.</td></tr>
-            <tr><td class="f c-cyan">resource-dependent</td><td><code>data/</code>, <code>assets/</code>, binaires</td><td>A besoin de ses fichiers pour être utile.</td></tr>
-            <tr><td class="f c-warn">executable</td><td><code>scripts/</code>, <code>.py</code>, <code>.sh</code>…</td><td>Contient du code. MCPIMP ne l'exécute jamais.</td></tr>
-            <tr><td class="f c-bad">platform-specific</td><td><code>${CLAUDE_PLUGIN_ROOT}</code>, <code>.claude-plugin</code></td><td>Dépend d'un hôte précis. Peut ne rien donner ailleurs.</td></tr>
+            <tr><td class="f c-ok">portable</td><td><code>SKILL.md</code> + <code>references/</code></td><td>Usable everywhere, with no condition.</td></tr>
+            <tr><td class="f c-cyan">resource-dependent</td><td><code>data/</code>, <code>assets/</code>, binaries</td><td>Needs its files to be useful.</td></tr>
+            <tr><td class="f c-warn">executable</td><td><code>scripts/</code>, <code>.py</code>, <code>.sh</code>…</td><td>Contains code. MCPIMP never executes it.</td></tr>
+            <tr><td class="f c-bad">platform-specific</td><td><code>${CLAUDE_PLUGIN_ROOT}</code>, <code>.claude-plugin</code></td><td>Depends on a specific host. May not be useful elsewhere.</td></tr>
           </tbody>
         </table>
       </div>
-      <p>La priorité est décroissante : un skill avec des scripts <em>et</em> un marqueur de plateforme est classé <code>platform-specific</code>. Les indices bruts sont conservés à part dans <code>skillTraits</code>. Logique dans <code>classifySkill()</code>, <code>src/ingestion/normalize.ts</code>.</p>
+      <p>Priority is descending: a skill with scripts <em>and</em> a platform marker is classified as <code>platform-specific</code>. Raw clues are kept separately in <code>skillTraits</code>. Logic lives in <code>classifySkill()</code>, <code>src/ingestion/normalize.ts</code>.</p>
     </section>
 
     <!-- 10 -->
     <section id="recherche" class="doc-sec rv">
-      <h2><span class="num">10</span>Régler la recherche</h2>
-      <p>Avec 3 capacités, un <code>includes()</code> suffisait. Avec 9 — et à terme des centaines — il fallait un classement. <code>src/registry/search.ts</code> calcule un score en cinq temps.</p>
+      <h2><span class="num">10</span>Tune search</h2>
+      <p>With 3 capabilities, <code>includes()</code> was enough. With 9, and eventually hundreds, ranking was needed. <code>src/registry/search.ts</code> computes a score in five passes.</p>
 
       <div class="rows">
-        <div class="row"><span class="mono">1. poids par champ</span><p>Le nom et la description de la capacité pèsent 6 et 4 ; le corps du texte pèse 1. Un mot dans un titre compte plus qu'au milieu d'un paragraphe.</p></div>
-        <div class="row"><span class="mono">2. IDF</span><p>Un mot présent dans tous les fichiers n'apporte aucune information et ne fait donc rien remonter.</p></div>
-        <div class="row"><span class="mono">3. couverture</span><p>Un fichier qui matche 3 mots sur 3 écrase celui qui n'en matche qu'un. C'est ce qui rend les requêtes multi-mots utiles.</p></div>
-        <div class="row"><span class="mono">4. poids par type</span><p>Un <code>SKILL.md</code> ×1.4, un <code>BUNDLE.md</code> ×0.35 (il concatène tout, donc il matche n'importe quoi), un script ×0.5.</p></div>
-        <div class="row"><span class="mono">5. bonus de phrase</span><p>×1.6 si la requête apparaît telle quelle.</p></div>
+        <div class="row"><span class="mono">1. field weights</span><p>The capability name and description weigh 6 and 4; body text weighs 1. A word in a title counts more than a word in the middle of a paragraph.</p></div>
+        <div class="row"><span class="mono">2. IDF</span><p>A word present in every file carries no information and does not lift results.</p></div>
+        <div class="row"><span class="mono">3. coverage</span><p>A file matching 3 words out of 3 beats one matching only one. This makes multi word queries useful.</p></div>
+        <div class="row"><span class="mono">4. type weights</span><p>A <code>SKILL.md</code> ×1.4, a <code>BUNDLE.md</code> ×0.35 because it concatenates everything, and a script ×0.5.</p></div>
+        <div class="row"><span class="mono">5. phrase bonus</span><p>×1.6 when the query appears as written.</p></div>
       </div>
 
-      <h3>Le pont français / anglais</h3>
-      <p>Tes capacités sont écrites en français, les IA interrogent souvent en anglais. <code>src/registry/synonyms.ts</code> contient des groupes de mots équivalents, comptés à poids réduit (0.4). C'est ce qui fait que <code>photographic luxury</code> retrouve un texte parlant d'<em>imagerie</em> et de <em>haut de gamme</em>.</p>
+      <h3>The French / English bridge</h3>
+      <p>Your capabilities may be written in French while AIs often query in English. <code>src/registry/synonyms.ts</code> contains equivalent word groups counted at reduced weight (0.4). That is how <code>photographic luxury</code> can find text about <em>imagerie</em> and <em>haut de gamme</em>.</p>
       <div class="codecard sm">
-<pre><span class="jc">// ajouter ton propre vocabulaire métier :</span>
+<pre><span class="jc">// add your own domain vocabulary :</span>
 [<span class="js">"hospitality"</span>, <span class="js">"hotel"</span>, <span class="js">"hotellerie"</span>, <span class="js">"restaurant"</span>, <span class="js">"resort"</span>],
 [<span class="js">"luxury"</span>, <span class="js">"luxe"</span>, <span class="js">"premium"</span>, <span class="js">"upscale"</span>, <span class="js">"elegant"</span>],
-<span class="jp">[<span class="js">"saas"</span>, <span class="js">"abonnement"</span>, <span class="js">"subscription"</span>, <span class="js">"b2b"</span>],</span>   <span class="jc">← à toi</span></pre>
+<span class="jp">[<span class="js">"saas"</span>, <span class="js">"abonnement"</span>, <span class="js">"subscription"</span>, <span class="js">"b2b"</span>],</span>   <span class="jc">← yours</span></pre>
       </div>
-      <p style="font-size:14px">Contrainte : un seul token par entrée, en minuscules sans accent. « haut-de-gamme » ne marcherait pas — le tokenizer le découperait.</p>
+      <p style="font-size:14px">Constraint: one token per entry, lowercase and accentless. “haut-de-gamme” would not work because the tokenizer would split it.</p>
 
       <div class="callout c-cyan">
         <i class="ph ph-brain" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Le jour où tu voudras du vrai sémantique</div>
-          <p>Ce n'est pas de la recherche sémantique, et ça ne prétend pas l'être. Le point de remplacement est unique : la fonction <code>expandTerm()</code>. Y brancher des embeddings ne touche aucun autre fichier. C'était le but de la découpe.</p>
+          <div class="c-t">When you want real semantics</div>
+          <p>This is not semantic search and does not claim to be. The replacement point is unique: <code>expandTerm()</code>. Plugging embeddings there does not touch any other file. That was the point of the split.</p>
         </div>
       </div>
     </section>
 
     <!-- 11 -->
     <section id="etendre" class="doc-sec rv">
-      <h2><span class="num">11</span>Étendre le code</h2>
-      <p>Le cas le plus probable : tu veux importer depuis autre chose que GitHub — un GitLab, un Git nu, une API interne, un sitemap.</p>
+      <h2><span class="num">11</span>Extend the code</h2>
+      <p>The most likely case: you want to import from something other than GitHub, such as GitLab, bare Git, an internal API, or a sitemap.</p>
 
-      <h3>Les deux ports</h3>
-      <p>Dans <code>src/ingestion/types.ts</code>. La distinction est importante : certaines sources <em>contiennent</em> du contenu, d'autres se contentent d'<em>indiquer où il est</em>.</p>
+      <h3>The two ports</h3>
+      <p>In <code>src/ingestion/types.ts</code>. The distinction matters: some sources <em>contain</em> content, while others only <em>point to where it is</em>.</p>
       <div class="codecard">
-<pre><span class="jc">// Source de CONTENU : on peut fetcher dedans</span>
+<pre><span class="jc">// CONTENT source: can be fetched</span>
 <span class="jk">interface</span> ContentSourceAdapter&lt;D&gt; {
   type: <span class="js">string</span>;
-  getRevision(source: D): Promise&lt;SourceRevision&gt;;              <span class="jc">// pas cher</span>
+  getRevision(source: D): Promise&lt;SourceRevision&gt;;              <span class="jc">// cheap</span>
   discover(source: D, rev: SourceRevision): Promise&lt;DiscoveredSkill[]&gt;;
-  fetch(source: D, skill: DiscoveredSkill): Promise&lt;FetchedFile[]&gt;; <span class="jc">// si changé</span>
+  fetch(source: D, skill: DiscoveredSkill): Promise&lt;FetchedFile[]&gt;; <span class="jc">// if changed</span>
 }
 
-<span class="jc">// Source de DÉCOUVERTE : elle délègue à une source de contenu</span>
+<span class="jc">// DISCOVERY source: delegates to a content source</span>
 <span class="jk">interface</span> DiscoverySourceAdapter&lt;D&gt; {
   type: <span class="js">string</span>;
   getRevision(source: D): Promise&lt;SourceRevision&gt;;
@@ -713,99 +713,99 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
 }</pre>
       </div>
 
-      <h3>Checklist pour un nouvel adapter de contenu</h3>
+      <h3>Checklist for a new content adapter</h3>
       <div class="rows">
-        <div class="row"><span class="mono">1.</span> <code>src/ingestion/types.ts</code> — ajoute ton interface de définition et mets-la dans l'union <code>SourceDefinition</code>.</div>
-        <div class="row"><span class="mono">2.</span> <code>src/ingestion/definitions.ts</code> — ajoute une branche dans <code>parseSourceDefinition()</code> pour valider tes champs. Valide vraiment : c'est la seule barrière avant le réseau.</div>
-        <div class="row"><span class="mono">3.</span> <code>src/ingestion/gitlab.ts</code> — implémente <code>ContentSourceAdapter</code>. Passe par <code>fetchJson</code>/<code>fetchBytes</code> de <code>http.ts</code> pour hériter des plafonds et des timeouts, et ajoute ton hôte via <code>extraHosts</code>.</div>
-        <div class="row"><span class="mono">4.</span> <code>src/ingestion/sync.ts</code> — <strong style="color:#f3c677">le point dur</strong>, voir ci-dessous.</div>
-        <div class="row"><span class="mono">5.</span> Un test avec un faux serveur. Copie <code>src/ingestion/__tests__/fake-github.ts</code> : il stubbe <code>fetch</code> et te laisse simuler un push.</div>
+        <div class="row"><span class="mono">1.</span> <code>src/ingestion/types.ts</code> — add your definition interface and put it in the <code>SourceDefinition</code> union.</div>
+        <div class="row"><span class="mono">2.</span> <code>src/ingestion/definitions.ts</code> — add a branch in <code>parseSourceDefinition()</code> to validate your fields. Validate seriously: it is the only barrier before the network.</div>
+        <div class="row"><span class="mono">3.</span> <code>src/ingestion/gitlab.ts</code> — implement <code>ContentSourceAdapter</code>. Go through <code>fetchJson</code>/<code>fetchBytes</code> from <code>http.ts</code> to inherit caps and timeouts, and add your host through <code>extraHosts</code>.</div>
+        <div class="row"><span class="mono">4.</span> <code>src/ingestion/sync.ts</code> — <strong style="color:#f3c677">the hard part</strong>, see below.</div>
+        <div class="row"><span class="mono">5.</span> A test with a fake server. Copy <code>src/ingestion/__tests__/fake-github.ts</code>: it stubs <code>fetch</code> and lets you simulate a push.</div>
       </div>
 
       <div class="callout c-coral">
         <i class="ph ph-git-branch" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Limite actuelle à connaître</div>
-          <p style="margin-bottom:14px"><code>sync.ts</code> code en dur l'adapter GitHub. Ligne ~252 :</p>
+          <div class="c-t">Current limitation to know</div>
+          <p style="margin-bottom:14px"><code>sync.ts</code> hard codes the GitHub adapter. Around line 252:</p>
           <div class="codecard sm" style="margin-bottom:14px"><pre><span class="jk">if</span> (source.type !== <span class="js">"github"</span>) <span class="jk">continue</span>;</pre></div>
-          <p>Avec un seul adapter de contenu, une table de dispatch aurait été de l'abstraction gratuite. Au deuxième, elle se justifie : remplace ce test par une <code>Map&lt;string, ContentSourceAdapter&gt;</code> et récupère l'adapter par <code>source.type</code>. Le reste de la boucle est déjà générique — elle ne manipule que des <code>DiscoveredSkill</code>.</p>
+          <p>With one content adapter, a dispatch table would have been free abstraction. With a second one, it becomes justified: replace this check with a <code>Map&lt;string, ContentSourceAdapter&gt;</code> and retrieve the adapter by <code>source.type</code>. The rest of the loop is already generic; it only manipulates <code>DiscoveredSkill</code> values.</p>
         </div>
       </div>
 
-      <h3>Le contrat à respecter</h3>
-      <p>Trois règles, sinon tu casses les garanties du système :</p>
+      <h3>The contract to respect</h3>
+      <p>Three rules, otherwise you break the system guarantees:</p>
       <div class="rows">
-        <div class="row"><strong>Ne télécharge rien dans <code>discover()</code>.</strong><p>C'est ce qui rend « inchangé = gratuit » vrai. Si ta source n'expose pas de hash par fichier, utilise ETag, Last-Modified, ou un hash de ce que tu peux obtenir sans coût.</p></div>
-        <div class="row"><strong>Fais passer chaque chemin par <code>assertSafeRelativePath()</code>.</strong><p>Ces chaînes viennent d'un tiers et vont devenir des écritures disque.</p></div>
-        <div class="row"><strong>Ne perds jamais la révision exacte.</strong><p>Remplis <code>origin</code> avec ce que tu as de plus précis. Sans identifiant stable, un hash du contenu vaut mieux que rien.</p></div>
+        <div class="row"><strong>Do not download anything in <code>discover()</code>.</strong><p>That is what makes “unchanged = free” true. If your source does not expose a per file hash, use ETag, Last-Modified, or a hash of what you can get cheaply.</p></div>
+        <div class="row"><strong>Run every path through <code>assertSafeRelativePath()</code>.</strong><p>These strings come from a third party and will become disk writes.</p></div>
+        <div class="row"><strong>Never lose the exact revision.</strong><p>Fill <code>origin</code> with the most precise value you have. Without a stable identifier, a content hash is better than nothing.</p></div>
       </div>
     </section>
 
     <!-- 12 -->
     <section id="securite" class="doc-sec rv">
-      <h2><span class="num">12</span>Sécurité</h2>
-      <p>Un <code>SKILL.md</code> récupéré sur Internet est un fichier écrit par un inconnu, qui sera ensuite lu par une IA. C'est exactement le profil d'une injection de prompt. Les garde-fous :</p>
+      <h2><span class="num">12</span>Security</h2>
+      <p>A <code>SKILL.md</code> fetched from the Internet is a file written by someone unknown, then read by an AI. That is exactly the profile of a prompt injection. The guardrails:</p>
 
       <div class="rows">
-        <div class="row"><strong>Aucune exécution.</strong> Les scripts importés sont du texte. Rien n'est lancé, ni à l'import ni au chargement.</div>
-        <div class="row"><strong>Aucune interprétation à l'ingestion.</strong> L'ingester lit des octets et des chemins. Il ne « suit » jamais ce qui est écrit dans un fichier.</div>
-        <div class="row"><strong>Bannière de provenance.</strong> <code>load-capability</code> préfixe tout contenu importé d'un rappel : ce texte est une référence, pas une autorité. Une IA qui lit « ignore previous instructions » dedans a le contexte pour le refuser.</div>
-        <div class="row"><strong>Réseau contraint.</strong> HTTPS obligatoire, liste blanche d'hôtes, plafonds de taille, timeouts.</div>
-        <div class="row"><strong>Écritures confinées.</strong> Chemins validés contre la traversée, segments <code>namespace</code>/<code>slug</code> validés, et chaque écriture re-vérifiée comme étant sous <code>catalog/capabilities/</code>.</div>
-        <div class="row"><strong>Aucun secret exposé.</strong> Un <code>GITHUB_TOKEN</code> n'est envoyé qu'à <code>api.github.com</code>, jamais à un hôte tiers.</div>
+        <div class="row"><strong>No execution.</strong> Imported scripts are text. Nothing is run during import or loading.</div>
+        <div class="row"><strong>No interpretation during ingestion.</strong> The ingester reads bytes and paths. It never “follows” what a file says.</div>
+        <div class="row"><strong>Provenance banner.</strong> <code>load-capability</code> prefixes imported content with a reminder: this text is a reference, not an authority. An AI reading “ignore previous instructions” inside it has the context to reject it.</div>
+        <div class="row"><strong>Constrained network.</strong> HTTPS required, host allowlist, size caps, timeouts.</div>
+        <div class="row"><strong>Confined writes.</strong> Paths are validated against traversal, <code>namespace</code>/<code>slug</code> segments are validated, and every write is rechecked as being under <code>catalog/capabilities/</code>.</div>
+        <div class="row"><strong>No secret exposed.</strong> A <code>GITHUB_TOKEN</code> is only sent to <code>api.github.com</code>, never to a third party host.</div>
       </div>
 
       <div class="callout c-coral">
         <i class="ph ph-shield-warning" aria-hidden="true"></i>
         <div>
-          <div class="c-t">Ce que ça ne protège pas</div>
-          <p>Un skill importé peut contenir de <em>mauvais conseils</em> de design, ou des instructions persuasives. Le système garantit qu'il ne s'exécute pas et qu'il est identifié comme externe — pas qu'il est bon. La politique <code>review</code> existe pour que tu lises avant d'accepter.</p>
+          <div class="c-t">What this does not protect against</div>
+          <p>An imported skill can contain <em>bad advice</em> or persuasive instructions. The system guarantees that it does not execute and that it is identified as external, not that it is good. The <code>review</code> policy exists so you read before accepting.</p>
         </div>
       </div>
     </section>
 
     <!-- 13 -->
     <section id="depannage" class="doc-sec rv">
-      <h2><span class="num">13</span>Dépannage</h2>
+      <h2><span class="num">13</span>Troubleshooting</h2>
 
       <div class="rows">
         <div class="row">
           <span class="mono" style="color:var(--coral)">"id" must match the filename</span>
-          <p>Le champ <code>id</code> et le nom du fichier diffèrent. Renomme l'un des deux.</p>
+          <p>The <code>id</code> field and filename differ. Rename one of them.</p>
         </div>
         <div class="row">
           <span class="mono" style="color:var(--coral)">GitHub tree … is truncated</span>
-          <p>Le dépôt est trop gros pour un arbre en une requête. Ajoute <code>roots</code> pour cibler le sous-dossier des skills. On refuse plutôt que d'importer un skill partiel.</p>
+          <p>The repository is too large for one tree request. Add <code>roots</code> to target the skills subfolder. MCPIMP refuses rather than importing a partial skill.</p>
         </div>
         <div class="row">
           <span class="mono" style="color:var(--coral)">HTTP 403 for https://api.github.com/…</span>
-          <p>Quota atteint : 60 requêtes/heure sans authentification. Mets un <code>GITHUB_TOKEN</code> dans <code>.env</code>.</p>
+          <p>Quota reached: 60 requests per hour without authentication. Put a <code>GITHUB_TOKEN</code> in <code>.env</code>.</p>
         </div>
         <div class="row">
           <span class="mono" style="color:var(--coral)">Host not allowed for source ingestion</span>
-          <p>Hôte hors liste blanche. Pour un catalogue, son propre domaine est autorisé automatiquement ; pour autre chose, passe par <code>extraHosts</code> dans ton adapter.</p>
+          <p>Host outside the allowlist. For a catalog, its own domain is allowed automatically; for anything else, go through <code>extraHosts</code> in your adapter.</p>
         </div>
         <div class="row">
           <span class="mono" style="color:var(--coral)">Unsafe upstream path</span>
-          <p>Un chemin amont contient <code>..</code>, un chemin absolu ou un segment réservé. Le fichier est ignoré — c'est le garde-fou qui fonctionne.</p>
+          <p>An upstream path contains <code>..</code>, an absolute path, or a reserved segment. The file is ignored; that means the guardrail works.</p>
         </div>
         <div class="row">
-          <span class="mono" style="color:#f3c677">Une capacité n'apparaît pas après l'import</span>
-          <p>Le registry requiert au moins un composant supporté (aujourd'hui <code>SKILL.md</code> ou <code>mcp.json</code>) dans <code>upstream/</code> (ou <code>overrides/</code>). Vérifie aussi qu'aucune capacité locale ne porte le même id — la locale gagne.</p>
+          <span class="mono" style="color:#f3c677">A capability does not appear after import</span>
+          <p>The registry requires at least one supported component, currently <code>SKILL.md</code> or <code>mcp.json</code>, in <code>upstream/</code> or <code>overrides/</code>. Also check that no local capability uses the same id: local wins.</p>
         </div>
         <div class="row">
-          <span class="mono" style="color:#f3c677">Mes modifications ont disparu</span>
-          <p>Tu as édité <code>upstream/</code>. Refais-les dans <code>overrides/</code>, au même chemin relatif.</p>
+          <span class="mono" style="color:#f3c677">My changes disappeared</span>
+          <p>You edited <code>upstream/</code>. Recreate the changes in <code>overrides/</code>, at the same relative path.</p>
         </div>
         <div class="row">
-          <span class="mono" style="color:#f3c677">Le déploiement Cloudflare ne voit pas les nouveaux skills</span>
-          <p>Le Worker sert un snapshot figé. Relance <code>pnpm run build</code> après chaque sync pour régénérer <code>generated/capability-snapshot.ts</code>.</p>
+          <span class="mono" style="color:#f3c677">Cloudflare deployment does not see new skills</span>
+          <p>The Worker serves a fixed snapshot. Run <code>pnpm run build</code> after each sync to regenerate <code>generated/capability-snapshot.ts</code>.</p>
         </div>
       </div>
 
       <footer>
-        <p>Code de référence : <code>src/ingestion/</code> (ingestion), <code>src/registry/</code> (index et recherche), <code>catalog/sources/</code> (déclarations), <code>catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code> (résultat).</p>
-        <p>Validation : <code>pnpm run test</code> · <code>pnpm run typecheck</code> · <code>pnpm run build</code>.</p>
+        <p>Reference code: <code>src/ingestion/</code> (ingestion), <code>src/registry/</code> (index and search), <code>catalog/sources/</code> (declarations), <code>catalog/capabilities/&lt;namespace&gt;/&lt;slug&gt;/</code> (result).</p>
+        <p>Validation: <code>pnpm run test</code> · <code>pnpm run typecheck</code> · <code>pnpm run build</code>.</p>
       </footer>
     </section>
   </main>

@@ -1,0 +1,19 @@
+:root {
+  color-scheme: dark;
+  --ink: #0a0a0a;
+  --panel: #181818;
+  --panel-strong: #1f1f1f;
+  --line: #313131;
+  --line-soft: #272727;
+  --paper: #f7f7f2;
+  --muted: #a8a8a2;
+  --lift: #141413;
+  --acid: #c9ff3d;
+  --cyan: #63e6ff;
+  --coral: #ff7a66;
+  --violet: #bda7ff;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --sans: "Geist Variable", Geist, -apple-system, system-ui, sans-serif;
+  --mono: "Geist Mono Variable", ui-monospace, Menlo, monospace;
+  --content: 1200px;
+}

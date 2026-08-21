@@ -82,5 +82,9 @@ export function createServer(registry: CapabilityRegistry) {
     return c.html(renderDashboard(registry));
   });
 
+  app.get("/fr/dashboard", (c) => {
+    return c.html(renderDashboard(registry, "fr"));
+  });
+
   return app;
 }
