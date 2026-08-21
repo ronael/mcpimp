@@ -31,6 +31,12 @@ interface ReferenceLink {
   sourcePath: string;
 }
 
+interface DashboardData {
+  capabilities: Capability[];
+  resources: ReturnType<CapabilityRegistry["listResources"]>;
+  upstreams: ReturnType<UpstreamMcpGateway["listUpstreams"]>;
+}
+
 function titleBefore(text: string, index: number): string | undefined {
   const before = text.slice(0, index);
   const headings = [...before.matchAll(/^#{2,3}\s+(.+)$/gm)];
@@ -175,10 +181,11 @@ function renderCapabilityResources(registry: CapabilityRegistry, copy: Dashboard
 
       const badge = capability.origin ? `<span class="badge">${escapeHtml(copy.imported)}</span>` : "";
 
-      return `<section class="capability" id="${escapeAttribute(capabilityAnchor)}">
+      return `<section class="capability cap-detail" id="${escapeAttribute(capabilityAnchor)}" data-capability-card data-search="${escapeAttribute(`${capability.name} ${capability.id} ${capability.description}`)}">
         <header>
           <div>
             <h2>${escapeHtml(capability.name)} ${badge}</h2>
+            <span class="cid">${escapeHtml(capability.id)}</span>
             <p>${escapeHtml(capability.description || copy.noDescription)}</p>
           </div>
           <strong>${capability.files.length} ${escapeHtml(copy.filesCount)}</strong>
@@ -196,39 +203,63 @@ function renderCapabilityResources(registry: CapabilityRegistry, copy: Dashboard
     .join("");
 }
 
-function renderDashboardNav(capabilities: Capability[], copy: DashboardCopy): string {
-  const capabilityLinks = capabilities
-    .map(
-      (capability) =>
-        `<a href="#capability-${escapeAttribute(anchorId(capability.id))}">${escapeHtml(capability.name)}</a>`,
-    )
-    .join("");
-
-  return `<nav class="dashboard-nav" aria-label="${escapeAttribute(copy.navLabel)}">
-    <a href="#discovery">${escapeHtml(copy.nav.discovery)}</a>
-    <a href="#endpoints">${escapeHtml(copy.nav.endpoints)}</a>
-    <a href="#tools">${escapeHtml(copy.nav.tools)}</a>
-    <a href="#upstreams">${escapeHtml(copy.nav.upstreams)}</a>
-    <a href="#quick-test">${escapeHtml(copy.nav.quickTest)}</a>
-    ${capabilityLinks}
+function renderMobileNav(copy: DashboardCopy): string {
+  return `<nav class="mtop" aria-label="${escapeAttribute(copy.navLabel)}">
+    <span class="brand-mark">M</span>
+    <a href="#overview" data-nav="overview" class="act">${escapeHtml(copy.nav.overview)}</a>
+    <a href="#capabilities" data-nav="capabilities">${escapeHtml(copy.nav.capabilities)}</a>
+    <a href="#upstreams" data-nav="upstreams">${escapeHtml(copy.nav.upstreams)}</a>
+    <a href="#tools" data-nav="tools">${escapeHtml(copy.nav.tools)}</a>
   </nav>`;
 }
 
+function renderSidebar(data: DashboardData, copy: DashboardCopy, language: DashboardLanguage): string {
+  const sourceGuidePath = language === "fr" ? "/fr/docs/sources.html" : "/docs/sources.html";
+  const sitePath = language === "fr" ? "/fr/" : "/";
+
+  return `<aside class="side">
+    <a class="side-brand" href="#overview"><span class="brand-mark">M</span>MCPIMP<span class="sub">console</span></a>
+    <div class="side-search">
+      <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+      <input data-dashboard-search type="search" placeholder="${escapeAttribute(copy.searchPlaceholder)}" autocomplete="off" spellcheck="false">
+      <kbd>/</kbd>
+    </div>
+    <div class="snav-label">Registry</div>
+    <nav class="snav" aria-label="${escapeAttribute(copy.navLabel)}">
+      <a href="#overview" data-nav="overview" class="act"><i class="ph ph-squares-four" aria-hidden="true"></i>${escapeHtml(copy.nav.overview)}</a>
+      <a href="#capabilities" data-nav="capabilities"><i class="ph ph-circles-three-plus" aria-hidden="true"></i>${escapeHtml(copy.nav.capabilities)}<span class="cnt">${data.capabilities.length}</span></a>
+      <a href="#upstreams" data-nav="upstreams"><i class="ph ph-network" aria-hidden="true"></i>${escapeHtml(copy.nav.upstreams)}<span class="cnt">${data.upstreams.length}</span></a>
+      <a href="#tools" data-nav="tools"><i class="ph ph-wrench" aria-hidden="true"></i>${escapeHtml(copy.nav.tools)}<span class="cnt">${MCP_TOOLS.length + copy.endpoints.length}</span></a>
+    </nav>
+    <div class="snav-label">${escapeHtml(copy.linksLabel)}</div>
+    <nav class="snav">
+      <a href="${escapeAttribute(sourceGuidePath)}"><i class="ph ph-book-open" aria-hidden="true"></i>${escapeHtml(copy.sourceGuide)}</a>
+      <a href="${escapeAttribute(sitePath)}"><i class="ph ph-arrow-up-right" aria-hidden="true"></i>${escapeHtml(copy.backToSite)}</a>
+    </nav>
+    <div class="side-foot">
+      <span class="side-status">${escapeHtml(copy.localStatus)}</span>
+      <p class="side-note">${escapeHtml(copy.localNote)}</p>
+    </div>
+  </aside>`;
+}
+
 function renderEndpointRows(copy: DashboardCopy): string {
-  return copy.endpoints.map(
-    (endpoint) => `<tr>
-      <td><code>${endpoint.method}</code></td>
-      <td><code>${endpoint.path}</code></td>
+  return copy.endpoints
+    .map(
+      (endpoint) => `<tr>
+      <td><span class="method ${endpoint.method.toLowerCase()}">${escapeHtml(endpoint.method)}</span></td>
+      <td class="mono">${escapeHtml(endpoint.path)}</td>
       <td>${endpoint.description}</td>
     </tr>`,
-  ).join("");
+    )
+    .join("");
 }
 
 function renderToolRows(): string {
   return MCP_TOOLS.map(
     (tool) => `<tr>
-      <td><code>${tool.name}</code></td>
-      <td>${tool.description}</td>
+      <td class="mono"><a href="#tools">${escapeHtml(tool.name)}</a></td>
+      <td>${escapeHtml(tool.description)}</td>
     </tr>`,
   ).join("");
 }
@@ -244,19 +275,206 @@ function renderUpstreamRows(registry: CapabilityRegistry, copy: DashboardCopy): 
   return upstreams
     .map(
       (upstream) => `<tr>
-        <td><code>${escapeHtml(upstream.capabilityId)}</code></td>
-        <td>${escapeHtml(upstream.transport)}</td>
-        <td>${escapeHtml(upstream.status)}</td>
-        <td><code>${escapeHtml(upstream.url)}</code></td>
-        <td>${upstream.missingEnv.map((name) => `<code>${escapeHtml(name)}</code>`).join(", ") || "n/a"}</td>
+        <td class="mono"><a href="#capability-${escapeAttribute(anchorId(upstream.capabilityId))}">${escapeHtml(upstream.capabilityId)}</a></td>
+        <td><span class="chip info plain">${escapeHtml(upstream.transport)}</span></td>
+        <td>${renderStatusChip(upstream.status)}</td>
+        <td class="mono wrap">${escapeHtml(upstream.url)}</td>
+        <td>${upstream.missingEnv.map((name) => `<code>${escapeHtml(name)}</code>`).join(", ") || `<span class="muted">n/a</span>`}</td>
       </tr>`,
     )
     .join("");
 }
 
+function renderStatusChip(status: string): string {
+  const variant = status === "ready" ? "ok" : status === "missing-env" ? "warn" : "err";
+  return `<span class="chip ${variant}">${escapeHtml(status)}</span>`;
+}
+
+function skillKind(capability: Capability): string {
+  if (capability.origin?.skillKind) return capability.origin.skillKind;
+  if (capability.files.some((file) => file.type === "script")) return "executable";
+  if (capability.files.some((file) => file.type === "asset" || file.type === "data")) return "resource-dependent";
+  return "portable";
+}
+
+function lastSync(capability: Capability, copy: DashboardCopy): string {
+  return capability.origin?.lastSyncedAt || copy.never;
+}
+
+function percent(count: number, total: number): number {
+  if (total === 0) return 0;
+  return Math.round((count / total) * 100);
+}
+
+function renderStats(data: DashboardData, copy: DashboardCopy): string {
+  const imported = data.capabilities.filter((capability) => capability.origin).length;
+  const binaries = data.capabilities.flatMap((capability) => capability.files).filter((file) => file.binary).length;
+  const alerts = data.upstreams.filter((upstream) => upstream.status !== "ready").length;
+
+  return `<div class="stats">
+    <div class="stat"><div class="s-ic"><i class="ph ph-circles-three-plus" aria-hidden="true"></i><span class="trend">${escapeHtml(copy.stats.imported(imported))}</span></div><span class="v">${data.capabilities.length}</span><span class="l">${escapeHtml(copy.stats.capabilities)}</span></div>
+    <div class="stat"><div class="s-ic"><i class="ph ph-files" aria-hidden="true"></i><span class="trend">${escapeHtml(copy.stats.binaries(binaries))}</span></div><span class="v">${data.resources.length}</span><span class="l">${escapeHtml(copy.stats.resources)}</span></div>
+    <div class="stat"><div class="s-ic"><i class="ph ph-wrench" aria-hidden="true"></i><span class="trend">${escapeHtml(copy.stats.jsonRpc)}</span></div><span class="v">${MCP_TOOLS.length}</span><span class="l">${escapeHtml(copy.stats.tools)}</span></div>
+    <div class="stat"><div class="s-ic"><i class="ph ph-network" aria-hidden="true"></i><span class="trend">${escapeHtml(copy.stats.upstreamAlerts(alerts))}</span></div><span class="v">${data.upstreams.length}</span><span class="l">${escapeHtml(copy.stats.upstreams)}</span></div>
+  </div>`;
+}
+
+function renderDistribution(data: DashboardData, copy: DashboardCopy): string {
+  const total = data.capabilities.length;
+  const imported = data.capabilities.filter((capability) => capability.origin).length;
+  const local = total - imported;
+  const kinds = new Map<string, number>();
+  for (const capability of data.capabilities) {
+    const kind = skillKind(capability);
+    kinds.set(kind, (kinds.get(kind) || 0) + 1);
+  }
+
+  const rows = [
+    { label: copy.localOrigin, count: local, color: "var(--acid)" },
+    { label: copy.importedOrigin, count: imported, color: "var(--cyan)" },
+    ...[...kinds.entries()].map(([label, count], index) => ({
+      label,
+      count,
+      color: ["var(--acid)", "var(--amber)", "var(--cyan)", "var(--coral)", "var(--violet)"][index % 5],
+    })),
+  ];
+
+  return `<div class="dist">
+    ${rows
+      .map((row) => {
+        const ratio = percent(row.count, total);
+        return `<div class="dist-row"><span class="dl">${escapeHtml(row.label)}</span><div class="dist-track"><i style="width:${ratio}%;background:${row.color}"></i></div><span class="dist-val">${row.count} · ${ratio}%</span></div>`;
+      })
+      .join("")}
+  </div>`;
+}
+
+function renderDiscovery(copy: DashboardCopy): string {
+  return `<div class="panel" id="discovery">
+    <div class="p-h"><h2><i class="ph ph-radar" aria-hidden="true"></i>${escapeHtml(copy.discoveryTitle)}</h2><a class="p-meta" href="#discovery">registry -> tools -> agent</a></div>
+    <div class="flow">
+      ${copy.discoverySteps
+        .map(
+          (step, index) =>
+            `<div class="step"><span class="n">${String(index + 1).padStart(2, "0")} ·</span><strong>${escapeHtml(step.title.replace(/^\d+\.\s*/, ""))}</strong><p>${step.body}</p></div>`,
+        )
+        .join("")}
+    </div>
+  </div>`;
+}
+
+function renderCapabilityRows(capabilities: Capability[], copy: DashboardCopy): string {
+  return capabilities
+    .map((capability) => {
+      const kind = skillKind(capability);
+      const origin = capability.origin ? "import" : "local";
+      const search = `${capability.name} ${capability.id} ${capability.description} ${kind} ${origin}`;
+      return `<tr class="caprow" data-capability-row data-search="${escapeAttribute(search)}" data-origin="${origin}" data-kind="${escapeAttribute(kind)}" data-name="${escapeAttribute(capability.name.toLowerCase())}" data-files="${capability.files.length}" data-sync="${escapeAttribute(capability.origin?.lastSyncedAt || "")}">
+        <td><a class="capname" href="#capability-${escapeAttribute(anchorId(capability.id))}"><strong>${escapeHtml(capability.name)}</strong><span class="cid">${escapeHtml(capability.id)}</span></a></td>
+        <td><span class="capdesc">${escapeHtml(capability.description || copy.noDescription)}</span></td>
+        <td><span class="chip ${origin === "import" ? "info" : "ok"}">${escapeHtml(kind)}</span></td>
+        <td class="num-c">${capability.files.length}</td>
+        <td class="mono">${escapeHtml(lastSync(capability, copy))}</td>
+        <td><a href="#capability-${escapeAttribute(anchorId(capability.id))}">${escapeHtml(copy.details)}</a></td>
+      </tr>`;
+    })
+    .join("");
+}
+
+function renderKindOptions(capabilities: Capability[]): string {
+  return [...new Set(capabilities.map(skillKind))]
+    .sort((a, b) => a.localeCompare(b))
+    .map((kind) => `<option value="${escapeAttribute(kind)}">${escapeHtml(kind)}</option>`)
+    .join("");
+}
+
+function renderDashboardScript(copy: DashboardCopy, totalCapabilities: number): string {
+  return `<script>
+(() => {
+  const views = [...document.querySelectorAll("[data-view]")];
+  const navLinks = [...document.querySelectorAll("[data-nav]")];
+  const rows = [...document.querySelectorAll("[data-capability-row]")];
+  const cards = [...document.querySelectorAll("[data-capability-card]")];
+  const searches = [...document.querySelectorAll("[data-dashboard-search], #capSearch")];
+  const originButtons = [...document.querySelectorAll("[data-origin-filter]")];
+  const kindSelect = document.querySelector("#kindSel");
+  const sortSelect = document.querySelector("#sortSel");
+  const resultCount = document.querySelector("#resultCount");
+  const emptyRow = document.querySelector("#emptyRow");
+  let query = "";
+  let origin = "all";
+
+  function showView(id) {
+    const viewId = ["overview", "capabilities", "upstreams", "tools"].includes(id) ? id : "overview";
+    views.forEach((view) => view.classList.toggle("on", view.dataset.view === viewId));
+    navLinks.forEach((link) => link.classList.toggle("act", link.dataset.nav === viewId));
+  }
+
+  function syncSearch(value) {
+    query = value.trim().toLowerCase();
+    searches.forEach((input) => {
+      if (input.value !== value) input.value = value;
+    });
+    filterRows();
+  }
+
+  function matches(row) {
+    const textMatch = !query || row.dataset.search.toLowerCase().includes(query);
+    const originMatch = origin === "all" || row.dataset.origin === origin;
+    const kindMatch = !kindSelect || kindSelect.value === "all" || row.dataset.kind === kindSelect.value;
+    return textMatch && originMatch && kindMatch;
+  }
+
+  function filterRows() {
+    const sorted = [...rows].sort((a, b) => {
+      if (!sortSelect || sortSelect.value === "name") return a.dataset.name.localeCompare(b.dataset.name);
+      if (sortSelect.value === "files") return Number(b.dataset.files) - Number(a.dataset.files);
+      return b.dataset.sync.localeCompare(a.dataset.sync);
+    });
+    const body = document.querySelector("#capRows");
+    sorted.forEach((row) => body.append(row));
+    let visible = 0;
+    rows.forEach((row) => {
+      const ok = matches(row);
+      row.hidden = !ok;
+      visible += ok ? 1 : 0;
+    });
+    cards.forEach((card) => {
+      card.hidden = query ? !card.dataset.search.toLowerCase().includes(query) : false;
+    });
+    if (emptyRow) emptyRow.hidden = visible !== 0;
+    if (resultCount) resultCount.innerHTML = "<b>" + visible + "</b> / ${totalCapabilities} ${escapeHtml(copy.stats.capabilities)}";
+  }
+
+  window.addEventListener("hashchange", () => showView(location.hash.slice(1)));
+  navLinks.forEach((link) => link.addEventListener("click", () => showView(link.dataset.nav)));
+  searches.forEach((input) => input.addEventListener("input", () => syncSearch(input.value)));
+  originButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      origin = button.dataset.originFilter;
+      originButtons.forEach((candidate) => candidate.classList.toggle("act", candidate === button));
+      filterRows();
+    });
+  });
+  kindSelect?.addEventListener("change", filterRows);
+  sortSelect?.addEventListener("change", filterRows);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "/" && document.activeElement?.tagName !== "INPUT") {
+      event.preventDefault();
+      searches[0]?.focus();
+    }
+  });
+  showView(location.hash.slice(1));
+  filterRows();
+})();
+</script>`;
+}
+
 export function renderDashboard(registry: CapabilityRegistry, language: DashboardLanguage = "en"): string {
   const capabilities = registry.listCapabilities();
   const resources = registry.listResources();
+  const upstreams = new UpstreamMcpGateway(registry).listUpstreams();
+  const data = { capabilities, resources, upstreams };
   const copy = DASHBOARD_COPY[language];
 
   return `<!doctype html>
@@ -268,61 +486,129 @@ export function renderDashboard(registry: CapabilityRegistry, language: Dashboar
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5.2.6/index.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist-mono@5.2.6/index.css">
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" defer></script>
   <style>
 ${DASHBOARD_STYLES}
   </style>
 </head>
 <body>
-  <main>
-    ${renderDashboardNav(capabilities, copy)}
+  ${renderMobileNav(copy)}
+  ${renderSidebar(data, copy, language)}
 
-    <div class="top">
-      <div>
-        <h1>${escapeHtml(copy.title)}</h1>
-        <p>${copy.intro}</p>
+  <main class="main">
+    <section class="view on" id="overview" data-view="overview">
+      <div class="v-head">
+        <div>
+          <div class="kicker">${escapeHtml(copy.overviewKicker)}</div>
+          <h1>${escapeHtml(copy.overviewTitle)}</h1>
+          <p class="sub">${copy.intro}</p>
+        </div>
       </div>
-      <div class="stats">
-        <div class="stat"><strong>${capabilities.length}</strong>${escapeHtml(copy.stats.capabilities)}</div>
-        <div class="stat"><strong>${resources.length}</strong>${escapeHtml(copy.stats.resources)}</div>
-        <div class="stat"><strong>${MCP_TOOLS.length}</strong>${escapeHtml(copy.stats.tools)}</div>
-      </div>
-    </div>
-
-    <section class="panel" id="discovery">
-      <h3>${escapeHtml(copy.discoveryTitle)}</h3>
-      <div class="flow">
-        ${copy.discoverySteps.map((step) => `<div class="step"><strong>${escapeHtml(step.title)}</strong><p>${step.body}</p></div>`).join("")}
+      ${renderStats(data, copy)}
+      ${renderDiscovery(copy)}
+      <div class="grid2">
+        <section class="panel">
+          <div class="p-h"><h2><i class="ph ph-chart-pie-slice" aria-hidden="true"></i>${escapeHtml(copy.distributionTitle)}</h2><span class="p-meta">${escapeHtml(copy.distributionMeta)}</span></div>
+          ${renderDistribution(data, copy)}
+        </section>
+        <section class="panel" id="quick-test">
+          <div class="p-h"><h2><i class="ph ph-terminal" aria-hidden="true"></i>${escapeHtml(copy.quickTestTitle)}</h2><span class="p-meta">${escapeHtml(copy.quickTestMeta)}</span></div>
+          <div class="term">
+            <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span><span>zsh — localhost:3901</span></div>
+            <pre><span class="jp">$</span> curl -sS http://localhost:3901/message \\
+  -H <span class="js">'content-type: application/json'</span> \\
+  -d <span class="js">'{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list-capabilities","arguments":{}}}'</span></pre>
+          </div>
+        </section>
       </div>
     </section>
 
-    <div class="grid">
-      <section class="panel" id="endpoints">
-        <h3>${escapeHtml(copy.endpointsTitle)}</h3>
-        <table><tbody>${renderEndpointRows(copy)}</tbody></table>
+    <section class="view" id="capabilities" data-view="capabilities">
+      <div class="v-head">
+        <div>
+          <div class="kicker">${escapeHtml(copy.capabilitiesKicker)}</div>
+          <h1>${escapeHtml(copy.capabilitiesTitle)}</h1>
+          <p class="sub">${escapeHtml(copy.capabilitiesIntro)}</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="searchbox">
+          <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+          <input id="capSearch" type="search" placeholder="${escapeAttribute(copy.capabilitiesSearchPlaceholder)}" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="fchips">
+          <button class="fchip act" data-origin-filter="all">${escapeHtml(copy.allOrigins)}</button>
+          <button class="fchip" data-origin-filter="local">${escapeHtml(copy.localOrigin)}</button>
+          <button class="fchip" data-origin-filter="import">${escapeHtml(copy.importedOrigin)}</button>
+        </div>
+        <select class="sel" id="kindSel" aria-label="${escapeAttribute(copy.capabilityHeaders.type)}">
+          <option value="all">${escapeHtml(copy.allTypes)}</option>
+          ${renderKindOptions(capabilities)}
+        </select>
+        <select class="sel" id="sortSel" aria-label="${escapeAttribute(copy.sortName)}">
+          <option value="name">${escapeHtml(copy.sortName)}</option>
+          <option value="files">${escapeHtml(copy.sortFiles)}</option>
+          <option value="sync">${escapeHtml(copy.sortSync)}</option>
+        </select>
+        <span class="result-count" id="resultCount">${escapeHtml(copy.resultCount(capabilities.length, capabilities.length))}</span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>${escapeHtml(copy.capabilityHeaders.capability)}</th><th>${escapeHtml(copy.capabilityHeaders.description)}</th><th>${escapeHtml(copy.capabilityHeaders.type)}</th><th>${escapeHtml(copy.capabilityHeaders.files)}</th><th>${escapeHtml(copy.capabilityHeaders.sync)}</th><th></th></tr></thead>
+          <tbody id="capRows">
+            ${renderCapabilityRows(capabilities, copy)}
+            <tr class="empty-row" id="emptyRow" hidden><td colspan="6"><i class="ph ph-magnifying-glass" aria-hidden="true"></i>${escapeHtml(copy.noResults)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cap-details">
+        ${renderCapabilityResources(registry, copy)}
+      </div>
+    </section>
+
+    <section class="view" id="upstreams" data-view="upstreams">
+      <div class="v-head">
+        <div>
+          <div class="kicker">${escapeHtml(copy.upstreamKicker)}</div>
+          <h1>${escapeHtml(copy.nav.upstreams)}</h1>
+          <p class="sub">${copy.upstreamIntro}</p>
+        </div>
+      </div>
+      <section class="panel">
+        <div class="tbl-wrap flush">
+          <table class="tbl">
+            <thead><tr><th>${escapeHtml(copy.upstreamHeaders.capability)}</th><th>${escapeHtml(copy.upstreamHeaders.transport)}</th><th>${escapeHtml(copy.upstreamHeaders.status)}</th><th>${escapeHtml(copy.upstreamHeaders.url)}</th><th>${escapeHtml(copy.upstreamHeaders.missingEnv)}</th></tr></thead>
+            <tbody>${renderUpstreamRows(registry, copy)}</tbody>
+          </table>
+        </div>
       </section>
-      <section class="panel" id="tools">
-        <h3>${escapeHtml(copy.toolsTitle)}</h3>
-        <table><tbody>${renderToolRows()}</tbody></table>
-      </section>
-    </div>
-
-    <section class="panel" id="upstreams">
-      <h3>${escapeHtml(copy.upstreamTitle)}</h3>
-      <table>
-        <thead><tr><th>${escapeHtml(copy.upstreamHeaders.capability)}</th><th>${escapeHtml(copy.upstreamHeaders.transport)}</th><th>${escapeHtml(copy.upstreamHeaders.status)}</th><th>${escapeHtml(copy.upstreamHeaders.url)}</th><th>${escapeHtml(copy.upstreamHeaders.missingEnv)}</th></tr></thead>
-        <tbody>${renderUpstreamRows(registry, copy)}</tbody>
-      </table>
     </section>
 
-    <section class="panel" id="quick-test">
-      <h3>${escapeHtml(copy.quickTestTitle)}</h3>
-      <pre><code>curl -sS http://localhost:3901/message \\
-  -H 'content-type: application/json' \\
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list-capabilities","arguments":{}}}'</code></pre>
+    <section class="view" id="tools" data-view="tools">
+      <div class="v-head">
+        <div>
+          <div class="kicker">${escapeHtml(copy.toolsKicker)}</div>
+          <h1>${escapeHtml(copy.nav.tools)}</h1>
+          <p class="sub">${copy.toolsIntro}</p>
+        </div>
+      </div>
+      <div class="grid2">
+        <section class="panel">
+          <div class="p-h"><h2><i class="ph ph-wrench" aria-hidden="true"></i>${escapeHtml(copy.toolsTitle)}</h2><span class="p-meta">${MCP_TOOLS.length} ${escapeHtml(copy.stats.tools)}</span></div>
+          <div class="tbl-wrap">
+            <table class="tbl"><tbody>${renderToolRows()}</tbody></table>
+          </div>
+        </section>
+        <section class="panel" id="endpoints">
+          <div class="p-h"><h2><i class="ph ph-plugs-connected" aria-hidden="true"></i>${escapeHtml(copy.endpointsTitle)}</h2><span class="p-meta">${copy.endpoints.length} routes</span></div>
+          <div class="tbl-wrap">
+            <table class="tbl"><tbody>${renderEndpointRows(copy)}</tbody></table>
+          </div>
+        </section>
+      </div>
     </section>
-
-    ${renderCapabilityResources(registry, copy)}
   </main>
+  ${renderDashboardScript(copy, capabilities.length)}
 </body>
 </html>`;
 }

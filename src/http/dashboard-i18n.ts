@@ -4,12 +4,20 @@ export interface DashboardCopy {
   htmlLang: string;
   navLabel: string;
   nav: {
+    overview: string;
+    capabilities: string;
     discovery: string;
     endpoints: string;
     tools: string;
     upstreams: string;
     quickTest: string;
   };
+  linksLabel: string;
+  sourceGuide: string;
+  backToSite: string;
+  searchPlaceholder: string;
+  localStatus: string;
+  localNote: string;
   endpoints: Array<{ method: string; path: string; description: string }>;
   noReferenceLinks: string;
   referencesTitle: string;
@@ -42,7 +50,44 @@ export interface DashboardCopy {
     capabilities: string;
     resources: string;
     tools: string;
+    upstreams: string;
+    imported: (count: number) => string;
+    binaries: (count: number) => string;
+    jsonRpc: string;
+    upstreamAlerts: (count: number) => string;
   };
+  overviewKicker: string;
+  overviewTitle: string;
+  capabilitiesKicker: string;
+  capabilitiesTitle: string;
+  capabilitiesIntro: string;
+  capabilitiesSearchPlaceholder: string;
+  allOrigins: string;
+  localOrigin: string;
+  importedOrigin: string;
+  allTypes: string;
+  sortName: string;
+  sortFiles: string;
+  sortSync: string;
+  resultCount: (visible: number, total: number) => string;
+  noResults: string;
+  distributionTitle: string;
+  distributionMeta: string;
+  local: string;
+  quickTestMeta: string;
+  upstreamKicker: string;
+  upstreamIntro: string;
+  toolsKicker: string;
+  toolsIntro: string;
+  capabilityHeaders: {
+    capability: string;
+    description: string;
+    type: string;
+    files: string;
+    sync: string;
+  };
+  details: string;
+  never: string;
   discoveryTitle: string;
   discoverySteps: Array<{ title: string; body: string }>;
   endpointsTitle: string;
@@ -64,12 +109,20 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     htmlLang: "en",
     navLabel: "Dashboard navigation",
     nav: {
+      overview: "Overview",
+      capabilities: "Capabilities",
       discovery: "Discovery",
       endpoints: "Endpoints",
       tools: "Tools",
       upstreams: "Upstreams",
       quickTest: "Quick test",
     },
+    linksLabel: "Links",
+    sourceGuide: "Source guide",
+    backToSite: "Back to site",
+    searchPlaceholder: "Search a capability...",
+    localStatus: "localhost:3901 · online",
+    localNote: "Local debug dashboard. No data leaves your machine.",
     endpoints: [
       { method: "GET", path: "/health", description: "Server status JSON and discovered capability count." },
       { method: "GET", path: "/sse", description: "SSE endpoint used by MCP clients compatible with HTTP." },
@@ -109,7 +162,44 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       capabilities: "capabilities",
       resources: "resources",
       tools: "MCP tools",
+      upstreams: "upstreams",
+      imported: (count) => `${count} imported`,
+      binaries: (count) => `${count} binaries`,
+      jsonRpc: "JSON-RPC /message",
+      upstreamAlerts: (count) => `${count} alert${count > 1 ? "s" : ""}`,
     },
+    overviewKicker: "Registry · server status",
+    overviewTitle: "Overview",
+    capabilitiesKicker: "Registry · content",
+    capabilitiesTitle: "Capabilities",
+    capabilitiesIntro: "Search, filter by origin and type, then open a capability anchor for files, provenance, and references.",
+    capabilitiesSearchPlaceholder: "Name, id, description...",
+    allOrigins: "All",
+    localOrigin: "Local",
+    importedOrigin: "Imported",
+    allTypes: "All types",
+    sortName: "Sort · name A-Z",
+    sortFiles: "Sort · file count",
+    sortSync: "Sort · latest sync",
+    resultCount: (visible, total) => `${visible} / ${total} visible`,
+    noResults: "No capability matches these filters.",
+    distributionTitle: "Distribution",
+    distributionMeta: "origin · type",
+    local: "local",
+    quickTestMeta: "tools/call · list-capabilities",
+    upstreamKicker: "Upstream MCP",
+    upstreamIntro: "External MCP servers proxied by MCPIMP. Secrets are referenced through <code>env:</code> and never stored in <code>mcp.json</code>.",
+    toolsKicker: "MCP + HTTP surface",
+    toolsIntro: "What agents can call through <code>POST /message</code>, plus server HTTP routes.",
+    capabilityHeaders: {
+      capability: "Capability",
+      description: "Description",
+      type: "Type",
+      files: "Files",
+      sync: "Sync",
+    },
+    details: "Details",
+    never: "never",
     discoveryTitle: "AI discovery",
     discoverySteps: [
       { title: "1. Scan", body: "The registry inspects folders at the catalog root." },
@@ -134,12 +224,20 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     htmlLang: "fr",
     navLabel: "Navigation du dashboard",
     nav: {
+      overview: "Vue d'ensemble",
+      capabilities: "Capabilities",
       discovery: "Découverte",
       endpoints: "Endpoints",
       tools: "Tools",
       upstreams: "Upstreams",
       quickTest: "Test rapide",
     },
+    linksLabel: "Liens",
+    sourceGuide: "Guide des sources",
+    backToSite: "Retour au site",
+    searchPlaceholder: "Rechercher une capacité...",
+    localStatus: "localhost:3901 · en ligne",
+    localNote: "Dashboard de debug local. Aucune donnée ne quitte ta machine.",
     endpoints: [
       { method: "GET", path: "/health", description: "Status JSON du serveur et nombre de capacités découvertes." },
       { method: "GET", path: "/sse", description: "Endpoint SSE utilisé par les clients MCP compatibles HTTP." },
@@ -179,7 +277,44 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       capabilities: "capacités",
       resources: "ressources",
       tools: "tools MCP",
+      upstreams: "upstreams",
+      imported: (count) => `dont ${count} importées`,
+      binaries: (count) => `${count} binaires`,
+      jsonRpc: "JSON-RPC /message",
+      upstreamAlerts: (count) => `${count} en alerte`,
     },
+    overviewKicker: "Registry · état du serveur",
+    overviewTitle: "Vue d'ensemble",
+    capabilitiesKicker: "Registry · contenu",
+    capabilitiesTitle: "Capabilities",
+    capabilitiesIntro: "Recherche, filtres par origine et par type, puis ouverture d'une ancre de capacité pour les fichiers, la provenance et les références.",
+    capabilitiesSearchPlaceholder: "Nom, id, description...",
+    allOrigins: "Toutes",
+    localOrigin: "Locales",
+    importedOrigin: "Importées",
+    allTypes: "Tous types",
+    sortName: "Tri · nom A-Z",
+    sortFiles: "Tri · nb de fichiers",
+    sortSync: "Tri · synchro récente",
+    resultCount: (visible, total) => `${visible} / ${total} visibles`,
+    noResults: "Aucune capacité ne correspond à ces filtres.",
+    distributionTitle: "Répartition",
+    distributionMeta: "origine · type",
+    local: "locale",
+    quickTestMeta: "tools/call · list-capabilities",
+    upstreamKicker: "MCP amont",
+    upstreamIntro: "Serveurs MCP externes proxifiés par MCPIMP. Les secrets sont référencés via <code>env:</code>, jamais écrits dans <code>mcp.json</code>.",
+    toolsKicker: "Surface MCP + HTTP",
+    toolsIntro: "Ce que les agents peuvent appeler via <code>POST /message</code>, et les routes HTTP du serveur.",
+    capabilityHeaders: {
+      capability: "Capacité",
+      description: "Description",
+      type: "Type",
+      files: "Fichiers",
+      sync: "Synchro",
+    },
+    details: "Détails",
+    never: "jamais",
     discoveryTitle: "Découverte par l'IA",
     discoverySteps: [
       { title: "1. Scan", body: "Le registry inspecte les dossiers à la racine." },
