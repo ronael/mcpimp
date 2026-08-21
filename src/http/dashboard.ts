@@ -181,7 +181,7 @@ function renderCapabilityResources(registry: CapabilityRegistry, copy: Dashboard
 
       const badge = capability.origin ? `<span class="badge">${escapeHtml(copy.imported)}</span>` : "";
 
-      return `<section class="capability cap-detail" id="${escapeAttribute(capabilityAnchor)}" data-capability-card data-search="${escapeAttribute(`${capability.name} ${capability.id} ${capability.description}`)}">
+      return `<section class="capability cap-detail" id="${escapeAttribute(capabilityAnchor)}" data-capability-card data-capability-id="${escapeAttribute(capability.id)}" data-capability-title="${escapeAttribute(capability.name)}" data-search="${escapeAttribute(`${capability.name} ${capability.id} ${capability.description}`)}">
         <header>
           <div>
             <h2>${escapeHtml(capability.name)} ${badge}</h2>
@@ -369,13 +369,14 @@ function renderCapabilityRows(capabilities: Capability[], copy: DashboardCopy): 
       const kind = skillKind(capability);
       const origin = capability.origin ? "import" : "local";
       const search = `${capability.name} ${capability.id} ${capability.description} ${kind} ${origin}`;
-      return `<tr class="caprow" data-capability-row data-search="${escapeAttribute(search)}" data-origin="${origin}" data-kind="${escapeAttribute(kind)}" data-name="${escapeAttribute(capability.name.toLowerCase())}" data-files="${capability.files.length}" data-sync="${escapeAttribute(capability.origin?.lastSyncedAt || "")}">
+      const capabilityAnchor = `capability-${anchorId(capability.id)}`;
+      return `<tr class="caprow" data-capability-row data-drawer-target="${escapeAttribute(capabilityAnchor)}" tabindex="0" role="button" aria-label="${escapeAttribute(`${copy.details}: ${capability.name}`)}" data-search="${escapeAttribute(search)}" data-origin="${origin}" data-kind="${escapeAttribute(kind)}" data-name="${escapeAttribute(capability.name.toLowerCase())}" data-files="${capability.files.length}" data-sync="${escapeAttribute(capability.origin?.lastSyncedAt || "")}">
         <td><a class="capname" href="#capability-${escapeAttribute(anchorId(capability.id))}"><strong>${escapeHtml(capability.name)}</strong><span class="cid">${escapeHtml(capability.id)}</span></a></td>
         <td><span class="capdesc">${escapeHtml(capability.description || copy.noDescription)}</span></td>
         <td><span class="chip ${origin === "import" ? "info" : "ok"}">${escapeHtml(kind)}</span></td>
         <td class="num-c">${capability.files.length}</td>
         <td class="mono">${escapeHtml(lastSync(capability, copy))}</td>
-        <td><a href="#capability-${escapeAttribute(anchorId(capability.id))}">${escapeHtml(copy.details)}</a></td>
+        <td><button class="row-action" type="button" data-drawer-target="${escapeAttribute(capabilityAnchor)}">${escapeHtml(copy.details)}</button></td>
       </tr>`;
     })
     .join("");
@@ -401,13 +402,50 @@ function renderDashboardScript(copy: DashboardCopy, totalCapabilities: number): 
   const sortSelect = document.querySelector("#sortSel");
   const resultCount = document.querySelector("#resultCount");
   const emptyRow = document.querySelector("#emptyRow");
+  const drawer = document.querySelector("#drawer");
+  const backdrop = document.querySelector("#backdrop");
+  const drawerContent = document.querySelector("#drawerContent");
   let query = "";
   let origin = "all";
 
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"]/g, (char) => {
+      if (char === "&") return "&amp;";
+      if (char === "<") return "&lt;";
+      if (char === ">") return "&gt;";
+      return "&quot;";
+    });
+  }
+
   function showView(id) {
-    const viewId = ["overview", "capabilities", "upstreams", "tools"].includes(id) ? id : "overview";
+    const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "capabilities", "upstreams", "tools"].includes(id) ? id : "overview";
     views.forEach((view) => view.classList.toggle("on", view.dataset.view === viewId));
     navLinks.forEach((link) => link.classList.toggle("act", link.dataset.nav === viewId));
+  }
+
+  function openDrawer(targetId) {
+    const source = document.getElementById(targetId);
+    if (!source || !drawer || !drawerContent || !backdrop) return;
+    const title = source.dataset.capabilityTitle || targetId;
+    const id = source.dataset.capabilityId || targetId;
+    drawerContent.innerHTML =
+      '<div class="d-top"><span class="d-id">' + esc(id) + '</span><button class="d-close" type="button" aria-label="${escapeAttribute(copy.close)}"><i class="ph ph-x" aria-hidden="true"></i></button></div>' +
+      '<div class="d-title">' + esc(title) + '</div>' +
+      source.innerHTML;
+    drawer.classList.add("on");
+    drawer.setAttribute("aria-hidden", "false");
+    backdrop.classList.add("on");
+    document.body.style.overflow = "hidden";
+    drawer.scrollTop = 0;
+    drawerContent.querySelector(".d-close")?.addEventListener("click", closeDrawer);
+  }
+
+  function closeDrawer() {
+    if (!drawer || !backdrop) return;
+    drawer.classList.remove("on");
+    drawer.setAttribute("aria-hidden", "true");
+    backdrop.classList.remove("on");
+    document.body.style.overflow = "";
   }
 
   function syncSearch(value) {
@@ -446,8 +484,26 @@ function renderDashboardScript(copy: DashboardCopy, totalCapabilities: number): 
     if (resultCount) resultCount.innerHTML = "<b>" + visible + "</b> / ${totalCapabilities} ${escapeHtml(copy.stats.capabilities)}";
   }
 
-  window.addEventListener("hashchange", () => showView(location.hash.slice(1)));
+  window.addEventListener("hashchange", () => {
+    const id = location.hash.slice(1);
+    showView(id);
+    if (id.startsWith("capability-")) openDrawer(id);
+  });
   navLinks.forEach((link) => link.addEventListener("click", () => showView(link.dataset.nav)));
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-drawer-target]");
+    if (!trigger) return;
+    event.preventDefault();
+    openDrawer(trigger.dataset.drawerTarget);
+  });
+  rows.forEach((row) => {
+    row.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openDrawer(row.dataset.drawerTarget);
+    });
+  });
+  backdrop?.addEventListener("click", closeDrawer);
   searches.forEach((input) => input.addEventListener("input", () => syncSearch(input.value)));
   originButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -459,12 +515,15 @@ function renderDashboardScript(copy: DashboardCopy, totalCapabilities: number): 
   kindSelect?.addEventListener("change", filterRows);
   sortSelect?.addEventListener("change", filterRows);
   document.addEventListener("keydown", (event) => {
-    if (event.key === "/" && document.activeElement?.tagName !== "INPUT") {
+    if (event.key === "Escape") {
+      closeDrawer();
+    } else if (event.key === "/" && document.activeElement?.tagName !== "INPUT") {
       event.preventDefault();
       searches[0]?.focus();
     }
   });
   showView(location.hash.slice(1));
+  if (location.hash.slice(1).startsWith("capability-")) openDrawer(location.hash.slice(1));
   filterRows();
 })();
 </script>`;
@@ -608,6 +667,10 @@ ${DASHBOARD_STYLES}
       </div>
     </section>
   </main>
+  <div class="backdrop" id="backdrop"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-live="polite">
+    <div class="drawer-in" id="drawerContent"></div>
+  </aside>
   ${renderDashboardScript(copy, capabilities.length)}
 </body>
 </html>`;

@@ -87,6 +87,7 @@ export interface DashboardCopy {
     sync: string;
   };
   details: string;
+  close: string;
   never: string;
   discoveryTitle: string;
   discoverySteps: Array<{ title: string; body: string }>;
@@ -199,6 +200,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       sync: "Sync",
     },
     details: "Details",
+    close: "Close",
     never: "never",
     discoveryTitle: "AI discovery",
     discoverySteps: [
@@ -314,6 +316,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       sync: "Synchro",
     },
     details: "Détails",
+    close: "Fermer",
     never: "jamais",
     discoveryTitle: "Découverte par l'IA",
     discoverySteps: [

@@ -104,6 +104,10 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl a:hover{color:var(--acid)}
 .num-c{font-family:var(--mono);color:var(--paper)}
 tr.caprow td:last-child{color:#6f6f69;font-size:13px}
+tr.caprow{cursor:pointer}
+tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+.row-action{padding:4px 8px;border:1px solid var(--line);border-radius:6px;color:var(--cyan);font-family:var(--mono);font-size:11px;background:var(--panel-strong)}
+.row-action:hover{color:var(--acid);border-color:rgba(201,255,61,.35)}
 .capname{display:flex;flex-direction:column;gap:1px}
 .capname strong{color:var(--paper);font-size:13.5px;font-weight:620}
 .cid{font-family:var(--mono);font-size:10.5px;color:#6f6f69}
@@ -142,6 +146,22 @@ tr.caprow td:last-child{color:#6f6f69;font-size:13px}
 .references h3{font-size:14px;margin-bottom:12px}
 .references h4{margin:0;color:var(--muted);font-size:13px;font-weight:600}
 .reference-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px}
+.backdrop{position:fixed;inset:0;z-index:80;background:rgba(5,5,5,.55);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .45s var(--ease)}
+.backdrop.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;z-index:90;width:min(640px,94vw);background:var(--lift);border-left:1px solid var(--line);transform:translateX(103%);transition:transform .55s var(--ease);overflow-y:auto;overscroll-behavior:contain;box-shadow:-32px 0 80px rgba(0,0,0,.4)}
+.drawer.on{transform:none}
+.drawer-in{padding:26px 28px 48px}
+.d-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.d-top .d-id{font-family:var(--mono);font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.d-close{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line);border-radius:6px;color:var(--muted);font-size:17px;transition:all .35s var(--ease)}
+.d-close:hover{color:var(--paper);border-color:#4b4b4b;transform:rotate(90deg)}
+.d-title{font-size:24px;font-weight:650;letter-spacing:0;margin-bottom:16px;overflow-wrap:anywhere}
+.drawer .capability{border:0;border-radius:0;background:transparent;padding:0;margin:0}
+.drawer .capability>header{display:none}
+.drawer .references{border-top:1px solid var(--line-soft);margin-top:22px;padding-top:18px}
+.drawer .reference-grid{grid-template-columns:1fr}
+.drawer .capability table{display:block;overflow-x:auto;border:1px solid var(--line-soft);border-radius:8px;background:var(--panel)}
+.drawer .capability tbody,.drawer .capability thead,.drawer .capability tr{display:table;width:100%;table-layout:auto}
 @media(max-width:1200px){
   .stats,.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .flow{grid-template-columns:repeat(2,1fr)}
