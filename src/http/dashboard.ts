@@ -1,104 +1,26 @@
 import { MCP_TOOLS } from "../mcp/tools";
 import { UpstreamMcpGateway } from "../mcp/upstream";
-import type { Capability, CapabilityFile, CapabilityRegistry } from "../registry/types";
+import type { Capability, CapabilityRegistry } from "../registry/types";
+import { renderDashboardScript } from "./dashboard-client-script";
+import {
+  anchorId,
+  chipClassForFile,
+  chipClassForKind,
+  escapeAttribute,
+  escapeHtml,
+  extractReferenceLinks,
+  lastSync,
+  percent,
+  provenanceRows,
+  skillKind,
+} from "./dashboard-helpers";
 import { DASHBOARD_COPY, type DashboardCopy, type DashboardLanguage } from "./dashboard-i18n";
 import { DASHBOARD_STYLES } from "./dashboard-styles";
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
-function escapeAttribute(value: string): string {
-  return escapeHtml(value).replaceAll("'", "&#39;");
-}
-
-function anchorId(value: string): string {
-  const normalized = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return normalized || "section";
-}
-
-interface ReferenceLink {
-  title: string;
-  url: string;
-  sourcePath: string;
-}
 
 interface DashboardData {
   capabilities: Capability[];
   resources: ReturnType<CapabilityRegistry["listResources"]>;
   upstreams: ReturnType<UpstreamMcpGateway["listUpstreams"]>;
-}
-
-function titleBefore(text: string, index: number): string | undefined {
-  const before = text.slice(0, index);
-  const headings = [...before.matchAll(/^#{2,3}\s+(.+)$/gm)];
-  return headings.at(-1)?.[1]?.trim();
-}
-
-function uniqueLinks(links: ReferenceLink[]): ReferenceLink[] {
-  const seen = new Set<string>();
-  return links.filter((link) => {
-    const key = `${link.sourcePath}:${link.url}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function textWithoutCode(markdown: string): string {
-  return markdown
-    .replaceAll(/```[\s\S]*?```/g, "")
-    .replaceAll(/`[^`\n]*`/g, "");
-}
-
-function cleanDetectedUrl(value: string): string | undefined {
-  const url = value.replace(/[.,;:!?]+$/, "");
-  if (/[`"'<>]/.test(url)) return undefined;
-  if (url.includes("&lt;") || url.includes("&gt;") || url.includes("&quot;")) return undefined;
-  if (url.includes("...") || url.includes("…")) return undefined;
-  return url;
-}
-
-function extractReferenceLinks(file: CapabilityFile): ReferenceLink[] {
-  const links: ReferenceLink[] = [];
-  const text = file.text ? textWithoutCode(file.text) : undefined;
-  if (!text) return links;
-
-  const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^)\s<>"'`]+)\)/g;
-  const bareUrlPattern = /https?:\/\/[^\s<>"'`)]+/g;
-
-  for (const match of text.matchAll(markdownLinkPattern)) {
-    const url = cleanDetectedUrl(match[2]);
-    if (!url) continue;
-
-    links.push({
-      title: match[1].trim(),
-      url,
-      sourcePath: file.path,
-    });
-  }
-
-  for (const match of text.matchAll(bareUrlPattern)) {
-    const url = cleanDetectedUrl(match[0]);
-    if (!url) continue;
-    if (links.some((link) => link.url === url)) continue;
-
-    links.push({
-      title: titleBefore(text, match.index ?? 0) || url,
-      url,
-      sourcePath: file.path,
-    });
-  }
-
-  return uniqueLinks(links);
 }
 
 function renderReferenceSources(capability: Capability, copy: DashboardCopy): string {
@@ -167,41 +89,6 @@ function renderProvenance(capability: Capability, copy: DashboardCopy): string {
     <table><tbody>${body}</tbody></table>
     ${skipped}
   </div>`;
-}
-
-function provenanceRows(capability: Capability, copy: DashboardCopy): [string, string | undefined][] {
-  const origin = capability.origin;
-  if (!origin) return [];
-
-  const location = [origin.repository, origin.path].filter(Boolean).join("/") || origin.url || origin.sourceId;
-  return [
-    [copy.provenanceRows.source, `${origin.type} · ${location}`],
-    [copy.provenanceRows.ref, origin.ref],
-    [copy.provenanceRows.commit, origin.commit || origin.revision?.value],
-    [copy.provenanceRows.contentHash, origin.contentHash],
-    [copy.provenanceRows.discoveredVia, origin.discoverySource ? `${origin.discoverySource.type} · ${origin.discoverySource.url}` : undefined],
-    [copy.provenanceRows.license, [origin.license?.spdxId, origin.license?.url].filter(Boolean).join(" · ") || undefined],
-    [copy.provenanceRows.skillKind, [origin.skillKind, ...(origin.skillTraits || [])].filter(Boolean).join(", ") || undefined],
-    [copy.provenanceRows.updatePolicy, origin.update],
-    [copy.provenanceRows.lastSync, origin.lastSyncedAt],
-  ];
-}
-
-function chipClassForKind(kind: string): string {
-  if (kind === "portable") return "ok";
-  if (kind === "resource-dependent") return "info";
-  if (kind === "executable") return "warn";
-  if (kind === "platform-specific") return "err";
-  return "plain";
-}
-
-function chipClassForFile(file: CapabilityFile): string {
-  if (file.binary) return "warn";
-  if (file.type === "skill") return "ok";
-  if (file.type === "reference") return "vio";
-  if (file.type === "script") return "warn";
-  if (file.type === "bundle" || file.type === "data") return "info";
-  return "plain";
 }
 
 function renderCapabilityResources(registry: CapabilityRegistry, copy: DashboardCopy): string {
@@ -415,22 +302,6 @@ function renderStatusChip(status: string): string {
   return `<span class="chip ${variant}">${escapeHtml(status)}</span>`;
 }
 
-function skillKind(capability: Capability): string {
-  if (capability.origin?.skillKind) return capability.origin.skillKind;
-  if (capability.files.some((file) => file.type === "script")) return "executable";
-  if (capability.files.some((file) => file.type === "asset" || file.type === "data")) return "resource-dependent";
-  return "portable";
-}
-
-function lastSync(capability: Capability, copy: DashboardCopy): string {
-  return capability.origin?.lastSyncedAt || copy.never;
-}
-
-function percent(count: number, total: number): number {
-  if (total === 0) return 0;
-  return Math.round((count / total) * 100);
-}
-
 function renderStats(data: DashboardData, copy: DashboardCopy): string {
   const imported = data.capabilities.filter((capability) => capability.origin).length;
   const binaries = data.capabilities.flatMap((capability) => capability.files).filter((file) => file.binary).length;
@@ -514,131 +385,6 @@ function renderKindOptions(capabilities: Capability[]): string {
     .join("");
 }
 
-function renderDashboardScript(copy: DashboardCopy, totalCapabilities: number): string {
-  return `<script>
-(() => {
-  const views = [...document.querySelectorAll("[data-view]")];
-  const navLinks = [...document.querySelectorAll("[data-nav]")];
-  const rows = [...document.querySelectorAll("[data-capability-row]")];
-  const cards = [...document.querySelectorAll("[data-capability-card]")];
-  const searches = [...document.querySelectorAll("[data-dashboard-search], #capSearch")];
-  const originButtons = [...document.querySelectorAll("[data-origin-filter]")];
-  const kindSelect = document.querySelector("#kindSel");
-  const sortSelect = document.querySelector("#sortSel");
-  const resultCount = document.querySelector("#resultCount");
-  const emptyRow = document.querySelector("#emptyRow");
-  const drawer = document.querySelector("#drawer");
-  const backdrop = document.querySelector("#backdrop");
-  const drawerContent = document.querySelector("#drawerContent");
-  let query = "";
-  let origin = "all";
-
-  function showView(id) {
-    const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "capabilities", "upstreams", "tools"].includes(id) ? id : "overview";
-    views.forEach((view) => view.classList.toggle("on", view.dataset.view === viewId));
-    navLinks.forEach((link) => link.classList.toggle("act", link.dataset.nav === viewId));
-  }
-
-  function openDrawer(targetId) {
-    const template = document.getElementById("drawer-" + targetId);
-    if (!template || !drawer || !drawerContent || !backdrop) return;
-    drawerContent.innerHTML = template.innerHTML;
-    drawer.classList.add("on");
-    drawer.setAttribute("aria-hidden", "false");
-    backdrop.classList.add("on");
-    document.body.style.overflow = "hidden";
-    drawer.scrollTop = 0;
-    drawerContent.querySelector(".d-close")?.addEventListener("click", closeDrawer);
-  }
-
-  function closeDrawer() {
-    if (!drawer || !backdrop) return;
-    drawer.classList.remove("on");
-    drawer.setAttribute("aria-hidden", "true");
-    backdrop.classList.remove("on");
-    document.body.style.overflow = "";
-  }
-
-  function syncSearch(value) {
-    query = value.trim().toLowerCase();
-    searches.forEach((input) => {
-      if (input.value !== value) input.value = value;
-    });
-    filterRows();
-  }
-
-  function matches(row) {
-    const textMatch = !query || row.dataset.search.toLowerCase().includes(query);
-    const originMatch = origin === "all" || row.dataset.origin === origin;
-    const kindMatch = !kindSelect || kindSelect.value === "all" || row.dataset.kind === kindSelect.value;
-    return textMatch && originMatch && kindMatch;
-  }
-
-  function filterRows() {
-    const sorted = [...rows].sort((a, b) => {
-      if (!sortSelect || sortSelect.value === "name") return a.dataset.name.localeCompare(b.dataset.name);
-      if (sortSelect.value === "files") return Number(b.dataset.files) - Number(a.dataset.files);
-      return b.dataset.sync.localeCompare(a.dataset.sync);
-    });
-    const body = document.querySelector("#capRows");
-    sorted.forEach((row) => body.append(row));
-    let visible = 0;
-    rows.forEach((row) => {
-      const ok = matches(row);
-      row.hidden = !ok;
-      visible += ok ? 1 : 0;
-    });
-    cards.forEach((card) => {
-      card.hidden = query ? !card.dataset.search.toLowerCase().includes(query) : false;
-    });
-    if (emptyRow) emptyRow.hidden = visible !== 0;
-    if (resultCount) resultCount.innerHTML = "<b>" + visible + "</b> / ${totalCapabilities} ${escapeHtml(copy.stats.capabilities)}";
-  }
-
-  window.addEventListener("hashchange", () => {
-    const id = location.hash.slice(1);
-    showView(id);
-    if (id.startsWith("capability-")) openDrawer(id);
-  });
-  navLinks.forEach((link) => link.addEventListener("click", () => showView(link.dataset.nav)));
-  document.addEventListener("click", (event) => {
-    const trigger = event.target.closest("[data-drawer-target]");
-    if (!trigger) return;
-    event.preventDefault();
-    openDrawer(trigger.dataset.drawerTarget);
-  });
-  rows.forEach((row) => {
-    row.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      openDrawer(row.dataset.drawerTarget);
-    });
-  });
-  backdrop?.addEventListener("click", closeDrawer);
-  searches.forEach((input) => input.addEventListener("input", () => syncSearch(input.value)));
-  originButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      origin = button.dataset.originFilter;
-      originButtons.forEach((candidate) => candidate.classList.toggle("act", candidate === button));
-      filterRows();
-    });
-  });
-  kindSelect?.addEventListener("change", filterRows);
-  sortSelect?.addEventListener("change", filterRows);
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      closeDrawer();
-    } else if (event.key === "/" && document.activeElement?.tagName !== "INPUT") {
-      event.preventDefault();
-      searches[0]?.focus();
-    }
-  });
-  showView(location.hash.slice(1));
-  if (location.hash.slice(1).startsWith("capability-")) openDrawer(location.hash.slice(1));
-  filterRows();
-})();
-</script>`;
-}
 
 export function renderDashboard(registry: CapabilityRegistry, language: DashboardLanguage = "en"): string {
   const capabilities = registry.listCapabilities();
