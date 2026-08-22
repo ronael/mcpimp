@@ -1,0 +1,37 @@
+{
+  "type": "github",
+  "sourceId": "ponytail",
+  "repository": "DietrichGebert/ponytail",
+  "path": "skills/ponytail-audit",
+  "ref": "main",
+  "commit": "2ed6c52c9d7e5e56942508591085fd45dea277d3",
+  "url": "https://github.com/DietrichGebert/ponytail/tree/2ed6c52c9d7e5e56942508591085fd45dea277d3/skills/ponytail-audit",
+  "revision": {
+    "kind": "git-commit",
+    "value": "2ed6c52c9d7e5e56942508591085fd45dea277d3"
+  },
+  "contentHash": "sha256:8245c3c38c0f06462b5b035df133e4c7e8338694e989602333383e6b20a2fd7b",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/DietrichGebert/ponytail/blob/2ed6c52c9d7e5e56942508591085fd45dea277d3/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "ponytail-audit",
+  "namespace": "ponytail",
+  "slug": "ponytail-audit",
+  "update": "review",
+  "lastSyncedAt": "2026-08-22T11:17:04.243Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 1652,
+      "binary": false,
+      "sha": "5582d10335daff5b5947f9b77927fbc97f2047f3",
+      "sha256": "5560b8e383dbe2ddfddc873a1e2bf2e586e23e0cd7d995537482b2315331f6d1"
+    }
+  ]
+}

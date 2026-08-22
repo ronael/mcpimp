@@ -1,0 +1,37 @@
+{
+  "type": "github",
+  "sourceId": "ponytail",
+  "repository": "DietrichGebert/ponytail",
+  "path": "skills/ponytail",
+  "ref": "main",
+  "commit": "2ed6c52c9d7e5e56942508591085fd45dea277d3",
+  "url": "https://github.com/DietrichGebert/ponytail/tree/2ed6c52c9d7e5e56942508591085fd45dea277d3/skills/ponytail",
+  "revision": {
+    "kind": "git-commit",
+    "value": "2ed6c52c9d7e5e56942508591085fd45dea277d3"
+  },
+  "contentHash": "sha256:51c40d154fef31a550387d1add8b7a620f440b81e206f86d255fb6d2f47d2ade",
+  "license": {
+    "spdxId": "MIT",
+    "name": "MIT License",
+    "url": "https://github.com/DietrichGebert/ponytail/blob/2ed6c52c9d7e5e56942508591085fd45dea277d3/LICENSE",
+    "noticePath": "LICENSE.md"
+  },
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "ponytail",
+  "namespace": "ponytail",
+  "slug": "ponytail",
+  "update": "review",
+  "lastSyncedAt": "2026-08-22T11:17:03.575Z",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "bytes": 6637,
+      "binary": false,
+      "sha": "02c0712c86277d49d18a77da3a2b825657bf02d1",
+      "sha256": "1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2"
+    }
+  ]
+}

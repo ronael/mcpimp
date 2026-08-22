@@ -1,0 +1,18 @@
+{
+  "id": "ponytail",
+  "type": "github",
+  "repository": "DietrichGebert/ponytail",
+  "ref": "main",
+  "roots": ["skills"],
+  "namespace": "ponytail",
+  "update": "review",
+  "include": [
+    "ponytail",
+    "ponytail-review",
+    "ponytail-audit",
+    "ponytail-debt",
+    "ponytail-gain",
+    "ponytail-help"
+  ],
+  "notes": "Ponytail, MIT. Minimalist/YAGNI coding ruleset for agents. Imported only from skills/: core mode, over-engineering review, repo audit, debt ledger, benchmark gain, and help. Site: https://ponytail.dev/. Repository also ships agent-specific plugins, hooks, assets, benchmarks, and ponytail-mcp; those are intentionally not imported as capabilities."
+}
