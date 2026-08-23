@@ -200,6 +200,14 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
           <p>An external source can never overwrite a local capability, meaning a folder without <code>SOURCE.json</code>, or take control of a capability owned by another source. Sync checks <code>sourceId</code> and the capability id before any write and refuses conflicts explicitly.</p>
         </div>
       </div>
+
+      <div class="callout c-cyan">
+        <i class="ph ph-git-branch" aria-hidden="true"></i>
+        <div>
+          <div class="c-t">Capability-centric ingestion</div>
+          <p>The GitHub adapter still discovers roots through <code>SKILL.md</code>, but the sync pipeline consumes capabilities, not skills. A content adapter may return skill-only, MCP-only, or skill+MCP capabilities; MCPIMP stores them with the same namespace/slug identity and provenance model.</p>
+        </div>
+      </div>
     </section>
 
     <!-- 04 -->

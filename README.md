@@ -145,6 +145,11 @@ match its `id`:
 | `maxFileBytes` | Per-file limit (512 KiB by default) |
 | `downloadBinaries` | `false` by default: binaries are indexed, not downloaded |
 
+GitHub sources currently discover capability roots through `SKILL.md`. The
+ingestion pipeline itself is capability-centric: content adapters return
+capabilities with detected components, so adapters can sync skill-only, MCP-only,
+or skill+MCP capabilities without forcing a `SKILL.md`.
+
 Synchronise sources with:
 
 ```bash

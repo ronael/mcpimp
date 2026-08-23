@@ -47,13 +47,40 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source();
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
 
-    expect(skills.map((skill) => skill.capabilityId)).toEqual([
+    expect(capabilities.map((capability) => capability.capabilityId)).toEqual([
       "ui-baseline-ui",
       "ui-executable-one",
       "ui-improve-ui",
     ]);
+  });
+
+  it("detects a composite GitHub capability with SKILL.md and mcp.json", async () => {
+    installFakeGitHub([
+      {
+        repository: "acme/ui-skills",
+        commit: COMMIT,
+        files: {
+          ...MULTI_SKILL_FILES,
+          "skills/improve-ui/mcp.json": JSON.stringify({
+            type: "mcp",
+            transport: "streamable-http",
+            url: "http://127.0.0.1:3901/message",
+          }),
+        },
+      },
+    ]);
+
+    const adapter = new GitHubSourceAdapter();
+    const definition = source({ include: ["improve-ui"] });
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
+
+    expect(capabilities[0]).toMatchObject({
+      capabilityId: "ui-improve-ui",
+      components: { skill: true, mcp: true },
+    });
+    expect(capabilities[0].files.map((file) => file.path)).toContain("mcp.json");
   });
 
   it("pins provenance to the exact commit and path", async () => {
@@ -61,8 +88,8 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source();
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
-    const improve = skills.find((skill) => skill.slug === "improve-ui");
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
+    const improve = capabilities.find((capability) => capability.slug === "improve-ui");
 
     expect(improve?.origin).toMatchObject({
       type: "github",
@@ -80,8 +107,8 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source();
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
-    const improve = skills.find((skill) => skill.slug === "improve-ui");
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
+    const improve = capabilities.find((capability) => capability.slug === "improve-ui");
 
     expect(improve?.files.map((file) => file.path)).toEqual(["SKILL.md", "references/plan.md"]);
     expect(improve?.skippedAssets).toMatchObject([{ path: "assets/preview.png", reason: "binary" }]);
@@ -92,13 +119,13 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source();
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
 
-    expect(skills.find((skill) => skill.slug === "executable-one")).toMatchObject({
+    expect(capabilities.find((capability) => capability.slug === "executable-one")).toMatchObject({
       skillKind: "executable",
       skillTraits: ["scripts"],
     });
-    expect(skills.find((skill) => skill.slug === "baseline-ui")).toMatchObject({ skillKind: "portable" });
+    expect(capabilities.find((capability) => capability.slug === "baseline-ui")).toMatchObject({ skillKind: "portable" });
   });
 
   it("honours include filters", async () => {
@@ -106,9 +133,9 @@ describe("GitHubSourceAdapter", () => {
 
     const adapter = new GitHubSourceAdapter();
     const definition = source({ include: ["improve-ui"] });
-    const skills = await adapter.discover(definition, await adapter.getRevision(definition));
+    const capabilities = await adapter.discover(definition, await adapter.getRevision(definition));
 
-    expect(skills.map((skill) => skill.slug)).toEqual(["improve-ui"]);
+    expect(capabilities.map((capability) => capability.slug)).toEqual(["improve-ui"]);
   });
 
   it("gives a stable content hash that moves only when content moves", async () => {

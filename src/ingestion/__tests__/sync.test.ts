@@ -4,7 +4,16 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSystemCapabilityRegistry } from "../../registry/filesystem";
 import { syncSources } from "../sync";
-import type { GitHubSourceDefinition, SourceDefinition } from "../types";
+import { capabilityIdFor, hashFileSet } from "../normalize";
+import type {
+  ContentSourceAdapter,
+  DiscoveredCapability,
+  DiscoveredFileRef,
+  FetchedFile,
+  GitHubSourceDefinition,
+  SourceDefinitionBase,
+  SourceRevision,
+} from "../types";
 import { installFakeGitHub } from "./fake-github";
 
 const COMMIT = "a".repeat(40);
@@ -29,6 +38,102 @@ function githubSource(overrides: Partial<GitHubSourceDefinition> = {}): GitHubSo
   };
 }
 
+interface MemorySourceDefinition {
+  id: string;
+  type: "memory";
+  namespace?: string;
+  update?: "manual" | "review" | "auto";
+}
+
+interface MemoryCapabilitySpec {
+  namespace: string;
+  slug: string;
+  files: Record<string, string>;
+}
+
+function memorySource(overrides: Partial<MemorySourceDefinition> = {}): SourceDefinitionBase {
+  return {
+    id: "memory",
+    type: "memory",
+    update: "review",
+    ...overrides,
+  };
+}
+
+function bytesOf(text: string): Uint8Array {
+  return new TextEncoder().encode(text);
+}
+
+class MemoryCapabilityAdapter implements ContentSourceAdapter<any> {
+  readonly type = "memory";
+  fetchCount = 0;
+
+  constructor(private specs: MemoryCapabilitySpec[], private revision = COMMIT) {}
+
+  updateFile(slug: string, path: string, text: string, revision = NEXT_COMMIT): void {
+    const spec = this.specs.find((item) => item.slug === slug);
+    if (!spec) throw new Error(`Unknown memory capability: ${slug}`);
+    spec.files[path] = text;
+    this.revision = revision;
+  }
+
+  async getRevision(): Promise<SourceRevision> {
+    return {
+      kind: "content-hash",
+      value: this.revision,
+      fetchedAt: new Date().toISOString(),
+    };
+  }
+
+  async discover(source: MemorySourceDefinition, revision: SourceRevision): Promise<DiscoveredCapability[]> {
+    return this.specs.map((spec) => {
+      const files = this.fileRefs(spec);
+      const contentHash = hashFileSet(files);
+      const namespace = source.namespace || spec.namespace;
+      const capabilityId = capabilityIdFor(namespace, spec.slug);
+
+      return {
+        namespace,
+        slug: spec.slug,
+        capabilityId,
+        components: {
+          skill: files.some((file) => file.path === "SKILL.md"),
+          mcp: files.some((file) => file.path === "mcp.json"),
+        },
+        files,
+        contentHash,
+        skippedAssets: [],
+        origin: {
+          type: "memory",
+          sourceId: source.id,
+          path: spec.slug,
+          revision: { kind: revision.kind, value: revision.value },
+          contentHash,
+        },
+      };
+    });
+  }
+
+  async fetch(_source: MemorySourceDefinition, capability: DiscoveredCapability): Promise<FetchedFile[]> {
+    this.fetchCount += 1;
+    const spec = this.specs.find((item) => item.slug === capability.slug);
+    if (!spec) throw new Error(`Unknown memory capability: ${capability.slug}`);
+    return Object.entries(spec.files).map(([path, text]) => ({ path, bytes: bytesOf(text) }));
+  }
+
+  private fileRefs(spec: MemoryCapabilitySpec): DiscoveredFileRef[] {
+    return Object.entries(spec.files)
+      .map(([path, text]) => ({
+        path,
+        bytes: bytesOf(text).byteLength,
+        binary: false,
+        sha: `${this.revision}:${path}:${text}`,
+        url: `memory://${spec.slug}/${path}`,
+      }))
+      .sort((a, b) => a.path.localeCompare(b.path));
+  }
+}
+
 let root: string;
 
 beforeEach(async () => {
@@ -40,11 +145,165 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-async function run(sources: SourceDefinition[], options: { apply?: boolean; targets?: string[] } = {}) {
+async function run(
+  sources: SourceDefinitionBase[],
+  options: { apply?: boolean; targets?: string[]; contentAdapters?: ContentSourceAdapter[] } = {},
+) {
   return syncSources({ root, sources, ...options });
 }
 
 describe("syncSources", () => {
+  it("syncs a capability with SKILL.md only", async () => {
+    const adapter = new MemoryCapabilityAdapter([
+      {
+        namespace: "mem",
+        slug: "skill-only",
+        files: {
+          "SKILL.md": "---\nname: Skill Only\ndescription: Portable capability.\n---\n\n# Skill Only",
+        },
+      },
+    ]);
+
+    const report = await run([memorySource()], { apply: true, contentAdapters: [adapter] });
+
+    expect(report.entries).toMatchObject([{ capabilityId: "mem-skill-only", status: "new", applied: true }]);
+
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities"));
+    expect(registry.getCapability("mem-skill-only")).toMatchObject({
+      name: "Skill Only",
+      components: { skill: true, mcp: false },
+      origin: { type: "memory", sourceId: "memory" },
+    });
+
+    const manifest = JSON.parse(
+      await readFile(join(root, "catalog/capabilities/mem/skill-only/SOURCE.json"), "utf-8"),
+    );
+    expect(manifest).toMatchObject({ capability: "mem-skill-only", skillKind: "portable" });
+  });
+
+  it("syncs an MCP-only capability without SKILL.md", async () => {
+    const adapter = new MemoryCapabilityAdapter([
+      {
+        namespace: "mem",
+        slug: "browser-mcp",
+        files: {
+          "mcp.json": JSON.stringify({
+            type: "mcp",
+            transport: "streamable-http",
+            url: "http://127.0.0.1:3901/message",
+            name: "Browser MCP",
+            description: "Rendered browser inspection.",
+            tags: ["browser", "inspection"],
+          }),
+        },
+      },
+    ]);
+
+    const report = await run([memorySource()], { apply: true, contentAdapters: [adapter] });
+
+    expect(report.entries).toMatchObject([{ capabilityId: "mem-browser-mcp", status: "new", applied: true }]);
+
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities"));
+    expect(registry.getCapability("mem-browser-mcp")).toMatchObject({
+      name: "Browser MCP",
+      description: "Rendered browser inspection.",
+      components: { skill: false, mcp: true },
+    });
+    expect(registry.listUpstreamMcpServers()).toHaveLength(1);
+
+    const manifest = JSON.parse(
+      await readFile(join(root, "catalog/capabilities/mem/browser-mcp/SOURCE.json"), "utf-8"),
+    );
+    expect(manifest.skillKind).toBeUndefined();
+    expect(manifest.skillTraits).toBeUndefined();
+  });
+
+  it("syncs a composite capability with SKILL.md and mcp.json", async () => {
+    const adapter = new MemoryCapabilityAdapter([
+      {
+        namespace: "mem",
+        slug: "composite",
+        files: {
+          "SKILL.md": "---\nname: Composite\ndescription: Skill plus MCP.\n---\n\n# Composite",
+          "mcp.json": JSON.stringify({
+            type: "mcp",
+            transport: "streamable-http",
+            url: "http://127.0.0.1:3901/message",
+          }),
+        },
+      },
+    ]);
+
+    await run([memorySource()], { apply: true, contentAdapters: [adapter] });
+
+    const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities"));
+    expect(registry.getCapability("mem-composite")).toMatchObject({
+      name: "Composite",
+      components: { skill: true, mcp: true },
+      mcp: { url: "http://127.0.0.1:3901/message" },
+    });
+  });
+
+  it("does not fetch an existing capability when contentHash is unchanged", async () => {
+    const adapter = new MemoryCapabilityAdapter([
+      {
+        namespace: "mem",
+        slug: "stable",
+        files: {
+          "mcp.json": JSON.stringify({
+            type: "mcp",
+            transport: "streamable-http",
+            url: "http://127.0.0.1:3901/message",
+          }),
+        },
+      },
+    ]);
+    await run([memorySource()], { apply: true, contentAdapters: [adapter] });
+
+    const before = adapter.fetchCount;
+    const report = await run([memorySource()], { apply: true, contentAdapters: [adapter] });
+
+    expect(report.entries).toMatchObject([{ capabilityId: "mem-stable", status: "up-to-date", applied: false }]);
+    expect(adapter.fetchCount).toBe(before);
+  });
+
+  it("detects an upstream contentHash change for a non-skill capability", async () => {
+    const adapter = new MemoryCapabilityAdapter([
+      {
+        namespace: "mem",
+        slug: "remote-tool",
+        files: {
+          "mcp.json": JSON.stringify({
+            type: "mcp",
+            transport: "streamable-http",
+            url: "http://127.0.0.1:3901/message",
+          }),
+        },
+      },
+    ]);
+    await run([memorySource()], { apply: true, contentAdapters: [adapter] });
+
+    adapter.updateFile(
+      "remote-tool",
+      "mcp.json",
+      JSON.stringify({
+        type: "mcp",
+        transport: "streamable-http",
+        url: "http://127.0.0.1:3902/message",
+      }),
+    );
+
+    const report = await run([memorySource()], { contentAdapters: [adapter] });
+
+    expect(report.entries[0]).toMatchObject({
+      capabilityId: "mem-remote-tool",
+      status: "update-available",
+      previousRevision: COMMIT,
+      revision: NEXT_COMMIT,
+      changes: { added: [], removed: [], modified: ["mcp.json"] },
+    });
+  });
+
   it("reports a first import as new and writes nothing without --apply", async () => {
     installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
 
