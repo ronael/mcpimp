@@ -22,7 +22,10 @@ liste de styles interdits.
 2. **Chercher les capabilities utiles**
    - Si le registre MCP est disponible, lance plusieurs recherches distinctes
      couvrant le type de page, le domaine du produit et les besoins spécialisés
-     comme l'accessibilité, les assets, le responsive ou la motion.
+     comme l'accessibilité, les assets, le responsive ou la motion. Pour la
+     motion, cherche notamment `motion-design-resources` quand le brief demande
+     des transitions, une landing plus vivante ou une alternative aux animations
+     d'apparition génériques.
    - Regroupe les résultats par `capabilityId`. Le skill `landing-page` est déjà
      actif : ne le recharge pas et ne le compte pas dans la sélection.
    - Examine avec `capability-info` les candidates susceptibles de modifier une

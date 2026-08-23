@@ -1,0 +1,35 @@
+# Motion Inspiration Links
+
+References utiles pour enrichir la motion d'une interface web. Ces ressources ne
+sont pas des sources MCPIMP importables par `sources:sync`; elles guident des
+decisions de design et d'implementation.
+
+## CSS Motion Studies
+
+- yui540 Motions: https://yui540.com/ — portfolio de motion design web realise
+  en CSS animation, SVG, HTML, TypeScript, JavaScript, React, Next.js et outils
+  de design. A utiliser comme reference externe pour le timing, les ruptures de
+  rythme, la typographie animee, les transitions de composition et les
+  interactions visuelles. Ne pas scraper, entrainer dessus, copier, reproduire
+  ou reutiliser les videos, images, textes ou animations du site.
+- yui540/css-animations: https://github.com/yui540/css-animations — depot MIT
+  public pour une partie des animations CSS publiees par l'auteur. Peut servir
+  de reference technique ou de base reutilisable si la licence MIT est respectee.
+- yui540/reanimated-css-animations:
+  https://github.com/yui540/reanimated-css-animations — port Reanimated MIT de
+  certaines animations CSS. Utile pour comprendre la traduction de principes CSS
+  vers des timelines React Native/Reanimated.
+
+## Usage Pattern
+
+- Pour une landing page, commencer par definir le role du mouvement : orienter
+  l'oeil, confirmer une action, reveler une structure, donner un tempo de marque
+  ou rendre une transition comprehensible.
+- Remplacer les presets fades generiques par une sequence precise : entree du
+  contenu principal, retard court sur les details, accent sur l'objet cle, puis
+  etat stable lisible.
+- Preferer `transform` et `opacity` pour la performance, limiter `filter`,
+  `clip-path` et les grandes ombres animees, et eviter les animations de
+  dimensions qui provoquent du reflow.
+- Toujours prevoir une version `prefers-reduced-motion` qui conserve la
+  hierarchie et l'information sans supprimer le contenu.

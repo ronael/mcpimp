@@ -25,6 +25,7 @@ const PUBLIC_IDS = [
   "matt-pocock-domain-modeling",
   "matt-pocock-grilling",
   "matt-pocock-improve-codebase-architecture",
+  "motion-design-resources",
   "nocodb",
   "ponytail",
   "ponytail-audit",
