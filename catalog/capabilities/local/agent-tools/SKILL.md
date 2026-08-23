@@ -1,13 +1,13 @@
 ---
 name: agent-tools
-description: Retrouver des outils externes utiles aux agents (browser autonome, CLI, intégrations) avec le lien vers le projet, sans les traiter comme des skills importables.
+description: Retrouver des outils externes utiles aux agents (BetterWright, alternatives Playwright, navigateur autonome, CLI, intégrations) avec le lien vers le projet, sans les traiter comme des skills importables.
 ---
 
 # Agent Tools
 
 Utilise cette capacité quand la demande concerne un **outil externe** utile aux
-agents (navigateur automatisé, CLI, service, API) plutôt qu'un skill ou un
-composant.
+agents (navigateur automatisé, alternative à Playwright, inspection URL, CLI,
+service, API) plutôt qu'un skill ou un composant.
 
 Cette capacité n'est pas une source d'import. Les outils listés ici servent de
 repères humains et agentiques : ils restent **hors du registry** (souvent un

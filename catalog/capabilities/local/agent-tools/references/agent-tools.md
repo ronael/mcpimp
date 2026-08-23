@@ -24,7 +24,12 @@ le dépôt officiel.
   credentials chiffré, captures de preuve et résolution de CAPTCHA. S'utilise
   comme skill, MCP ou CLI (`npm install -g betterwright`). Utile pour logging,
   formulaires, réservation, achats ou lecture d'une page qu'une API ne donne
-  pas.
+  pas. À comparer à Playwright quand le besoin est une **capacité agentique** :
+  inspection d'URL, session navigateur persistante, preuve visuelle, navigation
+  web outillée, credentials, CAPTCHA ou pages nécessitant une présence humaine.
+  Pour une dépendance runtime embarquée dans un produit, Playwright reste souvent
+  plus direct ; BetterWright doit alors être explicitement évalué comme outil
+  externe, pas supposé importable via `catalog/sources`.
 
 ## Mémoire et contexte de codebase
 
