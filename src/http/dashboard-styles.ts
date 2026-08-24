@@ -133,6 +133,12 @@ tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
 .term-bar .dots i:nth-child(2){background:rgba(243,198,119,.6)}
 .term-bar .dots i:nth-child(3){background:rgba(201,255,61,.6)}
 .term pre{padding:16px 18px;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--paper);overflow-x:auto;white-space:pre}
+.setup-grid .panel{display:flex;min-width:0;flex-direction:column}
+.setup-copy{margin-bottom:16px;color:var(--muted);font-size:13px;text-wrap:pretty}
+.setup-grid .term{margin-top:auto}
+.setup-grid .term pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.setup-note{display:flex;align-items:flex-start;gap:8px;margin-top:auto;padding:12px;border:1px solid rgba(99,230,255,.3);border-radius:8px;background:rgba(99,230,255,.06);color:var(--cyan);font-size:12px}
+.setup-note i{margin-top:2px;font-size:15px;flex:0 0 auto}
 .cap-details{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .capability{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:22px;margin-top:16px}
 .capability header{display:flex;align-items:start;justify-content:space-between;gap:20px;margin-bottom:8px}

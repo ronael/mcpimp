@@ -484,10 +484,10 @@ Claude Desktop utilise le transport SSE.
 ### Claude Code
 
 ```bash
-claude mcp add mcpimp http://localhost:3901/sse
+claude mcp add --transport http --scope user mcpimp http://localhost:3901/message
 ```
 
-Ou édite la configuration MCP de Claude Code pour pointer vers `http://localhost:3901/sse`.
+Ou édite la configuration MCP de Claude Code pour pointer vers `http://localhost:3901/message`.
 
 ### Cursor
 
@@ -503,9 +503,13 @@ Ajoute dans `~/.cursor/mcp.json` ou `.cursor/mcp.json` :
 }
 ```
 
-### Codex / autres clients
+### Codex
 
-Le format dépend de la version de Codex. Essaie le transport HTTP streamable avec `http://localhost:3901/message` ; si le client ne le supporte pas, retourne-toi sur `http://localhost:3901/sse`.
+```bash
+codex mcp add mcpimp --url http://localhost:3901/message
+```
+
+Pour un ancien client qui ne supporte pas le HTTP streamable, utilise l'endpoint SSE `http://localhost:3901/sse`.
 
 ### Vérifier sans client MCP
 

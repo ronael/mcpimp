@@ -18,6 +18,7 @@ import { DASHBOARD_COPY, type DashboardCopy, type DashboardLanguage } from "./da
 import { DASHBOARD_STYLES } from "./dashboard-styles";
 
 export interface DashboardLinks {
+  agentGuidePath?: string;
   sourceGuidePath?: string;
   sitePath?: string;
 }
@@ -224,6 +225,7 @@ function renderMobileNav(copy: DashboardCopy): string {
   return `<nav class="mtop" aria-label="${escapeAttribute(copy.navLabel)}">
     <span class="brand-mark">M</span>
     <a href="#overview" data-nav="overview" class="act">${escapeHtml(copy.nav.overview)}</a>
+    <a href="#connect" data-nav="connect">${escapeHtml(copy.nav.connect)}</a>
     <a href="#capabilities" data-nav="capabilities">${escapeHtml(copy.nav.capabilities)}</a>
     <a href="#upstreams" data-nav="upstreams">${escapeHtml(copy.nav.upstreams)}</a>
     <a href="#tools" data-nav="tools">${escapeHtml(copy.nav.tools)}</a>
@@ -231,6 +233,11 @@ function renderMobileNav(copy: DashboardCopy): string {
 }
 
 function renderSidebar(data: DashboardData, copy: DashboardCopy, language: DashboardLanguage, links: DashboardLinks): string {
+  const agentGuidePath =
+    links.agentGuidePath ||
+    (language === "fr"
+      ? "https://github.com/ronael/mcpimp/blob/main/site/fr/docs/agents.html"
+      : "https://github.com/ronael/mcpimp/blob/main/site/docs/agents.html");
   const sourceGuidePath =
     links.sourceGuidePath ||
     (language === "fr"
@@ -239,6 +246,8 @@ function renderSidebar(data: DashboardData, copy: DashboardCopy, language: Dashb
   const sitePath = links.sitePath || (language === "fr" ? "/fr/" : "/");
   const sourceGuideExternal = sourceGuidePath.startsWith("http://") || sourceGuidePath.startsWith("https://");
   const sourceGuideTarget = sourceGuideExternal ? ` target="_blank" rel="noreferrer"` : "";
+  const agentGuideExternal = agentGuidePath.startsWith("http://") || agentGuidePath.startsWith("https://");
+  const agentGuideTarget = agentGuideExternal ? ` target="_blank" rel="noreferrer"` : "";
 
   return `<aside class="side">
     <a class="side-brand" href="#overview"><span class="brand-mark">M</span>MCPIMP<span class="sub">console</span></a>
@@ -250,12 +259,14 @@ function renderSidebar(data: DashboardData, copy: DashboardCopy, language: Dashb
     <div class="snav-label">Registry</div>
     <nav class="snav" aria-label="${escapeAttribute(copy.navLabel)}">
       <a href="#overview" data-nav="overview" class="act"><i class="ph ph-squares-four" aria-hidden="true"></i>${escapeHtml(copy.nav.overview)}</a>
+      <a href="#connect" data-nav="connect"><i class="ph ph-plugs" aria-hidden="true"></i>${escapeHtml(copy.nav.connect)}</a>
       <a href="#capabilities" data-nav="capabilities"><i class="ph ph-circles-three-plus" aria-hidden="true"></i>${escapeHtml(copy.nav.capabilities)}<span class="cnt">${data.capabilities.length}</span></a>
       <a href="#upstreams" data-nav="upstreams"><i class="ph ph-network" aria-hidden="true"></i>${escapeHtml(copy.nav.upstreams)}<span class="cnt">${data.upstreams.length}</span></a>
       <a href="#tools" data-nav="tools"><i class="ph ph-wrench" aria-hidden="true"></i>${escapeHtml(copy.nav.tools)}<span class="cnt">${MCP_TOOLS.length + copy.endpoints.length}</span></a>
     </nav>
     <div class="snav-label">${escapeHtml(copy.linksLabel)}</div>
     <nav class="snav">
+      <a href="${escapeAttribute(agentGuidePath)}"${agentGuideTarget}><i class="ph ph-plugs" aria-hidden="true"></i>${escapeHtml(copy.agentGuide)}</a>
       <a href="${escapeAttribute(sourceGuidePath)}"${sourceGuideTarget}><i class="ph ph-book-open" aria-hidden="true"></i>${escapeHtml(copy.sourceGuide)}</a>
       <a href="${escapeAttribute(sitePath)}"><i class="ph ph-arrow-up-right" aria-hidden="true"></i>${escapeHtml(copy.backToSite)}</a>
     </nav>
@@ -370,6 +381,53 @@ function renderDiscovery(copy: DashboardCopy): string {
   </div>`;
 }
 
+function renderConnection(copy: DashboardCopy): string {
+  const clientJson = `{
+  &quot;mcpServers&quot;: {
+    &quot;mcpimp&quot;: {
+      &quot;url&quot;: &quot;http://localhost:3901/message&quot;
+    }
+  }
+}`;
+
+  return `<section class="view" id="connect" data-view="connect">
+    <div class="v-head">
+      <div>
+        <div class="kicker">${escapeHtml(copy.connectKicker)}</div>
+        <h1>${escapeHtml(copy.connectTitle)}</h1>
+        <p class="sub">${escapeHtml(copy.connectIntro)}</p>
+      </div>
+    </div>
+    <section class="panel">
+      <div class="p-h"><h2><i class="ph ph-play" aria-hidden="true"></i>${escapeHtml(copy.connectStartTitle)}</h2><span class="p-meta">localhost:3901</span></div>
+      <p class="setup-copy">${escapeHtml(copy.connectStartBody)}</p>
+      <div class="term"><div class="term-bar"><span class="dots"><i></i><i></i><i></i></span><span>terminal</span></div><pre><span class="jp">$</span> pnpm run dev</pre></div>
+    </section>
+    <div class="grid2 setup-grid">
+      <section class="panel">
+        <div class="p-h"><h2><i class="ph ph-code" aria-hidden="true"></i>Codex</h2><span class="p-meta">HTTP streamable</span></div>
+        <p class="setup-copy">${escapeHtml(copy.connectCodexBody)}</p>
+        <div class="term"><pre><span class="jp">$</span> codex mcp add mcpimp --url http://localhost:3901/message</pre></div>
+      </section>
+      <section class="panel">
+        <div class="p-h"><h2><i class="ph ph-terminal-window" aria-hidden="true"></i>Claude Code</h2><span class="p-meta">HTTP streamable</span></div>
+        <p class="setup-copy">${escapeHtml(copy.connectClaudeBody)}</p>
+        <div class="term"><pre><span class="jp">$</span> claude mcp add --transport http --scope user mcpimp http://localhost:3901/message</pre></div>
+      </section>
+      <section class="panel">
+        <div class="p-h"><h2><i class="ph ph-file-code" aria-hidden="true"></i>${escapeHtml(copy.connectJsonTitle)}</h2><span class="p-meta">JSON</span></div>
+        <p class="setup-copy">${escapeHtml(copy.connectJsonBody)}</p>
+        <div class="term"><pre>${clientJson}</pre></div>
+      </section>
+      <section class="panel">
+        <div class="p-h"><h2><i class="ph ph-check-circle" aria-hidden="true"></i>${escapeHtml(copy.connectVerifyTitle)}</h2><span class="p-meta">5 tools</span></div>
+        <p class="setup-copy">${escapeHtml(copy.connectVerifyBody)}</p>
+        <div class="setup-note"><i class="ph ph-info" aria-hidden="true"></i><span>${escapeHtml(copy.connectFallback)}</span></div>
+      </section>
+    </div>
+  </section>`;
+}
+
 function renderCapabilityRows(capabilities: Capability[], copy: DashboardCopy): string {
   return capabilities
     .map((capability) => {
@@ -449,6 +507,8 @@ ${DASHBOARD_STYLES}
         </section>
       </div>
     </section>
+
+    ${renderConnection(copy)}
 
     <section class="view" id="capabilities" data-view="capabilities">
       <div class="v-head">

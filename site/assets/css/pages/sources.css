@@ -85,13 +85,16 @@ h1{font-size:clamp(36px,4.6vw,56px);line-height:1.02;font-weight:650;letter-spac
 .codecard.sm pre{font-size:12.5px}
 
 /* ── callouts ── */
-.callout{display:flex;gap:16px;border:1px solid var(--line);border-left:2px solid var(--acid);border-radius:8px;background:var(--panel);padding:20px 22px;margin:28px 0}
+.callout{display:flex;gap:16px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:20px 22px;margin:28px 0}
 .callout i{font-size:22px;flex:0 0 auto;margin-top:2px;color:var(--acid)}
 .callout .c-t{font-weight:620;color:var(--paper);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .callout p{margin:0;font-size:14.5px}
-.callout.c-cyan{border-left-color:var(--cyan)} .callout.c-cyan i{color:var(--cyan)}
-.callout.c-coral{border-left-color:var(--coral)} .callout.c-coral i{color:var(--coral)}
-.callout.c-violet{border-left-color:var(--violet)} .callout.c-violet i{color:var(--violet)}
+/* .callout.c-cyan{border:1px solid var(--cyan)}  */
+.callout.c-cyan i{color:var(--cyan)}
+/* .callout.c-coral{border:1px solid var(--coral)}  */
+.callout.c-coral i{color:var(--coral)}
+/* .callout.c-violet{border:1px solid var(--violet)}  */
+.callout.c-violet i{color:var(--violet)}
 
 /* ── tables ── */
 .tbl-wrap{border:1px solid var(--line);border-radius:8px;overflow-x:auto;margin:20px 0 28px;background:var(--panel)}

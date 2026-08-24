@@ -21,7 +21,7 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   let origin = "all";
 
   function showView(id) {
-    const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "capabilities", "upstreams", "tools"].includes(id) ? id : "overview";
+    const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "connect", "capabilities", "upstreams", "tools"].includes(id) ? id : "overview";
     views.forEach((view) => view.classList.toggle("on", view.dataset.view === viewId));
     navLinks.forEach((link) => link.classList.toggle("act", link.dataset.nav === viewId));
   }

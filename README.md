@@ -189,9 +189,13 @@ pnpm run dev
 ```
 
 Use `http://localhost:3901/message` for streamable HTTP clients and
-`http://localhost:3901/sse` for SSE-only clients. For example, Claude Desktop,
-Claude Code, and Cursor use the SSE endpoint; Kimi Code CLI can use the
-streamable HTTP endpoint in `.kimi-code/mcp.json`.
+`http://localhost:3901/sse` for SSE-only clients. Current Codex and Claude Code
+clients can connect directly:
+
+```bash
+codex mcp add mcpimp --url http://localhost:3901/message
+claude mcp add --transport http --scope user mcpimp http://localhost:3901/message
+```
 
 Verify the server without an MCP client:
 

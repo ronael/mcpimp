@@ -21,6 +21,7 @@ function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) 
   if (!staticSite) return {};
 
   return {
+    agentGuidePath: language === "fr" ? "/fr/docs/agents.html" : "/docs/agents.html",
     sourceGuidePath: language === "fr" ? "/fr/docs/sources.html" : "/docs/sources.html",
     sitePath: language === "fr" ? "/fr/" : "/",
   };
@@ -42,6 +43,8 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   app.get("/fr/index.html", async (c) => (options.dashboardHome ? c.redirect("/fr/dashboard") : (await serveStatic(c.req.path)) || c.notFound()));
   app.get("/docs/sources.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
   app.get("/fr/docs/sources.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/docs/agents.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
+  app.get("/fr/docs/agents.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
   app.get("/assets/*", async (c) => (await serveStatic(c.req.path)) || c.notFound());
 
   app.get("/health", (c) => {

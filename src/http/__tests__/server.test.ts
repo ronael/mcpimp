@@ -87,6 +87,9 @@ describe("Hono server", () => {
     expect(html).toContain("The server scans");
     expect(html).toContain("/health");
     expect(html).toContain("/message");
+    expect(html).toContain('href="#connect"');
+    expect(html).toContain("codex mcp add mcpimp --url http://localhost:3901/message");
+    expect(html).toContain("claude mcp add --transport http --scope user mcpimp http://localhost:3901/message");
     expect(html).toContain('href="#discovery"');
     expect(html).toContain('id="endpoints"');
     expect(html).toContain('href="#capability-landing-page"');
@@ -118,6 +121,11 @@ describe("Hono server", () => {
               headers: { "content-type": "text/html; charset=utf-8" },
             });
           }
+          if (path === "/docs/agents.html") {
+            return new Response("<h1>Connect an agent</h1>", {
+              headers: { "content-type": "text/html; charset=utf-8" },
+            });
+          }
           if (path === "/assets/css/pages/sources.css") {
             return new Response("body{}", {
               headers: { "content-type": "text/css; charset=utf-8" },
@@ -129,7 +137,13 @@ describe("Hono server", () => {
     });
 
     const dashboard = await app.request("/dashboard");
-    await expect(dashboard.text()).resolves.toContain('href="/docs/sources.html"');
+    const dashboardHtml = await dashboard.text();
+    expect(dashboardHtml).toContain('href="/docs/sources.html"');
+    expect(dashboardHtml).toContain('href="/docs/agents.html"');
+
+    const agents = await app.request("/docs/agents.html");
+    expect(agents.status).toBe(200);
+    await expect(agents.text()).resolves.toContain("Connect an agent");
 
     const docs = await app.request("/docs/sources.html");
     expect(docs.status).toBe(200);

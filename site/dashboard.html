@@ -18,6 +18,7 @@
 <nav class="mtop" aria-label="Navigation">
   <span class="brand-mark">M</span>
   <a href="#overview" data-nav="overview" class="act">Vue d'ensemble</a>
+  <a href="#connect" data-nav="connect">Connecter un agent</a>
   <a href="#capabilities" data-nav="capabilities">Capabilities</a>
   <a href="#upstreams" data-nav="upstreams">Upstreams</a>
   <a href="#tools" data-nav="tools">Tools &amp; endpoints</a>
@@ -34,12 +35,14 @@
   <div class="snav-label">Registry</div>
   <nav class="snav">
     <a href="#overview" data-nav="overview" class="act"><i class="ph ph-squares-four" aria-hidden="true"></i>Vue d'ensemble</a>
+    <a href="#connect" data-nav="connect"><i class="ph ph-plugs" aria-hidden="true"></i>Connecter un agent</a>
     <a href="#capabilities" data-nav="capabilities"><i class="ph ph-circles-three-plus" aria-hidden="true"></i>Capabilities<span class="cnt">12</span></a>
     <a href="#upstreams" data-nav="upstreams"><i class="ph ph-network" aria-hidden="true"></i>Upstreams<span class="cnt">2</span></a>
     <a href="#tools" data-nav="tools"><i class="ph ph-wrench" aria-hidden="true"></i>Tools &amp; endpoints<span class="cnt">9</span></a>
   </nav>
   <div class="snav-label">Liens</div>
   <nav class="snav">
+    <a href="docs/agents.html"><i class="ph ph-plugs" aria-hidden="true"></i>Guide de connexion</a>
     <a href="docs/sources.html"><i class="ph ph-book-open" aria-hidden="true"></i>Guide des sources</a>
     <a href="index.html"><i class="ph ph-arrow-up-right" aria-hidden="true"></i>Retour au site</a>
   </nav>
@@ -99,6 +102,50 @@
   -d <span class="js">'{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list-capabilities","arguments":{}}}'</span></pre>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ═══ VUE : CONNEXION ═══ -->
+  <section class="view" id="connect" data-view="connect">
+    <div class="v-head">
+      <div>
+        <div class="kicker">Configuration client · deux minutes</div>
+        <h1>Connecter MCPIMP à un agent</h1>
+        <p class="sub">Lance MCPIMP, ajoute son endpoint HTTP streamable dans ton client, puis vérifie que les cinq tools du registry sont visibles.</p>
+      </div>
+    </div>
+    <section class="panel">
+      <div class="p-h"><h2><i class="ph ph-play" aria-hidden="true"></i>1. Lancer le registry</h2><span class="p-meta">localhost:3901</span></div>
+      <p class="setup-copy">Garde ce processus actif pendant que ton agent utilise MCPIMP.</p>
+      <div class="term"><div class="term-bar"><span class="dots"><i></i><i></i><i></i></span><span>terminal</span></div><pre><span class="jp">$</span> pnpm run dev</pre></div>
+    </section>
+    <div class="grid2 setup-grid">
+      <section class="panel">
+        <div class="p-h"><h2><i class="ph ph-code" aria-hidden="true"></i>Codex</h2><span class="p-meta">HTTP streamable</span></div>
+        <p class="setup-copy">Ajoute MCPIMP à la configuration utilisateur de Codex.</p>
+        <div class="term"><pre><span class="jp">$</span> codex mcp add mcpimp --url http://localhost:3901/message</pre></div>
+      </section>
+      <section class="panel">
+        <div class="p-h"><h2><i class="ph ph-terminal-window" aria-hidden="true"></i>Claude Code</h2><span class="p-meta">HTTP streamable</span></div>
+        <p class="setup-copy">Ajoute MCPIMP à la configuration utilisateur de Claude Code.</p>
+        <div class="term"><pre><span class="jp">$</span> claude mcp add --transport http --scope user mcpimp http://localhost:3901/message</pre></div>
+      </section>
+      <section class="panel">
+        <div class="p-h"><h2><i class="ph ph-file-code" aria-hidden="true"></i>Autres clients MCP</h2><span class="p-meta">JSON</span></div>
+        <p class="setup-copy">Utilise cette forme JSON dans Cursor ou dans tout client qui accepte un fichier de serveurs MCP.</p>
+        <div class="term"><pre>{
+  &quot;mcpServers&quot;: {
+    &quot;mcpimp&quot;: {
+      &quot;url&quot;: &quot;http://localhost:3901/message&quot;
+    }
+  }
+}</pre></div>
+      </section>
+      <section class="panel">
+        <div class="p-h"><h2><i class="ph ph-check-circle" aria-hidden="true"></i>2. Vérifier la connexion</h2><span class="p-meta">5 tools</span></div>
+        <p class="setup-copy">Redémarre le client s'il était déjà ouvert, puis liste ses serveurs MCP. Le serveur doit exposer <code>list-capabilities</code>, <code>search-capabilities</code>, <code>capability-info</code>, <code>load-capability</code> et <code>list-upstreams</code>.</p>
+        <div class="setup-note"><i class="ph ph-info" aria-hidden="true"></i><span>Client ancien ? Remplace <code>/message</code> par l'endpoint SSE legacy <code>/sse</code>.</span></div>
+      </section>
     </div>
   </section>
 

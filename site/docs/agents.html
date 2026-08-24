@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCPIMP — Connect an AI agent</title>
+<meta name="description" content="Connect MCPIMP to Codex, Claude Code, Cursor, or another MCP client in a few commands.">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c9ff3d'/%3E%3Cpath d='M7 23V9h4l5 7 5-7h4v14h-4v-8l-5 6-5-6v8z' fill='%230a0a0a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5.2.6/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist-mono@5.2.6/index.css">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" defer></script>
+<link rel="stylesheet" href="../assets/css/pages/sources.css">
+</head>
+<body>
+<div class="nav-wrap">
+  <nav class="nav" aria-label="Primary navigation">
+    <a class="brand" href="../index.html"><span class="brand-mark">M</span>MCPIMP<span class="sub">docs / agents</span></a>
+    <div class="nav-links">
+      <a href="../index.html">← Back to site</a>
+      <a href="../fr/docs/agents.html" hreflang="fr" lang="fr">Français</a>
+      <a class="nav-cta" href="https://github.com/ronael/mcpimp" target="_blank" rel="noreferrer"><i class="ph ph-github-logo" aria-hidden="true"></i>GitHub</a>
+    </div>
+  </nav>
+</div>
+<div class="layout">
+  <aside class="side">
+    <a class="side-back" href="../index.html"><i class="ph ph-arrow-left" aria-hidden="true"></i>Back to site</a>
+    <div class="side-label">Connect an agent</div>
+    <nav aria-label="Table of contents">
+      <a href="#start"><span class="n">01</span>Start MCPIMP</a>
+      <a href="#codex"><span class="n">02</span>Codex</a>
+      <a href="#claude"><span class="n">03</span>Claude Code</a>
+      <a href="#others"><span class="n">04</span>Other clients</a>
+      <a href="#verify"><span class="n">05</span>Verify</a>
+    </nav>
+  </aside>
+  <main>
+    <header class="doc-head rv on">
+      <div class="kicker">Documentation · MCP clients</div>
+      <h1>Connect your agent in two minutes.</h1>
+      <p class="lede">MCPIMP exposes one local endpoint for Codex, Claude Code, Cursor, and other MCP clients. Prefer streamable HTTP at <code>http://localhost:3901/message</code>.</p>
+      <div class="doc-note"><i class="ph ph-info" aria-hidden="true"></i>Run these commands from the MCPIMP repository after installing dependencies.</div>
+    </header>
+    <section id="start" class="doc-sec rv">
+      <h2><span class="num">01</span>Start MCPIMP</h2>
+      <p>Keep the registry running while an agent uses it.</p>
+      <div class="codecard"><pre><span class="jp">pnpm run dev</span></pre></div>
+    </section>
+    <section id="codex" class="doc-sec rv">
+      <h2><span class="num">02</span>Codex</h2>
+      <p>Add MCPIMP to your Codex user configuration, then restart an open Codex session.</p>
+      <div class="codecard"><pre><span class="jp">codex mcp add mcpimp --url http://localhost:3901/message</span></pre></div>
+      <p>Check the saved server with <code>codex mcp get mcpimp</code>.</p>
+    </section>
+    <section id="claude" class="doc-sec rv">
+      <h2><span class="num">03</span>Claude Code</h2>
+      <p>Add MCPIMP at user scope so it is available in every project.</p>
+      <div class="codecard"><pre><span class="jp">claude mcp add --transport http --scope user mcpimp http://localhost:3901/message</span></pre></div>
+      <p>Check the connection with <code>claude mcp get mcpimp</code>.</p>
+    </section>
+    <section id="others" class="doc-sec rv">
+      <h2><span class="num">04</span>Cursor and other clients</h2>
+      <p>Add this entry to the MCP configuration file used by your client.</p>
+      <div class="codecard"><pre><span class="jc">{</span>
+  <span class="jk">"mcpServers"</span>: <span class="jc">{</span>
+    <span class="jk">"mcpimp"</span>: <span class="jc">{</span>
+      <span class="jk">"url"</span>: <span class="js">"http://localhost:3901/message"</span>
+    <span class="jc">}</span>
+  <span class="jc">}</span>
+<span class="jc">}</span></pre></div>
+      <div class="callout"><i class="ph ph-plugs-connected" aria-hidden="true"></i><div><div class="c-t">Legacy SSE fallback</div><p>If an older client does not support streamable HTTP, use <code>http://localhost:3901/sse</code> instead.</p></div></div>
+    </section>
+    <section id="verify" class="doc-sec rv">
+      <h2><span class="num">05</span>Verify without an agent</h2>
+      <p>First check the server health, then ask MCP for its tool list.</p>
+      <div class="codecard"><pre><span class="jp">curl -sS http://localhost:3901/health</span>
+
+<span class="jp">curl -sS http://localhost:3901/message \</span>
+  -H <span class="js">'content-type: application/json'</span> \
+  -d <span class="js">'{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'</span></pre></div>
+      <footer><p>Expected tools: <code>list-capabilities</code>, <code>search-capabilities</code>, <code>capability-info</code>, <code>load-capability</code>, and <code>list-upstreams</code>.</p></footer>
+    </section>
+  </main>
+</div>
+<script src="../assets/js/sources.js" defer></script>
+</body>
+</html>

@@ -27,6 +27,7 @@
       <a href="#recherche">Recherche</a>
       <a href="#provenance">Provenance</a>
       <a href="#installation">Installer</a>
+      <a href="docs/agents.html">Connecter un agent</a>
       <a href="../" hreflang="en" lang="en">EN</a>
     </div>
     <div>
@@ -342,11 +343,11 @@
 <span class="jp">›</span> pnpm run dev</code></pre>
       </div>
       <div class="cmd-card">
-        <div class="cmd-head"><span>Configuration MCP — client SSE</span><button class="copy-btn" type="button" data-copy='{&#10;  "mcpServers": {&#10;    "capabilities": {&#10;      "url": "http://localhost:3901/sse"&#10;    }&#10;  }&#10;}'><i class="ph ph-copy" aria-hidden="true"></i><span>Copier</span></button></div>
+        <div class="cmd-head"><span>Configuration MCP — HTTP streamable</span><button class="copy-btn" type="button" data-copy='{&#10;  "mcpServers": {&#10;    "mcpimp": {&#10;      "url": "http://localhost:3901/message"&#10;    }&#10;  }&#10;}'><i class="ph ph-copy" aria-hidden="true"></i><span>Copier</span></button></div>
         <pre><code>{
   <span class="jk">"mcpServers"</span>: {
-    <span class="jk">"capabilities"</span>: {
-      <span class="jk">"url"</span>: <span class="js">"http://localhost:3901/sse"</span>
+    <span class="jk">"mcpimp"</span>: {
+      <span class="jk">"url"</span>: <span class="js">"http://localhost:3901/message"</span>
     }
   }
 }</code></pre>

@@ -5,6 +5,7 @@ export interface DashboardCopy {
   navLabel: string;
   nav: {
     overview: string;
+    connect: string;
     capabilities: string;
     discovery: string;
     endpoints: string;
@@ -13,6 +14,7 @@ export interface DashboardCopy {
     quickTest: string;
   };
   linksLabel: string;
+  agentGuide: string;
   sourceGuide: string;
   backToSite: string;
   searchPlaceholder: string;
@@ -103,6 +105,18 @@ export interface DashboardCopy {
   };
   noUpstreams: string;
   quickTestTitle: string;
+  connectKicker: string;
+  connectTitle: string;
+  connectIntro: string;
+  connectStartTitle: string;
+  connectStartBody: string;
+  connectCodexBody: string;
+  connectClaudeBody: string;
+  connectJsonTitle: string;
+  connectJsonBody: string;
+  connectVerifyTitle: string;
+  connectVerifyBody: string;
+  connectFallback: string;
 }
 
 export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
@@ -111,6 +125,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     navLabel: "Dashboard navigation",
     nav: {
       overview: "Overview",
+      connect: "Connect an agent",
       capabilities: "Capabilities",
       discovery: "Discovery",
       endpoints: "Endpoints",
@@ -119,6 +134,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       quickTest: "Quick test",
     },
     linksLabel: "Links",
+    agentGuide: "Agent setup guide",
     sourceGuide: "Source guide",
     backToSite: "Back to site",
     searchPlaceholder: "Search a capability...",
@@ -221,12 +237,25 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     },
     noUpstreams: "No upstream MCP configured.",
     quickTestTitle: "Quick test",
+    connectKicker: "Client setup · two minutes",
+    connectTitle: "Connect MCPIMP to an agent",
+    connectIntro: "Start MCPIMP, add its streamable HTTP endpoint to your client, then verify that the five registry tools are visible.",
+    connectStartTitle: "1. Start the registry",
+    connectStartBody: "Keep this process running while your agent uses MCPIMP.",
+    connectCodexBody: "Adds MCPIMP to the Codex user configuration.",
+    connectClaudeBody: "Adds MCPIMP to the Claude Code user configuration.",
+    connectJsonTitle: "Other MCP clients",
+    connectJsonBody: "Use this JSON shape in clients such as Cursor or any client that accepts an MCP server file.",
+    connectVerifyTitle: "2. Verify the connection",
+    connectVerifyBody: "Restart the client if it was already open, then list its MCP servers. The server should expose list-capabilities, search-capabilities, capability-info, load-capability, and list-upstreams.",
+    connectFallback: "Older client? Replace /message with the legacy SSE endpoint /sse.",
   },
   fr: {
     htmlLang: "fr",
     navLabel: "Navigation du dashboard",
     nav: {
       overview: "Vue d'ensemble",
+      connect: "Connecter un agent",
       capabilities: "Capabilities",
       discovery: "Découverte",
       endpoints: "Endpoints",
@@ -235,6 +264,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       quickTest: "Test rapide",
     },
     linksLabel: "Liens",
+    agentGuide: "Guide de connexion",
     sourceGuide: "Guide des sources",
     backToSite: "Retour au site",
     searchPlaceholder: "Rechercher une capacité...",
@@ -337,5 +367,17 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     },
     noUpstreams: "Aucun MCP upstream configuré.",
     quickTestTitle: "Test rapide",
+    connectKicker: "Configuration client · deux minutes",
+    connectTitle: "Connecter MCPIMP à un agent",
+    connectIntro: "Lance MCPIMP, ajoute son endpoint HTTP streamable dans ton client, puis vérifie que les cinq tools du registry sont visibles.",
+    connectStartTitle: "1. Lancer le registry",
+    connectStartBody: "Garde ce processus actif pendant que ton agent utilise MCPIMP.",
+    connectCodexBody: "Ajoute MCPIMP à la configuration utilisateur de Codex.",
+    connectClaudeBody: "Ajoute MCPIMP à la configuration utilisateur de Claude Code.",
+    connectJsonTitle: "Autres clients MCP",
+    connectJsonBody: "Utilise cette forme JSON dans Cursor ou dans tout client qui accepte un fichier de serveurs MCP.",
+    connectVerifyTitle: "2. Vérifier la connexion",
+    connectVerifyBody: "Redémarre le client s'il était déjà ouvert, puis liste ses serveurs MCP. Le serveur doit exposer list-capabilities, search-capabilities, capability-info, load-capability et list-upstreams.",
+    connectFallback: "Client ancien ? Remplace /message par l'endpoint SSE legacy /sse.",
   },
 };
