@@ -46,6 +46,7 @@ const PUBLIC_IDS = [
   "ui-skills-fixing-motion-performance",
   "ui-skills-improve-ui",
   "ui-ux-pro-max",
+  "visual-design-resources",
 ];
 
 describe("SnapshotCapabilityRegistry (Cloudflare Worker)", () => {

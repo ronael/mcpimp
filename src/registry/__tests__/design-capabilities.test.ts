@@ -47,6 +47,7 @@ describe("design capability catalog", () => {
       ["design language DESIGN.md", "ui-skills-create-design-md"],
       ["audit refine interface", "ui-skills-improve-ui"],
       ["improve ui", "ui-skills-improve-ui"],
+      ["visual inspiration branding 3D print", "visual-design-resources"],
     ] as const;
 
     for (const [query, expectedId] of cases) {
