@@ -573,6 +573,15 @@ pnpm run dev
 
 Le serveur local écoute par défaut sur `http://localhost:3901`.
 
+L’activité MCP locale est visible dans l’onglet **Activité** du dashboard, au
+format JSON via `GET /activity`, et dans le fichier NDJSON persistant
+`logs/mcpimp.ndjson`. Chaque entrée indique le client, la méthode MCP, le tool ou
+la resource ciblée, le transport, le statut, la durée, les identifiants JSON RPC
+et SSE, les paramètres expurgés des tools du registry, les métriques du résultat
+et les erreurs. Pour les appels upstream, seuls les noms et types des arguments
+sont conservés. Les clés sensibles sont masquées, tandis que les headers
+d’autorisation et contenus des réponses ne sont jamais journalisés.
+
 ## Cloudflare
 
 Le Worker ne lit pas le filesystem au runtime. `pnpm run build` génère

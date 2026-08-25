@@ -11,6 +11,7 @@ export interface DashboardCopy {
     endpoints: string;
     tools: string;
     upstreams: string;
+    activity: string;
     quickTest: string;
   };
   linksLabel: string;
@@ -81,6 +82,29 @@ export interface DashboardCopy {
   upstreamIntro: string;
   toolsKicker: string;
   toolsIntro: string;
+  activityKicker: string;
+  activityTitle: string;
+  activityIntro: string;
+  activityLive: string;
+  activityLoading: string;
+  activityEmpty: string;
+  activityError: string;
+  activityHeaders: {
+    time: string;
+    client: string;
+    action: string;
+    transport: string;
+    status: string;
+    duration: string;
+    details: string;
+  };
+  activityDetailLabels: {
+    requestId: string;
+    sessionId: string;
+    parameters: string;
+    result: string;
+    error: string;
+  };
   capabilityHeaders: {
     capability: string;
     description: string;
@@ -131,6 +155,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       endpoints: "Endpoints",
       tools: "Tools",
       upstreams: "Upstreams",
+      activity: "Activity",
       quickTest: "Quick test",
     },
     linksLabel: "Links",
@@ -144,6 +169,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       { method: "GET", path: "/health", description: "Server status JSON and discovered capability count." },
       { method: "GET", path: "/sse", description: "SSE endpoint used by MCP clients compatible with HTTP." },
       { method: "POST", path: "/message", description: "JSON RPC MCP endpoint for tools and resources." },
+      { method: "GET", path: "/activity", description: "Recent MCP activity without arguments, secrets, or response contents." },
       { method: "GET", path: "/dashboard", description: "Human debug HTML view for inspecting the registry." },
       { method: "GET", path: "/fr/dashboard", description: "French version of the dashboard." },
     ],
@@ -208,6 +234,29 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     upstreamIntro: "External MCP servers proxied by MCPIMP. Secrets are referenced through <code>env:</code> and never stored in <code>mcp.json</code>.",
     toolsKicker: "MCP + HTTP surface",
     toolsIntro: "What agents can call through <code>POST /message</code>, plus server HTTP routes.",
+    activityKicker: "Local observability",
+    activityTitle: "Agent activity",
+    activityIntro: "Registry tool parameters are recorded after automatic redaction. Upstream calls retain field names and types only. Authorization headers and response contents are never recorded.",
+    activityLive: "live · refreshes every 3 seconds",
+    activityLoading: "Loading recent activity…",
+    activityEmpty: "No agent has contacted this server since it started.",
+    activityError: "Activity could not be loaded. The server may be restarting.",
+    activityHeaders: {
+      time: "Time",
+      client: "Client",
+      action: "Action",
+      transport: "Transport",
+      status: "Status",
+      duration: "Duration",
+      details: "Details",
+    },
+    activityDetailLabels: {
+      requestId: "JSON RPC id",
+      sessionId: "SSE session",
+      parameters: "Sanitized parameters",
+      result: "Result summary",
+      error: "Error",
+    },
     capabilityHeaders: {
       capability: "Capability",
       description: "Description",
@@ -261,6 +310,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       endpoints: "Endpoints",
       tools: "Tools",
       upstreams: "Upstreams",
+      activity: "Activité",
       quickTest: "Test rapide",
     },
     linksLabel: "Liens",
@@ -274,6 +324,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       { method: "GET", path: "/health", description: "Status JSON du serveur et nombre de capacités découvertes." },
       { method: "GET", path: "/sse", description: "Endpoint SSE utilisé par les clients MCP compatibles HTTP." },
       { method: "POST", path: "/message", description: "Endpoint JSON RPC MCP pour tools et resources." },
+      { method: "GET", path: "/activity", description: "Activité MCP récente sans arguments, secrets ni contenu des réponses." },
       { method: "GET", path: "/dashboard", description: "Vue HTML de debug humain pour inspecter le registry." },
       { method: "GET", path: "/fr/dashboard", description: "Version française du dashboard." },
     ],
@@ -338,6 +389,29 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     upstreamIntro: "Serveurs MCP externes proxifiés par MCPIMP. Les secrets sont référencés via <code>env:</code>, jamais écrits dans <code>mcp.json</code>.",
     toolsKicker: "Surface MCP + HTTP",
     toolsIntro: "Ce que les agents peuvent appeler via <code>POST /message</code>, et les routes HTTP du serveur.",
+    activityKicker: "Observabilité locale",
+    activityTitle: "Activité des agents",
+    activityIntro: "Les paramètres des tools du registry sont enregistrés après expurgation automatique. Pour les appels upstream, seuls les noms et types des champs sont conservés. Les headers d’autorisation et contenus des réponses ne sont jamais enregistrés.",
+    activityLive: "direct · actualisation toutes les 3 secondes",
+    activityLoading: "Chargement de l’activité récente…",
+    activityEmpty: "Aucun agent n’a contacté ce serveur depuis son démarrage.",
+    activityError: "Impossible de charger l’activité. Le serveur redémarre peut être.",
+    activityHeaders: {
+      time: "Heure",
+      client: "Client",
+      action: "Action",
+      transport: "Transport",
+      status: "Statut",
+      duration: "Durée",
+      details: "Détails",
+    },
+    activityDetailLabels: {
+      requestId: "ID JSON RPC",
+      sessionId: "Session SSE",
+      parameters: "Paramètres expurgés",
+      result: "Résumé du résultat",
+      error: "Erreur",
+    },
     capabilityHeaders: {
       capability: "Capacité",
       description: "Description",

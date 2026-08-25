@@ -228,6 +228,7 @@ function renderMobileNav(copy: DashboardCopy): string {
     <a href="#connect" data-nav="connect">${escapeHtml(copy.nav.connect)}</a>
     <a href="#capabilities" data-nav="capabilities">${escapeHtml(copy.nav.capabilities)}</a>
     <a href="#upstreams" data-nav="upstreams">${escapeHtml(copy.nav.upstreams)}</a>
+    <a href="#activity" data-nav="activity">${escapeHtml(copy.nav.activity)}</a>
     <a href="#tools" data-nav="tools">${escapeHtml(copy.nav.tools)}</a>
   </nav>`;
 }
@@ -262,6 +263,7 @@ function renderSidebar(data: DashboardData, copy: DashboardCopy, language: Dashb
       <a href="#connect" data-nav="connect"><i class="ph ph-plugs" aria-hidden="true"></i>${escapeHtml(copy.nav.connect)}</a>
       <a href="#capabilities" data-nav="capabilities"><i class="ph ph-circles-three-plus" aria-hidden="true"></i>${escapeHtml(copy.nav.capabilities)}<span class="cnt">${data.capabilities.length}</span></a>
       <a href="#upstreams" data-nav="upstreams"><i class="ph ph-network" aria-hidden="true"></i>${escapeHtml(copy.nav.upstreams)}<span class="cnt">${data.upstreams.length}</span></a>
+      <a href="#activity" data-nav="activity"><i class="ph ph-pulse" aria-hidden="true"></i>${escapeHtml(copy.nav.activity)}<span class="live-dot" aria-hidden="true"></span></a>
       <a href="#tools" data-nav="tools"><i class="ph ph-wrench" aria-hidden="true"></i>${escapeHtml(copy.nav.tools)}<span class="cnt">${MCP_TOOLS.length + copy.endpoints.length}</span></a>
     </nav>
     <div class="snav-label">${escapeHtml(copy.linksLabel)}</div>
@@ -593,6 +595,27 @@ ${DASHBOARD_STYLES}
           </div>
         </section>
       </div>
+    </section>
+
+    <section class="view" id="activity" data-view="activity">
+      <div class="v-head">
+        <div>
+          <div class="kicker">${escapeHtml(copy.activityKicker)}</div>
+          <h1>${escapeHtml(copy.activityTitle)}</h1>
+          <p class="sub">${escapeHtml(copy.activityIntro)}</p>
+        </div>
+        <span class="activity-live"><i aria-hidden="true"></i>${escapeHtml(copy.activityLive)}</span>
+      </div>
+      <section class="panel activity-panel">
+        <div class="tbl-wrap flush">
+          <table class="tbl activity-table">
+            <thead><tr><th>${escapeHtml(copy.activityHeaders.time)}</th><th>${escapeHtml(copy.activityHeaders.client)}</th><th>${escapeHtml(copy.activityHeaders.action)}</th><th>${escapeHtml(copy.activityHeaders.transport)}</th><th>${escapeHtml(copy.activityHeaders.status)}</th><th>${escapeHtml(copy.activityHeaders.duration)}</th><th>${escapeHtml(copy.activityHeaders.details)}</th></tr></thead>
+            <tbody id="activityRows">
+              <tr class="activity-state"><td colspan="7"><span class="activity-skeleton"></span>${escapeHtml(copy.activityLoading)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </section>
   </main>
   <div class="backdrop" id="backdrop"></div>

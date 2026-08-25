@@ -39,6 +39,7 @@ code{font-family:var(--mono);font-size:.88em;color:var(--cyan)}
 .snav a.act{background:var(--panel);color:var(--acid)}
 .snav a .cnt{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:#6f6f69;background:var(--panel-strong);border:1px solid var(--line-soft);border-radius:4px;padding:1px 6px}
 .snav a.act .cnt{color:var(--acid);border-color:rgba(201,255,61,.3)}
+.live-dot{width:7px;height:7px;margin-left:auto;border-radius:50%;background:var(--acid);box-shadow:0 0 0 3px rgba(201,255,61,.12)}
 .side-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft)}
 .side-status{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid rgba(201,255,61,.35);border-radius:6px;background:rgba(201,255,61,.07);color:var(--acid);font-family:var(--mono);font-size:11px}
 .side-status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--acid);animation:pulse 2s ease-in-out infinite}
@@ -125,6 +126,27 @@ tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
 .method{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.04em}
 .method.get{color:var(--acid);background:rgba(201,255,61,.08);border:1px solid rgba(201,255,61,.3)}
 .method.post{color:var(--cyan);background:rgba(99,230,255,.08);border:1px solid rgba(99,230,255,.3)}
+.activity-live{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(201,255,61,.3);border-radius:6px;color:var(--acid);font-family:var(--mono);font-size:12px}
+.activity-live i{width:7px;height:7px;border-radius:50%;background:var(--acid);animation:pulse 2s ease-in-out infinite}
+.activity-panel{padding:0}
+.activity-table td:first-child,.activity-table td:last-child{font-family:var(--mono);white-space:nowrap}
+.activity-table .activity-action{display:flex;flex-direction:column;gap:2px}
+.activity-table .activity-action strong{color:var(--paper);font-family:var(--mono);font-size:12px;font-weight:600}
+.activity-table .activity-action span{color:var(--cyan);font-family:var(--mono);font-size:11px;overflow-wrap:anywhere}
+.activity-table .activity-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;color:var(--cyan);font-family:var(--mono);font-size:12px;transition:color .7s var(--ease),border-color .7s var(--ease),transform .7s var(--ease)}
+.activity-table .activity-toggle:hover{color:var(--acid);border-color:rgba(201,255,61,.3)}
+.activity-table .activity-toggle:active{transform:scale(.98)}
+.activity-table .activity-toggle i{transition:transform .7s var(--ease)}
+.activity-table .activity-toggle[aria-expanded="true"] i{transform:rotate(180deg)}
+.activity-detail-row td{padding:0 16px 16px!important;background:var(--panel)}
+.activity-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px;border:1px solid var(--line);border-radius:8px;background:var(--lift)}
+.activity-detail-grid>div{min-width:0}
+.activity-detail-grid dt{margin-bottom:4px;color:var(--muted);font-family:var(--mono);font-size:12px}
+.activity-detail-grid dd,.activity-detail-grid pre{color:var(--paper);font-family:var(--mono);font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.activity-detail-grid .detail-wide{grid-column:1/-1}
+.activity-state td{padding:48px 16px!important;text-align:center;color:var(--muted)}
+.activity-skeleton{display:block;width:160px;height:12px;margin:0 auto 12px;border-radius:4px;background:var(--line);animation:pulse 1.4s ease-in-out infinite}
+.activity-state.error td{color:var(--coral)}
 .term{border:1px solid #3c3c3c;border-radius:8px;background:#0c0c0b;overflow:hidden}
 .term-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 15px;border-bottom:1px solid var(--line);background:var(--panel);font-family:var(--mono);font-size:11px;color:var(--muted)}
 .term-bar .dots{display:inline-flex;gap:6px}
@@ -198,6 +220,8 @@ tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
   .dist-row{align-items:flex-start;flex-direction:column;gap:6px}
   .dist-row .dl,.dist-val{width:auto;min-width:0;text-align:left}
   .dist-track{width:100%}
+  .activity-detail-grid{grid-template-columns:1fr}
+  .activity-detail-grid .detail-wide{grid-column:auto}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}

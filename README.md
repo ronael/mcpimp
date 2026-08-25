@@ -239,6 +239,14 @@ Worker does not read the filesystem at runtime: `pnpm run build` creates
 `generated/capability-snapshot.ts` from `catalog/capabilities/`, and `worker.ts`
 serves that static snapshot.
 
+Local MCP activity is available in the dashboard under **Activity**, as JSON at
+`GET /activity`, and as a persistent NDJSON file at `logs/mcpimp.ndjson`.
+Entries include the client, MCP method, tool or resource target, transport,
+status, duration, JSON-RPC and SSE identifiers, sanitized registry-tool
+parameters, result metrics, and errors. Upstream calls retain argument names and
+types only. Sensitive keys are redacted, while authorization headers and
+response contents are never logged.
+
 ```bash
 pnpm run build
 npx wrangler deploy

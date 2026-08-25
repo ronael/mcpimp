@@ -1,10 +1,12 @@
 import { serve } from "@hono/node-server";
-import { readFile } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { mkdir, readFile } from "node:fs/promises";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { CAPABILITIES_DIR } from "./core/paths";
 import { loadDotenv } from "./env/load-dotenv";
 import type { StaticSiteProvider } from "./http/server";
 import { createServer } from "./http/server";
+import type { McpActivityEvent } from "./mcp/activity";
 import { FileSystemCapabilityRegistry } from "./registry/filesystem";
 
 await loadDotenv();
@@ -13,6 +15,10 @@ const port = Number(process.env.PORT || 3901);
 const root = resolve(process.env.MCPIMP_ROOT || process.cwd());
 const registry = await FileSystemCapabilityRegistry.scan(join(root, CAPABILITIES_DIR));
 const siteRoot = join(root, "site");
+const logDirectory = join(root, "logs");
+await mkdir(logDirectory, { recursive: true });
+const activityStream = createWriteStream(join(logDirectory, "mcpimp.ndjson"), { flags: "a" });
+activityStream.on("error", (error) => console.error(`Could not write MCP activity log: ${error.message}`));
 
 const MIME_TYPES: Record<string, string> = {
   ".css": "text/css; charset=utf-8",
@@ -53,9 +59,16 @@ const staticSite: StaticSiteProvider = {
   },
 };
 
-const app = createServer(registry, { staticSite, dashboardHome: true });
+function logActivity(event: McpActivityEvent) {
+  activityStream.write(`${JSON.stringify(event)}\n`);
+  const target = event.target ? ` ${event.target}` : "";
+  console.log(`[MCP] ${event.status} ${event.client} ${event.method}${target} ${event.durationMs}ms`);
+}
+
+const app = createServer(registry, { staticSite, dashboardHome: true, onActivity: logActivity });
 
 serve({ fetch: app.fetch, port });
 
 console.log(`Capability registry MCP listening on http://localhost:${port}`);
 console.log(`Scanned ${registry.listCapabilities().length} capabilities from ${join(root, CAPABILITIES_DIR)}`);
+console.log(`Activity log: ${join(logDirectory, "mcpimp.ndjson")}`);

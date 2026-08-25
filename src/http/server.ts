@@ -1,10 +1,20 @@
 import { Hono } from "hono";
+import {
+  activityClient,
+  activityOutcome,
+  activityParameters,
+  activityTarget,
+  McpActivityLog,
+  type McpActivityEvent,
+  type McpTransport,
+} from "../mcp/activity";
 import { createMcpHandler } from "../mcp/handler";
-import { formatSseEvent, jsonRpcFailure, type JsonRpcRequest } from "../mcp/protocol";
+import { formatSseEvent, jsonRpcFailure, type JsonRpcRequest, type JsonRpcResponse } from "../mcp/protocol";
 import type { CapabilityRegistry } from "../registry/types";
 import { renderDashboard } from "./dashboard";
 
 interface SseSession {
+  client: string;
   send(payload: unknown): void;
 }
 
@@ -15,6 +25,8 @@ export interface StaticSiteProvider {
 export interface ServerOptions {
   staticSite?: StaticSiteProvider;
   dashboardHome?: boolean;
+  activityLog?: McpActivityLog;
+  onActivity?: (event: McpActivityEvent) => void;
 }
 
 function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) {
@@ -30,11 +42,38 @@ function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) 
 export function createServer(registry: CapabilityRegistry, options: ServerOptions = {}) {
   const app = new Hono();
   const handleMcpMessage = createMcpHandler(registry);
+  const activityLog = options.activityLog || new McpActivityLog(200, options.onActivity);
   const sessions = new Map<string, SseSession>();
   const encoder = new TextEncoder();
 
   async function serveStatic(path: string) {
     return options.staticSite?.serve(path);
+  }
+
+  async function handleAndRecord(
+    message: JsonRpcRequest,
+    transport: McpTransport,
+    client: string,
+    sessionId?: string,
+  ): Promise<JsonRpcResponse> {
+    const startedAt = performance.now();
+    const response = await handleMcpMessage(message);
+    const outcome = activityOutcome(message, response);
+    const parameters = activityParameters(message);
+    activityLog.record({
+      transport,
+      client: activityClient(message, client),
+      method: message.method,
+      target: activityTarget(message),
+      status: outcome.status,
+      durationMs: Math.max(0, Math.round(performance.now() - startedAt)),
+      ...(message.id !== undefined ? { requestId: message.id } : {}),
+      ...(sessionId ? { sessionId } : {}),
+      ...(parameters ? { parameters } : {}),
+      ...(outcome.result ? { result: outcome.result } : {}),
+      ...(outcome.error ? { error: outcome.error } : {}),
+    });
+    return response;
   }
 
   app.get("/", async (c) => (options.dashboardHome ? c.redirect("/dashboard") : (await serveStatic(c.req.path)) || c.notFound()));
@@ -54,14 +93,23 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
     });
   });
 
-  app.get("/sse", () => {
+  app.get("/activity", (c) => {
+    const requestedLimit = Number(c.req.query("limit") || 100);
+    const limit = Number.isFinite(requestedLimit) ? requestedLimit : 100;
+    c.header("Cache-Control", "no-store");
+    return c.json({ events: activityLog.list(limit) });
+  });
+
+  app.get("/sse", (c) => {
     const sessionId = crypto.randomUUID();
+    const client = c.req.header("user-agent") || "unknown client";
     let keepAlive: ReturnType<typeof setInterval> | undefined;
 
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         const write = (chunk: string) => controller.enqueue(encoder.encode(chunk));
         sessions.set(sessionId, {
+          client,
           send(payload) {
             write(formatSseEvent("message", payload));
           },
@@ -94,7 +142,9 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
 
     const sessionId = c.req.query("sessionId");
     if (!sessionId) {
-      return c.json(await handleMcpMessage(message));
+      const response = await handleAndRecord(message, "http", c.req.header("user-agent") || "unknown client");
+      if (message.id === undefined) return c.body(null, 202);
+      return c.json(response);
     }
 
     const session = sessions.get(sessionId);
@@ -103,9 +153,9 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
     }
 
     if (message.id !== undefined) {
-      session.send(await handleMcpMessage(message));
-    } else if (message.method !== "notifications/initialized") {
-      await handleMcpMessage(message);
+      session.send(await handleAndRecord(message, "sse", session.client, sessionId));
+    } else {
+      await handleAndRecord(message, "sse", session.client, sessionId);
     }
 
     return c.body(null, 202);

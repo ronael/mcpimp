@@ -34,6 +34,48 @@ describe("Hono server", () => {
     });
   });
 
+  it("acknowledges JSON-RPC notifications without a response body", async () => {
+    const app = await createApp();
+    const response = await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+    });
+
+    expect(response.status).toBe(202);
+    await expect(response.text()).resolves.toBe("");
+  });
+
+  it("records MCP activity without request arguments or response contents", async () => {
+    const app = await createApp();
+    await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json", "user-agent": "Codex Test/1.0" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: { name: "search-capabilities", arguments: { query: "landing", token: "must-not-leak" } },
+      }),
+    });
+
+    const response = await app.request("/activity");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    const payload: any = await response.json();
+    expect(payload.events).toHaveLength(1);
+    expect(payload.events[0]).toMatchObject({
+      client: "Codex Test/1.0",
+      method: "tools/call",
+      target: "search-capabilities",
+      status: "success",
+      transport: "http",
+      requestId: 2,
+      parameters: { query: "landing" },
+      result: { kind: "tool-result", blockCount: 1, contentTypes: ["text"] },
+    });
+    expect(JSON.stringify(payload)).not.toContain("must-not-leak");
+  });
+
   it("supports legacy MCP SSE transport", async () => {
     const app = await createApp();
     const sse = await app.request("/sse");
@@ -87,6 +129,9 @@ describe("Hono server", () => {
     expect(html).toContain("The server scans");
     expect(html).toContain("/health");
     expect(html).toContain("/message");
+    expect(html).toContain("/activity");
+    expect(html).toContain('href="#activity"');
+    expect(html).toContain('id="activityRows"');
     expect(html).toContain('href="#connect"');
     expect(html).toContain("codex mcp add mcpimp --url http://localhost:3901/message");
     expect(html).toContain("claude mcp add --transport http --scope user mcpimp http://localhost:3901/message");
