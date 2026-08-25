@@ -48,6 +48,9 @@ describe("design capability catalog", () => {
       ["audit refine interface", "ui-skills-improve-ui"],
       ["improve ui", "ui-skills-improve-ui"],
       ["visual inspiration branding 3D print", "visual-design-resources"],
+      ["beautiful ui ai native approval card", "ui-component-resources"],
+      ["beui rare ui shadcn animated components", "ui-component-resources"],
+      ["transitions card resize modal number pop-in", "motion-design-resources"],
     ] as const;
 
     for (const [query, expectedId] of cases) {

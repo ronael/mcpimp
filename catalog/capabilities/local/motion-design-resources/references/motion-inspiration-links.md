@@ -6,6 +6,11 @@ decisions de design et d'implementation.
 
 ## CSS Motion Studies
 
+- Transitions.dev: https://transitions.dev/ — collection de transitions UI
+  pretes a adapter pour web apps : card resize, number pop-in, notification
+  badge, text state swap, menu dropdown, modal open/close et transitions de
+  panneaux. A utiliser pour calibrer timing, easing, sequence et relation entre
+  etats, sans copier une recette sous licence ou pro sans verifier les droits.
 - yui540 Motions: https://yui540.com/ — portfolio de motion design web realise
   en CSS animation, SVG, HTML, TypeScript, JavaScript, React, Next.js et outils
   de design. A utiliser comme reference externe pour le timing, les ruptures de
