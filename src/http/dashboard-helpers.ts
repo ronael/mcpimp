@@ -34,6 +34,32 @@ function titleBefore(text: string, index: number): string | undefined {
   return headings.at(-1)?.[1]?.trim();
 }
 
+function titleFromListLabel(value: string): string | undefined {
+  const label = value
+    .replace(/^\s*(?:[-*]|\d+\.)\s+/, "")
+    .trim()
+    .replace(/[:：]\s*$/, "")
+    .trim();
+
+  if (!label || label.startsWith("#") || /^https?:\/\//.test(label)) return undefined;
+  return label;
+}
+
+function titleNearBareUrl(text: string, index: number): string | undefined {
+  const lineStart = text.lastIndexOf("\n", index - 1) + 1;
+  const beforeUrl = text.slice(lineStart, index);
+  const inlineLabel = titleFromListLabel(beforeUrl);
+  if (inlineLabel) return inlineLabel;
+
+  const previous = text
+    .slice(0, lineStart)
+    .split("\n")
+    .reverse()
+    .find((line) => line.trim());
+
+  return previous ? titleFromListLabel(previous) : undefined;
+}
+
 function uniqueLinks(links: ReferenceLink[]): ReferenceLink[] {
   const seen = new Set<string>();
   return links.filter((link) => {
@@ -83,7 +109,7 @@ export function extractReferenceLinks(file: CapabilityFile): ReferenceLink[] {
     if (links.some((link) => link.url === url)) continue;
 
     links.push({
-      title: titleBefore(text, match.index ?? 0) || url,
+      title: titleNearBareUrl(text, match.index ?? 0) || titleBefore(text, match.index ?? 0) || url,
       url,
       sourcePath: file.path,
     });
