@@ -516,14 +516,15 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
     <!-- 10 -->
     <section id="recherche" class="doc-sec rv">
       <h2><span class="num">10</span>Régler la recherche</h2>
-      <p>Avec 3 capacités, un <code>includes()</code> suffisait. Avec 9 — et à terme des centaines — il fallait un classement. <code>src/registry/search.ts</code> calcule un score en cinq temps.</p>
+      <p>Avec 3 capacités, un <code>includes()</code> suffisait. Avec 9 — et à terme des centaines — il fallait un classement. <code>src/registry/search.ts</code> calcule un score en six temps.</p>
 
       <div class="rows">
         <div class="row"><span class="mono">1. poids par champ</span><p>Le nom et la description de la capacité pèsent 6 et 4 ; le corps du texte pèse 1. Un mot dans un titre compte plus qu'au milieu d'un paragraphe.</p></div>
         <div class="row"><span class="mono">2. IDF</span><p>Un mot présent dans tous les fichiers n'apporte aucune information et ne fait donc rien remonter.</p></div>
         <div class="row"><span class="mono">3. couverture</span><p>Un fichier qui matche 3 mots sur 3 écrase celui qui n'en matche qu'un. C'est ce qui rend les requêtes multi-mots utiles.</p></div>
         <div class="row"><span class="mono">4. poids par type</span><p>Un <code>SKILL.md</code> ×1.4, un <code>BUNDLE.md</code> ×0.35 (il concatène tout, donc il matche n'importe quoi), un script ×0.5.</p></div>
-        <div class="row"><span class="mono">5. bonus de phrase</span><p>×1.6 si la requête apparaît telle quelle.</p></div>
+        <div class="row"><span class="mono">5. intention ressource</span><p>Quand la requête cherche une ressource, une référence, un lien, un catalogue ou de l'inspiration, les capacités de ressources et les fichiers <code>references/</code> reçoivent un boost ciblé.</p></div>
+        <div class="row"><span class="mono">6. bonus de phrase</span><p>×1.6 si la requête apparaît telle quelle.</p></div>
       </div>
 
       <h3>Le pont français / anglais</h3>

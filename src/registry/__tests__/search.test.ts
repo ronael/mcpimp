@@ -82,6 +82,79 @@ const MCP_ONLY = capability(
   [file("crm-connector", "mcp.json", '{"type":"mcp","url":"https://example.com/crm/mcp"}', "other")],
 );
 
+const NOISY_GENERALIST = capability(
+  "generalist-design-skill",
+  "external",
+  "design-skill",
+  "design-skill",
+  "General UI design skill for components, agent interfaces, motion, shadcn, command palettes and product layouts.",
+  [
+    file(
+      "generalist-design-skill",
+      "SKILL.md",
+      [
+        "# General UI Design",
+        "Use this for agent interfaces, animated components, approval cards, tool chips, streaming text, command palettes, shadcn and motion.",
+        "It includes broad design rules but does not list external resource links.",
+      ].join("\n\n"),
+      "skill",
+    ),
+  ],
+);
+
+const RESOURCE_INTENT_CAPABILITIES: Capability[] = [
+  NOISY_GENERALIST,
+  capability(
+    "component-resources",
+    "local",
+    "component-resources",
+    "component-resources",
+    "References and resource links for component galleries, AI-native UI patterns, animated components and shadcn registries.",
+    [
+      file(
+        "component-resources",
+        "references/component-links.md",
+        [
+          "# Component Links",
+          "- Beautiful UI: AI-native approval cards, tool chips and streaming text.",
+          "- beUI: animated React components, command palette and shadcn registry patterns.",
+        ].join("\n"),
+        "reference",
+      ),
+    ],
+  ),
+  capability(
+    "motion-resources",
+    "local",
+    "motion-resources",
+    "motion-resources",
+    "References and resource links for UI transitions, timing, easing, animation states and motion systems.",
+    [
+      file(
+        "motion-resources",
+        "references/motion-links.md",
+        "# Motion Links\n\nTransitions for card resize, modal open, number pop-in, badge and text state swap.",
+        "reference",
+      ),
+    ],
+  ),
+  capability(
+    "visual-resources",
+    "local",
+    "visual-resources",
+    "visual-resources",
+    "References and resource links for visual inspiration, branding, 3D, illustration and print direction.",
+    [
+      file(
+        "visual-resources",
+        "references/visual-links.md",
+        "# Visual Links\n\nBranding, web design, product design, 3D, illustration and print inspiration.",
+        "reference",
+      ),
+    ],
+  ),
+];
+
 function ids(query: string): string[] {
   return searchCapabilities(CAPABILITIES, query).map((hit) => `${hit.capabilityId}/${hit.path}`);
 }
@@ -194,5 +267,36 @@ describe("searchCapabilities", () => {
     const top = searchCapabilities([MCP_ONLY], "customer records")[0];
 
     expect(top.capabilityId).toBe("crm-connector");
+  });
+
+  it("ranks component resources above a broad design skill for resource-seeking queries", () => {
+    const [top] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "je cherche une ressource composant UI anime agent approval card tool chips streaming text command palette shadcn",
+      { limit: 5 },
+    );
+
+    expect(top.capabilityId).toBe("component-resources");
+    expect(top.path).toBe("references/component-links.md");
+  });
+
+  it("ranks motion resources first when a transition query asks for references", () => {
+    const [top] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "resource transition card resize modal number pop-in badge text state swap",
+      { limit: 5 },
+    );
+
+    expect(top.capabilityId).toBe("motion-resources");
+  });
+
+  it("ranks visual resources first when the query asks for visual inspiration", () => {
+    const [top] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "visual inspiration resource branding 3D illustration print",
+      { limit: 5 },
+    );
+
+    expect(top.capabilityId).toBe("visual-resources");
   });
 });

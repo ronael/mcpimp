@@ -523,14 +523,15 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
     <!-- 10 -->
     <section id="recherche" class="doc-sec rv">
       <h2><span class="num">10</span>Tune search</h2>
-      <p>With 3 capabilities, <code>includes()</code> was enough. With 9, and eventually hundreds, ranking was needed. <code>src/registry/search.ts</code> computes a score in five passes.</p>
+      <p>With 3 capabilities, <code>includes()</code> was enough. With 9, and eventually hundreds, ranking was needed. <code>src/registry/search.ts</code> computes a score in six passes.</p>
 
       <div class="rows">
         <div class="row"><span class="mono">1. field weights</span><p>The capability name and description weigh 6 and 4; body text weighs 1. A word in a title counts more than a word in the middle of a paragraph.</p></div>
         <div class="row"><span class="mono">2. IDF</span><p>A word present in every file carries no information and does not lift results.</p></div>
         <div class="row"><span class="mono">3. coverage</span><p>A file matching 3 words out of 3 beats one matching only one. This makes multi word queries useful.</p></div>
         <div class="row"><span class="mono">4. type weights</span><p>A <code>SKILL.md</code> ×1.4, a <code>BUNDLE.md</code> ×0.35 because it concatenates everything, and a script ×0.5.</p></div>
-        <div class="row"><span class="mono">5. phrase bonus</span><p>×1.6 when the query appears as written.</p></div>
+        <div class="row"><span class="mono">5. resource intent</span><p>When the query asks for a resource, reference, link, catalogue or inspiration, resource capabilities and <code>references/</code> files get a targeted boost.</p></div>
+        <div class="row"><span class="mono">6. phrase bonus</span><p>×1.6 when the query appears as written.</p></div>
       </div>
 
       <h3>The French / English bridge</h3>

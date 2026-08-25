@@ -42,6 +42,24 @@ const FIELD_WEIGHTS = {
   body: 1,
 } as const;
 
+const RESOURCE_QUERY_TERMS = new Set(["catalogue", "gallery", "gallerie", "inspiration", "lien", "link", "reference", "resource", "ressource"]);
+const RESOURCE_CAPABILITY_TERMS = new Set(["inspiration", "lien", "link", "reference", "resource", "ressource"]);
+
+const RESOURCE_DOMAINS = [
+  {
+    queryTerms: new Set(["ai", "agent", "anime", "animated", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
+    capabilityTerms: new Set(["ai", "agent", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
+  },
+  {
+    queryTerms: new Set(["animation", "badge", "card", "easing", "modal", "motion", "number", "resize", "timing", "transition"]),
+    capabilityTerms: new Set(["animation", "easing", "motion", "timing", "transition"]),
+  },
+  {
+    queryTerms: new Set(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
+    capabilityTerms: new Set(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
+  },
+] as const;
+
 /**
  * Not every file is equally worth surfacing. A `BUNDLE.md` concatenates the whole
  * capability, so it matches almost any query without being the useful answer; data
@@ -128,6 +146,11 @@ interface IndexedDocument {
    * Undefined only when the capability has no indexable text file at all.
    */
   representative?: CapabilityFile;
+}
+
+interface QueryIntent {
+  terms: Set<string>;
+  wantsResource: boolean;
 }
 
 function addField(target: Map<string, number>, value: string, weight: number, collect?: Set<string>): void {
@@ -236,6 +259,43 @@ function fileRelevanceWeight(file: CapabilityFile): number {
   return (FILE_TYPE_WEIGHTS[file.type] ?? 1) * (FILE_PATH_MULTIPLIERS[file.path] ?? 1);
 }
 
+function capabilityMetadataTerms(capability: Capability): Set<string> {
+  return new Set(tokenize([capability.id, capability.name, capability.description, ...(capability.tags || [])].join(" ")));
+}
+
+function hasAny(source: Set<string>, candidates: ReadonlySet<string>): boolean {
+  for (const candidate of candidates) {
+    if (source.has(candidate)) return true;
+  }
+  return false;
+}
+
+function detectQueryIntent(queryTerms: QueryTerm[]): QueryIntent {
+  const terms = new Set(queryTerms.filter((term) => term.weight === 1).map((term) => term.root));
+  return {
+    terms,
+    wantsResource: hasAny(terms, RESOURCE_QUERY_TERMS),
+  };
+}
+
+function resourceIntentWeight(document: IndexedDocument, intent: QueryIntent): number {
+  if (!intent.wantsResource) return 1;
+
+  const metadataTerms = capabilityMetadataTerms(document.capability);
+  let weight = 1;
+
+  if (hasAny(metadataTerms, RESOURCE_CAPABILITY_TERMS)) weight *= 2;
+  if (document.file.type === "reference") weight *= 1.3;
+
+  for (const domain of RESOURCE_DOMAINS) {
+    if (hasAny(intent.terms, domain.queryTerms) && hasAny(metadataTerms, domain.capabilityTerms)) {
+      weight *= 1.35;
+    }
+  }
+
+  return weight;
+}
+
 export function searchCapabilities(
   capabilities: Capability[],
   query: string,
@@ -273,6 +333,7 @@ export function searchCapabilities(
 
   const roots = new Set(queryTerms.filter((term) => term.weight === 1).map((term) => term.root));
   const phrase = normalizeText(trimmed);
+  const intent = detectQueryIntent(queryTerms);
 
   const scored = documents
     .map((document) => {
@@ -302,6 +363,7 @@ export function searchCapabilities(
       const coverage = roots.size === 0 ? 1 : matchedRoots.size / roots.size;
       score *= coverage * coverage;
       score *= fileRelevanceWeight(document.file);
+      score *= resourceIntentWeight(document, intent);
 
       if (document.normalizedText.includes(phrase)) score *= PHRASE_BONUS;
 

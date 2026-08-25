@@ -110,6 +110,9 @@ retourner toutes les correspondances littérales. Le score combine :
 - un poids par type de fichier : un `SKILL.md` passe devant un `BUNDLE.md`
   (qui concatène tout et matche donc n'importe quoi), les scripts et les CSV
   passent derrière la prose.
+- un bonus d'intention quand la requête cherche une ressource, une référence,
+  des liens ou de l'inspiration : les capabilities de ressources et leurs
+  fichiers `references/` passent devant les skills généralistes.
 - un déclassement supplémentaire pour les fichiers procéduraux (`output-schemas`,
   `examples`, `scoring-rubric`, `BUNDLE`) : ils restent trouvables par une
   recherche ciblée, mais ne doivent pas masquer la connaissance design directe.

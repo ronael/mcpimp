@@ -83,8 +83,9 @@ skill://ui-ux-pro-max/references/quick-reference.md
 | `list-upstreams` | Checks configured upstream MCP servers |
 
 `search-capabilities` supports multiple words and ranks results using field
-weights, IDF, query coverage, exact-query bonuses, and file-type weights. It
-also includes a light French/English synonym table in
+weights, IDF, query coverage, exact-query bonuses, file-type weights, and a
+resource-intent boost for queries asking for references or inspiration. It also
+includes a light French/English synonym table in
 `src/registry/synonyms.ts`. Optional parameters are `limit` (20 by default) and
 `capabilityId` to restrict a search to one capability.
 
