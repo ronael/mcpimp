@@ -619,7 +619,7 @@ ${DASHBOARD_STYLES}
     </section>
   </main>
   <div class="backdrop" id="backdrop"></div>
-  <aside class="drawer" id="drawer" aria-hidden="true" aria-live="polite">
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="${escapeAttribute(copy.details)}" aria-hidden="true" aria-live="polite">
     <div class="drawer-in" id="drawerContent"></div>
   </aside>
   ${renderDrawerTemplates(registry, copy)}

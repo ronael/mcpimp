@@ -137,8 +137,8 @@ tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
 .activity-table .activity-toggle:hover{color:var(--acid);border-color:rgba(201,255,61,.3)}
 .activity-table .activity-toggle:active{transform:scale(.98)}
 .activity-table .activity-toggle i{transition:transform .7s var(--ease)}
-.activity-table .activity-toggle[aria-expanded="true"] i{transform:rotate(180deg)}
-.activity-detail-row td{padding:0 16px 16px!important;background:var(--panel)}
+.activity-row{cursor:pointer}
+.activity-row:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
 .activity-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px;border:1px solid var(--line);border-radius:8px;background:var(--lift)}
 .activity-detail-grid>div{min-width:0}
 .activity-detail-grid dt{margin-bottom:4px;color:var(--muted);font-family:var(--mono);font-size:12px}

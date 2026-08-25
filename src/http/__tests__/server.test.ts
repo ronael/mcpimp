@@ -132,6 +132,11 @@ describe("Hono server", () => {
     expect(html).toContain("/activity");
     expect(html).toContain('href="#activity"');
     expect(html).toContain('id="activityRows"');
+    expect(html).toContain("openActivityDrawer");
+    expect(html).toContain('role="dialog"');
+    const inlineScript = html.match(/<script>\s*([\s\S]*?)<\/script>/)?.[1];
+    expect(inlineScript).toBeDefined();
+    expect(() => new Function(inlineScript!)).not.toThrow();
     expect(html).toContain('href="#connect"');
     expect(html).toContain("codex mcp add mcpimp --url http://localhost:3901/message");
     expect(html).toContain("claude mcp add --transport http --scope user mcpimp http://localhost:3901/message");

@@ -25,7 +25,7 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     labels: copy.activityDetailLabels,
   })};
   const activityDate = new Intl.DateTimeFormat(${JSON.stringify(copy.htmlLang)}, { dateStyle: "short", timeStyle: "medium" });
-  const expandedActivity = new Set();
+  let drawerTrigger = null;
   let query = "";
   let origin = "all";
 
@@ -35,16 +35,25 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     navLinks.forEach((link) => link.classList.toggle("act", link.dataset.nav === viewId));
   }
 
-  function openDrawer(targetId) {
-    const template = document.getElementById("drawer-" + targetId);
-    if (!template || !drawer || !drawerContent || !backdrop) return;
-    drawerContent.innerHTML = template.innerHTML;
+  function showDrawer(trigger) {
+    if (!drawer || !drawerContent || !backdrop) return;
+    drawerTrigger = trigger || null;
     drawer.classList.add("on");
     drawer.setAttribute("aria-hidden", "false");
     backdrop.classList.add("on");
     document.body.style.overflow = "hidden";
     drawer.scrollTop = 0;
-    drawerContent.querySelector(".d-close")?.addEventListener("click", closeDrawer);
+    const close = drawerContent.querySelector(".d-close");
+    close?.addEventListener("click", closeDrawer);
+    close?.focus();
+  }
+
+  function openDrawer(targetId, trigger) {
+    const template = document.getElementById("drawer-" + targetId);
+    if (!template || !drawer || !drawerContent || !backdrop) return;
+    delete drawerContent.dataset.activityId;
+    drawerContent.innerHTML = template.innerHTML;
+    showDrawer(trigger);
   }
 
   function closeDrawer() {
@@ -53,6 +62,9 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     drawer.setAttribute("aria-hidden", "true");
     backdrop.classList.remove("on");
     document.body.style.overflow = "";
+    drawerTrigger?.focus();
+    drawerTrigger = null;
+    if (drawerContent) delete drawerContent.dataset.activityId;
   }
 
   function syncSearch(value) {
@@ -127,25 +139,73 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     return item;
   }
 
-  function activityDetails(event) {
-    const row = document.createElement("tr");
-    row.className = "activity-detail-row";
-    row.id = "activity-detail-" + event.id;
-    row.hidden = !expandedActivity.has(event.id);
-    const cell = document.createElement("td");
-    cell.colSpan = 7;
+  function openActivityDrawer(event, trigger) {
+    if (!drawerContent) return;
+    drawerContent.replaceChildren();
+    drawerContent.dataset.activityId = event.id;
+
+    const top = document.createElement("div");
+    top.className = "d-top";
+    const eventId = document.createElement("span");
+    eventId.className = "d-id";
+    eventId.textContent = activityDate.format(new Date(event.timestamp)) + " · " + event.id;
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "d-close";
+    close.setAttribute("aria-label", ${JSON.stringify(copy.close)});
+    const closeIcon = document.createElement("i");
+    closeIcon.className = "ph ph-x";
+    closeIcon.setAttribute("aria-hidden", "true");
+    close.append(closeIcon);
+    top.append(eventId, close);
+
+    const title = document.createElement("div");
+    title.className = "d-title";
+    title.textContent = event.method;
+    const chips = document.createElement("div");
+    chips.className = "d-chips";
+    [[event.status, event.status === "success" ? "ok" : "err"], [event.transport, "info"]].forEach(([text, variant]) => {
+      const chip = document.createElement("span");
+      chip.className = "chip plain " + variant;
+      chip.textContent = text;
+      chips.append(chip);
+    });
+    const description = document.createElement("p");
+    description.className = "d-desc";
+    description.textContent = event.target || event.client;
+
+    const summarySection = document.createElement("div");
+    summarySection.className = "d-sec";
+    const summaryTitle = document.createElement("div");
+    summaryTitle.className = "cs-h";
+    summaryTitle.textContent = activityCopy.details;
     const list = document.createElement("dl");
     list.className = "activity-detail-grid";
+    list.append(activityDetailItem(${JSON.stringify(copy.activityHeaders.client)}, event.client));
+    list.append(activityDetailItem(${JSON.stringify(copy.activityHeaders.duration)}, event.durationMs + " ms"));
     if (Object.prototype.hasOwnProperty.call(event, "requestId")) {
       list.append(activityDetailItem(activityCopy.labels.requestId, event.requestId));
     }
     if (event.sessionId) list.append(activityDetailItem(activityCopy.labels.sessionId, event.sessionId));
-    if (event.parameters) list.append(activityDetailItem(activityCopy.labels.parameters, event.parameters, true));
-    if (event.result) list.append(activityDetailItem(activityCopy.labels.result, event.result, true));
-    if (event.error) list.append(activityDetailItem(activityCopy.labels.error, event.error, true));
-    cell.append(list);
-    row.append(cell);
-    return row;
+    summarySection.append(summaryTitle, list);
+
+    const payloadSection = document.createElement("div");
+    payloadSection.className = "d-sec activity-payload";
+    if (event.parameters || event.result || event.error) {
+      const payloadTitle = document.createElement("div");
+      payloadTitle.className = "cs-h";
+      payloadTitle.textContent = ${JSON.stringify(copy.activityPayloadTitle)};
+      const payloadList = document.createElement("dl");
+      payloadList.className = "activity-detail-grid single";
+      if (event.parameters) payloadList.append(activityDetailItem(activityCopy.labels.parameters, event.parameters, true));
+      if (event.result) payloadList.append(activityDetailItem(activityCopy.labels.result, event.result, true));
+      if (event.error) payloadList.append(activityDetailItem(activityCopy.labels.error, event.error, true));
+      payloadSection.append(payloadTitle, payloadList);
+    }
+
+    drawerContent.append(top, title, chips, description, summarySection);
+    if (payloadSection.childElementCount) drawerContent.append(payloadSection);
+    showDrawer(trigger);
   }
 
   function renderActivity(events) {
@@ -157,6 +217,10 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     activityRows.replaceChildren();
     events.forEach((event) => {
       const row = document.createElement("tr");
+      row.className = "activity-row";
+      row.tabIndex = 0;
+      row.setAttribute("role", "button");
+      row.setAttribute("aria-label", activityCopy.details + ": " + event.method + (event.target ? " · " + event.target : ""));
       row.append(activityCell(activityDate.format(new Date(event.timestamp))));
       row.append(activityCell(event.client));
 
@@ -187,30 +251,31 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "activity-toggle";
-      toggle.setAttribute("aria-controls", "activity-detail-" + event.id);
-      toggle.setAttribute("aria-expanded", String(expandedActivity.has(event.id)));
       const label = document.createElement("span");
       label.textContent = activityCopy.details;
       const icon = document.createElement("i");
-      icon.className = "ph ph-caret-down";
+      icon.className = "ph ph-arrow-right";
       icon.setAttribute("aria-hidden", "true");
       toggle.append(label, icon);
       toggleCell.append(toggle);
       row.append(toggleCell);
-
-      const detailRow = activityDetails(event);
-      toggle.addEventListener("click", () => {
-        const isOpen = expandedActivity.has(event.id);
-        if (isOpen) expandedActivity.delete(event.id);
-        else expandedActivity.add(event.id);
-        detailRow.hidden = isOpen;
-        toggle.setAttribute("aria-expanded", String(!isOpen));
+      toggle.addEventListener("click", (clickEvent) => {
+        clickEvent.stopPropagation();
+        openActivityDrawer(event, toggle);
       });
-      activityRows.append(row, detailRow);
+      row.addEventListener("click", () => openActivityDrawer(event, row));
+      row.addEventListener("keydown", (keyEvent) => {
+        if (keyEvent.target !== row) return;
+        if (keyEvent.key !== "Enter" && keyEvent.key !== " ") return;
+        keyEvent.preventDefault();
+        openActivityDrawer(event, row);
+      });
+      activityRows.append(row);
     });
   }
 
   async function refreshActivity() {
+    if (drawer?.classList.contains("on") && drawerContent?.dataset.activityId) return;
     try {
       const response = await fetch("/activity?limit=100", { cache: "no-store" });
       if (!response.ok) throw new Error("activity request failed");
@@ -231,13 +296,14 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     const trigger = event.target.closest("[data-drawer-target]");
     if (!trigger) return;
     event.preventDefault();
-    openDrawer(trigger.dataset.drawerTarget);
+    openDrawer(trigger.dataset.drawerTarget, trigger);
   });
   rows.forEach((row) => {
     row.addEventListener("keydown", (event) => {
+      if (event.target !== row) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
-      openDrawer(row.dataset.drawerTarget);
+      openDrawer(row.dataset.drawerTarget, row);
     });
   });
   backdrop?.addEventListener("click", closeDrawer);

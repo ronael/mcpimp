@@ -89,6 +89,7 @@ export interface DashboardCopy {
   activityLoading: string;
   activityEmpty: string;
   activityError: string;
+  activityPayloadTitle: string;
   activityHeaders: {
     time: string;
     client: string;
@@ -241,6 +242,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     activityLoading: "Loading recent activity…",
     activityEmpty: "No agent has contacted this server since it started.",
     activityError: "Activity could not be loaded. The server may be restarting.",
+    activityPayloadTitle: "Request and result",
     activityHeaders: {
       time: "Time",
       client: "Client",
@@ -396,6 +398,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     activityLoading: "Chargement de l’activité récente…",
     activityEmpty: "Aucun agent n’a contacté ce serveur depuis son démarrage.",
     activityError: "Impossible de charger l’activité. Le serveur redémarre peut être.",
+    activityPayloadTitle: "Requête et résultat",
     activityHeaders: {
       time: "Heure",
       client: "Client",
