@@ -1,5 +1,5 @@
-import type { CapabilityRegistry } from "../registry/types";
-import { jsonRpcFailure, jsonRpcSuccess, type JsonRpcRequest, type JsonRpcResponse } from "./protocol";
+import { CapabilityResourceNotFoundError, type CapabilityRegistry } from "../registry/types";
+import { JsonRpcError, jsonRpcFailure, jsonRpcSuccess, type JsonRpcRequest, type JsonRpcResponse } from "./protocol";
 import { callMcpTool, MCP_TOOLS } from "./tools";
 import { UpstreamMcpGateway } from "./upstream";
 
@@ -30,7 +30,7 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
         case "tools/call": {
           const params = request.params || {};
           const toolName = params.name;
-          if (typeof toolName !== "string") throw new Error("Missing tool name");
+          if (typeof toolName !== "string") throw new JsonRpcError(-32602, "Missing tool name");
 
           if (upstreamGateway.canHandleTool(toolName)) {
             return jsonRpcSuccess(
@@ -52,7 +52,7 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
           return jsonRpcSuccess(id, { resourceTemplates: [] });
         case "resources/read": {
           const params = request.params || {};
-          if (typeof params.uri !== "string") throw new Error("Missing resource uri");
+          if (typeof params.uri !== "string") throw new JsonRpcError(-32602, "Missing resource uri");
           const resource = registry.readResource(params.uri);
 
           return jsonRpcSuccess(id, {
@@ -70,7 +70,13 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
           return jsonRpcFailure(id, -32601, `Unknown method: ${request.method}`);
       }
     } catch (error) {
-      return jsonRpcFailure(id, -32601, error instanceof Error ? error.message : "Unknown MCP error");
+      if (error instanceof JsonRpcError) {
+        return jsonRpcFailure(id, error.code, error.message, error.data);
+      }
+      if (error instanceof CapabilityResourceNotFoundError) {
+        return jsonRpcFailure(id, -32002, "Resource not found", { uri: error.uri });
+      }
+      return jsonRpcFailure(id, -32603, error instanceof Error ? error.message : "Internal MCP error");
     }
   };
 }

@@ -431,6 +431,8 @@ perte de données.
 - Proxy MCP upstream et transports HTTP streamable/SSE.
 - Sonde MCP `resources/templates/list` prise en charge avec une liste vide ; les
   sondes non standard comme `server/discover` restent explicitement refusées.
+- Codes d'erreur JSON-RPC différenciés pour les méthodes inconnues, paramètres
+  invalides, ressources absentes et erreurs internes.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.

@@ -205,6 +205,13 @@ export interface CapabilitySearchOptions {
   diagnostic?: boolean;
 }
 
+export class CapabilityResourceNotFoundError extends Error {
+  constructor(readonly uri: string) {
+    super(`Resource not found: ${uri}`);
+    this.name = "CapabilityResourceNotFoundError";
+  }
+}
+
 export interface CapabilityRegistry {
   listCapabilities(): Capability[];
   getCapability(id: string): Capability | undefined;

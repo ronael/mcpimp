@@ -5,6 +5,7 @@ import { capabilityIdFor, assertSafeSegment, slugify } from "../core/names";
 import { parseFrontmatter } from "./frontmatter";
 import { searchCapabilities } from "./search";
 import { countLines, decodeTextContent, mimeTypeFor } from "./text";
+import { CapabilityResourceNotFoundError } from "./types";
 import type {
   Capability,
   CapabilityComponents,
@@ -455,7 +456,7 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
 
   readResource(uri: string): CapabilityFile {
     const file = this.capabilities.flatMap((capability) => capability.files).find((item) => item.uri === uri);
-    if (!file) throw new Error(`Resource not found: ${uri}`);
+    if (!file) throw new CapabilityResourceNotFoundError(uri);
     if (file.binary) {
       throw new Error(
         `Binary resource is not readable as text: ${uri} (${file.bytes} bytes, ${file.mimeType}, sha256 ${file.sha256})`,

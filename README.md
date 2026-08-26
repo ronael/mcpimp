@@ -221,6 +221,8 @@ MCPIMP advertises concrete resources and therefore answers the standard
 `resources/templates/list` client probe with an empty `resourceTemplates` list.
 Non-standard probes such as `server/discover` intentionally receive JSON-RPC
 `-32601 Method not found` rather than a proprietary compatibility response.
+Invalid request parameters use `-32602`, missing resources use the MCP
+`-32002` code, and unexpected handler failures use `-32603`.
 
 ## Public website
 

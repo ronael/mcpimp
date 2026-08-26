@@ -141,7 +141,45 @@ describe("MCP handler", () => {
       params: { uri: "skill://landing-page/missing.md" },
     });
 
-    expect(response.error.message).toContain("Resource not found");
+    expect(response.error).toEqual({
+      code: -32002,
+      message: "Resource not found",
+      data: { uri: "skill://landing-page/missing.md" },
+    });
+  });
+
+  it("distinguishes invalid parameters from unknown methods", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 71,
+      method: "resources/read",
+      params: {},
+    });
+
+    expect(response.error).toEqual({
+      code: -32602,
+      message: "Missing resource uri",
+    });
+  });
+
+  it("reports unexpected handler failures as internal errors", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+    vi.spyOn(registry, "readResource").mockImplementation(() => {
+      throw new Error("Registry unavailable");
+    });
+    const handle = createMcpHandler(registry);
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 72,
+      method: "resources/read",
+      params: { uri: "skill://landing-page/SKILL.md" },
+    });
+
+    expect(response.error).toEqual({
+      code: -32603,
+      message: "Registry unavailable",
+    });
   });
 
   afterEach(() => {
