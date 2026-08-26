@@ -229,6 +229,9 @@ already completed; their free-text reason is never retained in the activity log.
 Streamable HTTP accepts JSON-RPC batches. Responses are returned only for batch
 items carrying an ID; notification-only batches receive an empty `202`.
 
+Observed client sequences and their validation level are tracked in
+[`docs/mcp-compatibility.md`](docs/mcp-compatibility.md).
+
 ## Public website
 
 The public static website lives in `site/` and is deployed to GitHub Pages by

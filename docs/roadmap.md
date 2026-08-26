@@ -438,6 +438,8 @@ perte de données.
   dans le journal ; l'éventuelle raison libre n'est pas conservée.
 - Batches JSON-RPC pris en charge sur Streamable HTTP, avec réponses agrégées
   pour les requêtes et `202` vide pour les lots de notifications uniquement.
+- Matrice de compatibilité versionnée pour les séquences Codex et Claude
+  observées ; Cursor, Kimi et les validations live restent explicitement à faire.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.
