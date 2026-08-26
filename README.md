@@ -226,6 +226,8 @@ Invalid request parameters use `-32602`, missing resources use the MCP
 The standard `ping` heartbeat receives an immediate empty result.
 Cancellation notifications are accepted even when the target request has
 already completed; their free-text reason is never retained in the activity log.
+Streamable HTTP accepts JSON-RPC batches. Responses are returned only for batch
+items carrying an ID; notification-only batches receive an empty `202`.
 
 ## Public website
 

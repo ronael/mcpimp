@@ -436,6 +436,8 @@ perte de données.
 - Heartbeat MCP `ping` pris en charge avec une réponse vide immédiate.
 - Notifications `notifications/cancelled` acceptées sans réponse ni faux incident
   dans le journal ; l'éventuelle raison libre n'est pas conservée.
+- Batches JSON-RPC pris en charge sur Streamable HTTP, avec réponses agrégées
+  pour les requêtes et `202` vide pour les lots de notifications uniquement.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.

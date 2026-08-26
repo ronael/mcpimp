@@ -34,6 +34,71 @@ describe("Hono server", () => {
     });
   });
 
+  it("handles mixed Streamable HTTP batches and omits notification responses", async () => {
+    const app = await createApp();
+    const response = await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json", "user-agent": "Batch Client/1.0" },
+      body: JSON.stringify([
+        { jsonrpc: "2.0", id: 1, method: "ping" },
+        { jsonrpc: "2.0", method: "notifications/initialized" },
+        { jsonrpc: "2.0", id: 2, method: "resources/templates/list" },
+      ]),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([
+      { jsonrpc: "2.0", id: 1, result: {} },
+      { jsonrpc: "2.0", id: 2, result: { resourceTemplates: [] } },
+    ]);
+
+    const activity: any = await (await app.request("/activity")).json();
+    expect(activity.events).toHaveLength(3);
+    expect(activity.events.every((event: { status: string }) => event.status === "success")).toBe(true);
+  });
+
+  it("acknowledges notification-only batches with an empty 202 response", async () => {
+    const app = await createApp();
+    const response = await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify([
+        { jsonrpc: "2.0", method: "notifications/initialized" },
+        { jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: 1 } },
+      ]),
+    });
+
+    expect(response.status).toBe(202);
+    await expect(response.text()).resolves.toBe("");
+  });
+
+  it("accepts client response envelopes without creating server activity", async () => {
+    const app = await createApp();
+    const response = await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 9, result: {} }),
+    });
+
+    expect(response.status).toBe(202);
+    await expect(response.text()).resolves.toBe("");
+    await expect((await app.request("/activity")).json()).resolves.toEqual({ events: [] });
+  });
+
+  it("rejects empty JSON-RPC batches", async () => {
+    const app = await createApp();
+    const response = await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "[]",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: -32600 },
+    });
+  });
+
   it("acknowledges JSON-RPC notifications without a response body", async () => {
     const app = await createApp();
     const response = await app.request("/message", {
