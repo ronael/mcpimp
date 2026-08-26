@@ -27,6 +27,10 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
           });
         case "notifications/initialized":
           return jsonRpcSuccess(id, null);
+        case "notifications/cancelled":
+          // Local registry operations are currently short-lived and cannot be
+          // interrupted. MCP permits ignoring unknown or completed request IDs.
+          return jsonRpcSuccess(id, null);
         case "tools/list":
           return jsonRpcSuccess(id, { tools: [...MCP_TOOLS, ...(await upstreamGateway.listTools())] });
         case "tools/call": {

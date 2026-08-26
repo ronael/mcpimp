@@ -46,6 +46,30 @@ describe("Hono server", () => {
     await expect(response.text()).resolves.toBe("");
   });
 
+  it("accepts late cancellation notifications without logging a protocol error", async () => {
+    const app = await createApp();
+    const response = await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: 42, reason: "Sensitive user context" },
+      }),
+    });
+
+    expect(response.status).toBe(202);
+    await expect(response.text()).resolves.toBe("");
+
+    const activity: any = await (await app.request("/activity")).json();
+    expect(activity.events[0]).toMatchObject({
+      method: "notifications/cancelled",
+      status: "success",
+      parameters: { requestId: 42, hasReason: true },
+    });
+    expect(JSON.stringify(activity)).not.toContain("Sensitive user context");
+  });
+
   it("records MCP activity without request arguments or response contents", async () => {
     const app = await createApp();
     await app.request("/message", {

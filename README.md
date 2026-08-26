@@ -224,6 +224,8 @@ Non-standard probes such as `server/discover` intentionally receive JSON-RPC
 Invalid request parameters use `-32602`, missing resources use the MCP
 `-32002` code, and unexpected handler failures use `-32603`.
 The standard `ping` heartbeat receives an immediate empty result.
+Cancellation notifications are accepted even when the target request has
+already completed; their free-text reason is never retained in the activity log.
 
 ## Public website
 

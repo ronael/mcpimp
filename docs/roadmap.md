@@ -434,6 +434,8 @@ perte de données.
 - Codes d'erreur JSON-RPC différenciés pour les méthodes inconnues, paramètres
   invalides, ressources absentes et erreurs internes.
 - Heartbeat MCP `ping` pris en charge avec une réponse vide immédiate.
+- Notifications `notifications/cancelled` acceptées sans réponse ni faux incident
+  dans le journal ; l'éventuelle raison libre n'est pas conservée.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.

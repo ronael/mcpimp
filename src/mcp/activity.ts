@@ -156,6 +156,14 @@ export function activityParameters(request: JsonRpcRequest): Record<string, unkn
     }
     return describeArguments(args);
   }
+  if (request.method === "notifications/cancelled") {
+    const requestId = request.params?.requestId;
+    const reason = request.params?.reason;
+    return {
+      ...(typeof requestId === "string" || typeof requestId === "number" ? { requestId } : {}),
+      hasReason: typeof reason === "string" && reason.length > 0,
+    };
+  }
   if (request.method === "resources/read" && typeof request.params?.uri === "string") {
     return { uri: truncate(request.params.uri) };
   }

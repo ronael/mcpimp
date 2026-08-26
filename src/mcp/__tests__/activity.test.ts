@@ -56,6 +56,17 @@ describe("MCP activity log", () => {
     expect(JSON.stringify(parameters)).not.toContain("private@example.com");
   });
 
+  it("describes cancellation without retaining its free-text reason", () => {
+    const parameters = activityParameters({
+      jsonrpc: "2.0",
+      method: "notifications/cancelled",
+      params: { requestId: "request-42", reason: "Customer name and private context" },
+    });
+
+    expect(parameters).toEqual({ requestId: "request-42", hasReason: true });
+    expect(JSON.stringify(parameters)).not.toContain("Customer");
+  });
+
   it("summarizes returned items without retaining response text", () => {
     const outcome = activityOutcome(
       { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "search-capabilities", arguments: {} } },
