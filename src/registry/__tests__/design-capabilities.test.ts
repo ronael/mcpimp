@@ -116,4 +116,46 @@ describe("design capability catalog", () => {
     });
     expect(loaded.result.content[0].text).toContain("# UI/UX Pro Max - Design Intelligence");
   });
+
+  it("loads bounded Markdown entrypoints for two real capabilities", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
+    const handle = createMcpHandler(registry);
+    const cases = [
+      { id: "elaya-design-landing-page-design", heading: "PART A — Strategy and structure" },
+      { id: "frontend-architecture", heading: "Workflow" },
+    ];
+
+    for (const [index, entry] of cases.entries()) {
+      const info: any = await handle({
+        jsonrpc: "2.0",
+        id: 20 + index,
+        method: "tools/call",
+        params: {
+          name: "capability-info",
+          arguments: { id: entry.id, path: "SKILL.md" },
+        },
+      });
+      const outline = JSON.parse(info.result.content[0].text).files[0].outline;
+      expect(outline).toContainEqual(expect.objectContaining({ heading: entry.heading }));
+
+      const full: any = await handle({
+        jsonrpc: "2.0",
+        id: 30 + index,
+        method: "tools/call",
+        params: { name: "load-capability", arguments: { id: entry.id, path: "SKILL.md" } },
+      });
+      const partial: any = await handle({
+        jsonrpc: "2.0",
+        id: 40 + index,
+        method: "tools/call",
+        params: {
+          name: "load-capability",
+          arguments: { id: entry.id, path: "SKILL.md", heading: entry.heading },
+        },
+      });
+
+      expect(partial.result.content[0].text).toContain(entry.heading);
+      expect(partial.result.content[0].text.length).toBeLessThan(full.result.content[0].text.length / 2);
+    }
+  });
 });

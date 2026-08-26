@@ -142,6 +142,40 @@ describe("MCP handler", () => {
     expect(response.result.content[0].text).not.toContain("# Landing Page");
   });
 
+  it("inspects a Markdown outline before loading one complete heading", async () => {
+    const handle = await createHandler();
+    const info: any = await handle({
+      jsonrpc: "2.0",
+      id: 61,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: { id: "landing-page", path: "references/source.md" },
+      },
+    });
+    const summary = JSON.parse(info.result.content[0].text);
+
+    expect(summary.files).toHaveLength(1);
+    expect(summary.files[0].outline).toEqual([
+      expect.objectContaining({ heading: "Source", level: 1 }),
+      expect.objectContaining({ heading: "Example Source", level: 2 }),
+    ]);
+
+    const loaded: any = await handle({
+      jsonrpc: "2.0",
+      id: 62,
+      method: "tools/call",
+      params: {
+        name: "load-capability",
+        arguments: { id: "landing-page", path: "references/source.md", heading: "Example Source" },
+      },
+    });
+
+    expect(loaded.result.content[0].text).toContain("## Example Source");
+    expect(loaded.result.content[0].text).toContain("https://example.com/source");
+    expect(loaded.result.content[0].text).not.toContain("Reference material for the capability");
+  });
+
   it("returns a JSON-RPC error for missing resources", async () => {
     const handle = await createHandler();
     const response: any = await handle({

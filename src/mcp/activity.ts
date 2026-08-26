@@ -96,8 +96,8 @@ const INTERNAL_TOOLS = new Set([
 const SENSITIVE_KEY = /authorization|cookie|credential|password|secret|token|api[-_]?key/i;
 const INTERNAL_ARGUMENTS: Record<string, string[]> = {
   "list-capabilities": [],
-  "capability-info": ["id"],
-  "load-capability": ["id", "section", "path"],
+  "capability-info": ["id", "path"],
+  "load-capability": ["id", "section", "path", "heading"],
   "search-capabilities": ["query", "limit", "capabilityId"],
   "list-upstreams": [],
 };

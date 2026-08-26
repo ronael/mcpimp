@@ -41,6 +41,20 @@ qualité de sélection est donc encourageante, mais ce pilote confirme que le
 prochain enjeu n'est pas uniquement le rang : MCPIMP doit aussi proposer un
 entrypoint plus petit ou un chargement progressif pour les capabilities longues.
 
+## Incrément suivant : chargement par heading
+
+`capability-info(id, path)` expose désormais l'outline Markdown et la taille de
+chaque section. `load-capability(id, path, heading)` charge un heading complet
+avec ses sous-sections. Sur les deux cas réels utilisés pour valider ce contrat :
+
+| Capability | Entrée | Fichier complet | Section | Réduction |
+|---|---|---:|---:|---:|
+| `elaya-design-landing-page-design` | `PART A — Strategy and structure` | 16 899 | 4 941 caractères | 70,8 % |
+| `frontend-architecture` | `Workflow` | 3 870 | 1 514 caractères | 60,9 % |
+
+Ce mécanisme ne choisit pas encore automatiquement le heading selon l'intention.
+Il fournit au harness une primitive explicable et non destructive pour le faire.
+
 ## Limites
 
 - Trois scénarios et une seule exécution par scénario ne permettent pas de

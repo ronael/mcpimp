@@ -443,6 +443,9 @@ perte de données.
 - Premier pilote agent outcome avec Codex Luna : trois sélections et trois
   fichiers corrects sur trois scénarios ; le coût de chargement des longues
   capabilities devient le prochain signal produit à traiter.
+- Outline Markdown ciblé via `capability-info(id, path)` et chargement d'un
+  heading complet via `load-capability` : réduction mesurée de 60,9 à 70,8 % sur
+  deux capabilities réelles, sans troncature arbitraire.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.

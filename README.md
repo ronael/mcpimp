@@ -82,8 +82,8 @@ skill://ui-ux-pro-max/references/quick-reference.md
 | Tool | Purpose |
 |---|---|
 | `list-capabilities` | Lists available capabilities and their origin |
-| `capability-info` | Returns metadata, provenance, and files |
-| `load-capability` | Loads a capability, section, or exact file |
+| `capability-info` | Returns metadata and files, or one file's Markdown outline with `path` |
+| `load-capability` | Loads a capability, exact file, or complete Markdown heading subtree |
 | `search-capabilities` | Searches indexed files and ranks results |
 | `list-upstreams` | Checks configured upstream MCP servers |
 
@@ -98,6 +98,18 @@ The optional `limit` parameter adjusts the maximum shortlist size.
 Set `diagnostic: true` to include score components: coverage, terms and IDF,
 matched fields, file weight, resource intent, and phrase bonus. Diagnostics are
 omitted by default to keep normal responses compact.
+
+For a long Markdown entrypoint, inspect its outline before loading context:
+
+```txt
+search-capabilities(query)
+→ capability-info(id, path: "SKILL.md")
+→ load-capability(id, path: "SKILL.md", heading: "Workflow")
+```
+
+Each outline entry reports its heading level and character count. Loading a
+heading returns that complete section and its nested subsections, so context is
+reduced without cutting instructions at an arbitrary character boundary.
 
 ```bash
 curl -sS http://localhost:3901/message \

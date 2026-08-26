@@ -41,6 +41,18 @@ describe("MCP activity log", () => {
     expect(JSON.stringify(parameters)).not.toContain("hidden");
   });
 
+  it("records progressive loading coordinates", () => {
+    expect(activityParameters({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: {
+        name: "load-capability",
+        arguments: { id: "landing-page", path: "SKILL.md", heading: "Workflow" },
+      },
+    })).toEqual({ id: "landing-page", path: "SKILL.md", heading: "Workflow" });
+  });
+
   it("records only field names and types for upstream tool arguments", () => {
     const parameters = activityParameters({
       jsonrpc: "2.0",

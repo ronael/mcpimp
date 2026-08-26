@@ -1,4 +1,5 @@
 import type { Capability, CapabilityRegistry } from "../registry/types";
+import { extractMarkdownSections } from "../registry/frontmatter";
 import type { UpstreamMcpGateway } from "./upstream";
 
 export const MCP_TOOLS = [
@@ -13,11 +14,12 @@ export const MCP_TOOLS = [
   },
   {
     name: "capability-info",
-    description: "Get metadata, provenance and indexed files for one capability.",
+    description: "Get metadata, provenance and indexed files for one capability. Pass a path to inspect its Markdown outline before loading context.",
     inputSchema: {
       type: "object",
       properties: {
         id: { type: "string", description: "Capability id." },
+        path: { type: "string", description: "Optional exact file path whose Markdown outline should be returned." },
       },
       required: ["id"],
     },
@@ -37,6 +39,10 @@ export const MCP_TOOLS = [
         path: {
           type: "string",
           description: "Optional exact file path inside the capability, for example shared/content-rules.md.",
+        },
+        heading: {
+          type: "string",
+          description: "Optional exact Markdown heading to load from path, including its nested subsections.",
         },
       },
       required: ["id"],
@@ -108,9 +114,15 @@ function originSummary(capability: Capability) {
   };
 }
 
-function summarizeCapability(registry: CapabilityRegistry, id: string) {
+function summarizeCapability(registry: CapabilityRegistry, id: string, requestedPath = "") {
   const capability = registry.getCapability(id);
   if (!capability) throw new Error(`Capability not found: ${id}`);
+  const selectedFiles = requestedPath
+    ? capability.files.filter((file) => file.path === requestedPath)
+    : capability.files;
+  if (requestedPath && selectedFiles.length === 0) {
+    throw new Error(`Capability file not found: ${id}/${requestedPath}`);
+  }
 
   return {
     id: capability.id,
@@ -121,7 +133,7 @@ function summarizeCapability(registry: CapabilityRegistry, id: string) {
     description: capability.description,
     tags: capability.tags,
     origin: capability.origin,
-    files: capability.files.map((file) => ({
+    files: selectedFiles.map((file) => ({
       path: file.path,
       uri: file.uri,
       type: file.type,
@@ -131,6 +143,15 @@ function summarizeCapability(registry: CapabilityRegistry, id: string) {
       binary: file.binary,
       sha256: file.sha256,
       layer: file.layer,
+      ...(requestedPath && file.mimeType === "text/markdown" && typeof file.text === "string"
+        ? {
+            outline: extractMarkdownSections(file.text).map((section) => ({
+              heading: section.heading,
+              level: section.level,
+              characters: section.text.length,
+            })),
+          }
+        : {}),
     })),
   };
 }
@@ -160,8 +181,10 @@ function loadCapability(registry: CapabilityRegistry, args: Record<string, unkno
   const id = requireString(args, "id");
   const section = typeof args.section === "string" ? args.section : "full";
   const path = typeof args.path === "string" ? args.path.trim() : "";
+  const heading = typeof args.heading === "string" ? args.heading.trim() : "";
   const capability = registry.getCapability(id);
   if (!capability) throw new Error(`Capability not found: ${id}`);
+  if (heading && !path) throw new Error("Markdown heading requires an exact capability path");
 
   const sections: Record<string, (type: string) => boolean> = {
     full: () => true,
@@ -176,7 +199,15 @@ function loadCapability(registry: CapabilityRegistry, args: Record<string, unkno
     const file = capability.files.find((candidate) => candidate.path === path);
     if (!file) throw new Error(`Capability file not found: ${id}/${path}`);
     if (typeof file.text !== "string") throw new Error(`Capability file is not readable as text: ${id}/${path}`);
-    body = `<!-- ${file.path} -->\n\n${file.text}`;
+    if (heading) {
+      if (file.mimeType !== "text/markdown") throw new Error(`Capability file is not Markdown: ${id}/${path}`);
+      const section = extractMarkdownSections(file.text)
+        .find((candidate) => candidate.heading.localeCompare(heading, undefined, { sensitivity: "accent" }) === 0);
+      if (!section) throw new Error(`Markdown heading not found: ${id}/${path}#${heading}`);
+      body = `<!-- ${file.path} · ${section.heading} -->\n\n${section.text}`;
+    } else {
+      body = `<!-- ${file.path} -->\n\n${file.text}`;
+    }
   } else {
     const matches = sections[section];
     if (!matches) throw new Error(`Unknown section: ${section}`);
@@ -222,7 +253,11 @@ export function callMcpTool(
         })),
       );
     case "capability-info":
-      return textContent(summarizeCapability(registry, requireString(args, "id")));
+      return textContent(summarizeCapability(
+        registry,
+        requireString(args, "id"),
+        typeof args.path === "string" ? args.path.trim() : "",
+      ));
     case "load-capability":
       return textContent(loadCapability(registry, args));
     case "search-capabilities":
