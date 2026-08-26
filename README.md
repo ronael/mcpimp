@@ -95,6 +95,9 @@ includes a light French/English synonym table in
 capabilities by default, with the best matching file for each one. Then use
 `capabilityId` to search several internal files within the selected capability.
 The optional `limit` parameter adjusts the maximum shortlist size.
+Set `diagnostic: true` to include score components: coverage, terms and IDF,
+matched fields, file weight, resource intent, and phrase bonus. Diagnostics are
+omitted by default to keep normal responses compact.
 
 ```bash
 curl -sS http://localhost:3901/message \

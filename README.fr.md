@@ -134,6 +134,9 @@ La recherche globale renvoie par défaut une shortlist de huit capabilities, ave
 le meilleur fichier correspondant pour chacune. Utilise ensuite `capabilityId`
 pour rechercher plusieurs fichiers internes à la capability retenue. Le
 paramètre optionnel `limit` ajuste la taille maximale de la shortlist.
+Active `diagnostic: true` pour obtenir les composantes du score : couverture,
+termes et IDF, champs correspondants, poids du fichier, intention ressource et
+bonus de phrase. Ce détail est absent par défaut afin de garder la réponse courte.
 
 ```bash
 curl -sS http://localhost:3901/message \

@@ -22,6 +22,7 @@ import { expandTerm } from "./synonyms";
 import type {
   Capability,
   CapabilityFile,
+  CapabilitySearchField,
   CapabilitySearchOptions,
   CapabilitySearchResult,
 } from "./types";
@@ -138,6 +139,8 @@ interface IndexedDocument {
   file: CapabilityFile;
   /** Term -> accumulated field-weighted frequency. */
   weights: Map<string, number>;
+  /** Searchable terms kept by field for optional score explanations. */
+  fieldTerms: Map<CapabilitySearchField, Set<string>>;
   /** Terms found in file-level fields only (path, headings, body). */
   fileTerms: Set<string>;
   normalizedText: string;
@@ -153,8 +156,18 @@ interface QueryIntent {
   wantsResource: boolean;
 }
 
-function addField(target: Map<string, number>, value: string, weight: number, collect?: Set<string>): void {
-  for (const token of tokenize(value)) {
+function addField(
+  target: Map<string, number>,
+  fieldTerms: Map<CapabilitySearchField, Set<string>>,
+  field: CapabilitySearchField,
+  value: string,
+  weight: number,
+  collect?: Set<string>,
+): void {
+  const terms = tokenize(value);
+  if (terms.length > 0) fieldTerms.set(field, new Set(terms));
+
+  for (const token of terms) {
     target.set(token, (target.get(token) || 0) + weight);
     collect?.add(token);
   }
@@ -162,22 +175,23 @@ function addField(target: Map<string, number>, value: string, weight: number, co
 
 function indexFile(capability: Capability, file: CapabilityFile): IndexedDocument {
   const weights = new Map<string, number>();
+  const fieldTerms = new Map<CapabilitySearchField, Set<string>>();
   const fileTerms = new Set<string>();
 
-  addField(weights, `${capability.id} ${capability.name}`, FIELD_WEIGHTS.capabilityName);
-  addField(weights, `${capability.namespace} ${capability.slug}`, FIELD_WEIGHTS.namespaceSlug);
-  addField(weights, capability.description, FIELD_WEIGHTS.capabilityDescription);
-  addField(weights, (capability.tags || []).join(" "), FIELD_WEIGHTS.tags);
+  addField(weights, fieldTerms, "capabilityName", `${capability.id} ${capability.name}`, FIELD_WEIGHTS.capabilityName);
+  addField(weights, fieldTerms, "namespaceSlug", `${capability.namespace} ${capability.slug}`, FIELD_WEIGHTS.namespaceSlug);
+  addField(weights, fieldTerms, "capabilityDescription", capability.description, FIELD_WEIGHTS.capabilityDescription);
+  addField(weights, fieldTerms, "tags", (capability.tags || []).join(" "), FIELD_WEIGHTS.tags);
 
-  addField(weights, file.path, FIELD_WEIGHTS.path, fileTerms);
+  addField(weights, fieldTerms, "path", file.path, FIELD_WEIGHTS.path, fileTerms);
 
   const text = file.text || "";
   if (file.mimeType === "text/markdown") {
-    addField(weights, extractHeadings(text).join(" "), FIELD_WEIGHTS.headings, fileTerms);
+    addField(weights, fieldTerms, "headings", extractHeadings(text).join(" "), FIELD_WEIGHTS.headings, fileTerms);
   }
-  addField(weights, text, FIELD_WEIGHTS.body, fileTerms);
+  addField(weights, fieldTerms, "body", text, FIELD_WEIGHTS.body, fileTerms);
 
-  return { capability, file, weights, fileTerms, normalizedText: normalizeText(text) };
+  return { capability, file, weights, fieldTerms, fileTerms, normalizedText: normalizeText(text) };
 }
 
 /**
@@ -336,7 +350,7 @@ export function searchCapabilities(
   const intent = detectQueryIntent(queryTerms);
 
   const scored = documents
-    .map((document) => {
+    .map((document): CapabilitySearchResult | undefined => {
       let score = 0;
       const matched = new Set<string>();
       const matchedRoots = new Set<string>();
@@ -361,11 +375,16 @@ export function searchCapabilities(
       if (!matchedInFile && document.file !== document.representative) return undefined;
 
       const coverage = roots.size === 0 ? 1 : matchedRoots.size / roots.size;
-      score *= coverage * coverage;
-      score *= fileRelevanceWeight(document.file);
-      score *= resourceIntentWeight(document, intent);
+      const lexicalScore = score;
+      const coverageMultiplier = coverage * coverage;
+      const fileWeight = fileRelevanceWeight(document.file);
+      const intentWeight = resourceIntentWeight(document, intent);
+      const phraseBonus = document.normalizedText.includes(phrase) ? PHRASE_BONUS : 1;
 
-      if (document.normalizedText.includes(phrase)) score *= PHRASE_BONUS;
+      score *= coverageMultiplier;
+      score *= fileWeight;
+      score *= intentWeight;
+      score *= phraseBonus;
 
       return {
         capabilityId: document.capability.id,
@@ -377,6 +396,37 @@ export function searchCapabilities(
         snippet: buildSnippet(document, matched),
         score: Number(score.toFixed(4)),
         matchedTerms: [...matchedRoots].sort(),
+        ...(options.diagnostic
+          ? {
+              diagnostics: {
+                lexicalScore: Number(lexicalScore.toFixed(4)),
+                coverage: Number(coverage.toFixed(4)),
+                coverageMultiplier: Number(coverageMultiplier.toFixed(4)),
+                fileWeight: Number(fileWeight.toFixed(4)),
+                resourceIntentWeight: Number(intentWeight.toFixed(4)),
+                phraseBonus,
+                terms: queryTerms
+                  .filter(({ term }) => document.weights.has(term))
+                  .map(({ term, root, weight }) => ({
+                    term,
+                    root,
+                    source: weight === 1 ? "literal" as const : "synonym" as const,
+                    queryWeight: weight,
+                    documentWeight: Number((document.weights.get(term) || 0).toFixed(4)),
+                    idf: Number((idf.get(term) || 0).toFixed(4)),
+                  })),
+                fields: [...document.fieldTerms.entries()]
+                  .map(([field, terms]) => ({
+                    field,
+                    weight: Number(FIELD_WEIGHTS[field]),
+                    matchedTerms: queryTerms
+                      .filter(({ term }) => terms.has(term))
+                      .map(({ term }) => term),
+                  }))
+                  .filter((field) => field.matchedTerms.length > 0),
+              },
+            }
+          : {}),
       } satisfies CapabilitySearchResult;
     })
     .filter((result): result is CapabilitySearchResult => result !== undefined)

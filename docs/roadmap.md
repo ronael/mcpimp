@@ -420,6 +420,8 @@ perte de données.
   budget de contexte.
 - Shortlist globale capability-first : huit capabilities maximum et un meilleur
   fichier chacune, sans perte de pertinence mesurée sur la référence initiale.
+- Diagnostic de ranking optionnel : termes et IDF, champs, couverture, poids de
+  fichier, intention ressource et bonus de phrase, sans alourdir le mode normal.
 - Proxy MCP upstream et transports HTTP streamable/SSE.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de

@@ -52,6 +52,27 @@ describe("MCP handler", () => {
     expect(response.result.content[0].text).toContain("landing-page");
   });
 
+  it("returns optional search score diagnostics", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 31,
+      method: "tools/call",
+      params: {
+        name: "search-capabilities",
+        arguments: { query: "landing page", diagnostic: true },
+      },
+    });
+    const [result] = JSON.parse(response.result.content[0].text);
+
+    expect(result.diagnostics).toMatchObject({
+      coverage: 1,
+      fileWeight: 1.4,
+    });
+    expect(result.diagnostics.terms.length).toBeGreaterThan(0);
+    expect(result.diagnostics.fields.length).toBeGreaterThan(0);
+  });
+
   it("lists and reads resources", async () => {
     const handle = await createHandler();
 

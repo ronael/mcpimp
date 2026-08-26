@@ -161,12 +161,46 @@ export interface CapabilitySearchResult {
   /** Relative lexical relevance; only comparable within one result set. */
   score: number;
   matchedTerms: string[];
+  diagnostics?: CapabilitySearchDiagnostics;
+}
+
+export type CapabilitySearchField =
+  | "capabilityName"
+  | "capabilityDescription"
+  | "tags"
+  | "namespaceSlug"
+  | "path"
+  | "headings"
+  | "body";
+
+export interface CapabilitySearchDiagnostics {
+  /** Score after term frequency, field weights, IDF and synonym weights. */
+  lexicalScore: number;
+  coverage: number;
+  coverageMultiplier: number;
+  fileWeight: number;
+  resourceIntentWeight: number;
+  phraseBonus: number;
+  terms: Array<{
+    term: string;
+    root: string;
+    source: "literal" | "synonym";
+    queryWeight: number;
+    documentWeight: number;
+    idf: number;
+  }>;
+  fields: Array<{
+    field: CapabilitySearchField;
+    weight: number;
+    matchedTerms: string[];
+  }>;
 }
 
 export interface CapabilitySearchOptions {
   limit?: number;
   capabilityId?: string;
   maxPerCapability?: number;
+  diagnostic?: boolean;
 }
 
 export interface CapabilityRegistry {

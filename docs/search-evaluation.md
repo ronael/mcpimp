@@ -92,3 +92,21 @@ la landing page générique, restent des sujets de ranking distincts.
 - Ne jamais modifier un attendu uniquement pour faire passer une modification
   du ranking.
 - Conserver les anciens cas lorsqu'ils représentent encore un besoin supporté.
+
+## Diagnostic du score
+
+L'outil MCP accepte `diagnostic: true`. Chaque résultat contient alors :
+
+- le score lexical avant multiplicateurs ;
+- la couverture de la requête et son multiplicateur quadratique ;
+- chaque terme reconnu, sa racine, son origine littérale ou synonyme, son IDF
+  et son poids dans le document ;
+- les champs correspondants et leurs poids ;
+- le poids du type et du chemin de fichier ;
+- le multiplicateur d'intention ressource ;
+- le bonus de phrase exacte.
+
+Ce mode sert aux benchmarks et aux incidents de ranking. Il reste désactivé par
+défaut, car son payload détaillé contredirait l'objectif de contexte minimal. Le
+score reste relatif à une même recherche : il ne constitue pas encore une
+probabilité ni un niveau de confiance calibré.

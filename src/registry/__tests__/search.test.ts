@@ -267,6 +267,45 @@ describe("searchCapabilities", () => {
     expect(top.snippet).toContain("keyboard focus");
   });
 
+  it("keeps diagnostics absent by default", () => {
+    const [top] = searchCapabilities(CAPABILITIES, "accessibility contrast");
+
+    expect(top.diagnostics).toBeUndefined();
+  });
+
+  it("explains score components only in diagnostic mode", () => {
+    const [top] = searchCapabilities(CAPABILITIES, "accessibility contrast", { diagnostic: true });
+
+    expect(top.diagnostics).toMatchObject({
+      coverage: 1,
+      coverageMultiplier: 1,
+      fileWeight: 1.4,
+      resourceIntentWeight: 1,
+      phraseBonus: 1,
+    });
+    expect(top.diagnostics?.lexicalScore).toBeGreaterThan(0);
+    expect(top.diagnostics?.terms).toEqual(expect.arrayContaining([
+      expect.objectContaining({ term: "accessibility", source: "literal", queryWeight: 1 }),
+      expect.objectContaining({ term: "contrast", source: "literal", queryWeight: 1 }),
+    ]));
+    expect(top.diagnostics?.fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: "capabilityDescription", weight: 4 }),
+      expect.objectContaining({ field: "body", weight: 1 }),
+    ]));
+  });
+
+  it("reports phrase and resource-intent multipliers", () => {
+    const [phrase] = searchCapabilities(CAPABILITIES, "keyboard focus", { diagnostic: true });
+    const [resource] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "resource transition modal easing",
+      { diagnostic: true },
+    );
+
+    expect(phrase.diagnostics?.phraseBonus).toBe(1.6);
+    expect(resource.diagnostics?.resourceIntentWeight).toBeGreaterThan(1);
+  });
+
   it("skips files that have no indexable text", () => {
     const withBinary: Capability[] = [
       capability("assets", "local", "assets", "assets", "", [

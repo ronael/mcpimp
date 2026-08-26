@@ -52,6 +52,10 @@ export const MCP_TOOLS = [
         query: { type: "string", description: "Search query, one or more words." },
         limit: { type: "number", description: "Maximum number of results (default 8)." },
         capabilityId: { type: "string", description: "Restrict the search to one capability." },
+        diagnostic: {
+          type: "boolean",
+          description: "Include score components, matched fields and per-term IDF (default false).",
+        },
       },
       required: ["query"],
     },
@@ -191,8 +195,9 @@ function searchCapabilities(registry: CapabilityRegistry, args: Record<string, u
   const query = requireString(args, "query");
   const limit = typeof args.limit === "number" && args.limit > 0 ? Math.floor(args.limit) : undefined;
   const capabilityId = typeof args.capabilityId === "string" && args.capabilityId ? args.capabilityId : undefined;
+  const diagnostic = args.diagnostic === true;
 
-  return registry.search(query, { limit, capabilityId });
+  return registry.search(query, { limit, capabilityId, diagnostic });
 }
 
 export function callMcpTool(
