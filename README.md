@@ -91,8 +91,10 @@ skill://ui-ux-pro-max/references/quick-reference.md
 weights, IDF, query coverage, exact-query bonuses, file-type weights, and a
 resource-intent boost for queries asking for references or inspiration. It also
 includes a light French/English synonym table in
-`src/registry/synonyms.ts`. Optional parameters are `limit` (20 by default) and
-`capabilityId` to restrict a search to one capability.
+`src/registry/synonyms.ts`. Global search returns a shortlist of eight
+capabilities by default, with the best matching file for each one. Then use
+`capabilityId` to search several internal files within the selected capability.
+The optional `limit` parameter adjusts the maximum shortlist size.
 
 ```bash
 curl -sS http://localhost:3901/message \

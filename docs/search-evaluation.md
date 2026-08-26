@@ -32,8 +32,9 @@ actuel plutôt qu'à améliorer le produit.
 - Volume : nombre de caractères du résultat JSON, utilisé comme approximation
   stable du contexte avant une future mesure en tokens.
 
-Les rangs sont calculés par capability distincte, même si le moteur actuel
-retourne encore une liste plate de fichiers.
+Les rangs sont calculés par capability distincte. Le format public reste une
+liste de résultats de fichiers pour compatibilité, mais la recherche globale ne
+conserve désormais que le meilleur fichier de chaque capability.
 
 ## Référence initiale — 26 août 2026
 
@@ -58,8 +59,29 @@ Les deux échecs les plus utiles à examiner dans le prochain incrément sont :
   n'apparaissent qu'au rang 4.
 
 Le signal le plus net est toutefois le volume : aucun cas ne respecte le budget.
-Le prochain changement doit donc produire une réponse compacte regroupée par
-capability avant de recalibrer les poids lexicaux.
+Cette référence a donc justifié une réponse globale plus compacte avant tout
+recalibrage des poids lexicaux.
+
+## Après shortlist capability-first — 26 août 2026
+
+La recherche globale conserve le meilleur fichier de huit capabilities au
+maximum par défaut. Une recherche restreinte avec `capabilityId` peut toujours
+retourner jusqu'à trois fichiers internes. La forme publique de chaque résultat
+n'a pas changé.
+
+| Mesure | Avant | Après |
+|---|---:|---:|
+| `Success@1` | 66,7 % | 66,7 % |
+| `Recall@3` | 91,7 % | 91,7 % |
+| MRR | 0,7986 | 0,7986 |
+| Précision du fichier recommandé | 100 % | 100 % |
+| Respect du budget de contexte | 0 % | 100 % |
+| Volume moyen | 17 287 | 7 157 caractères |
+| Volume maximal | 19 081 | 8 474 caractères |
+
+Le volume moyen baisse d'environ 58,6 % sans dégradation des mesures de
+pertinence du corpus. Les rangs 2 des ressources UI et motion, puis le rang 4 de
+la landing page générique, restent des sujets de ranking distincts.
 
 ## Règles d'évolution du corpus
 

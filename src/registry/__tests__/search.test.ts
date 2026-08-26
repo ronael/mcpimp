@@ -226,7 +226,39 @@ describe("searchCapabilities", () => {
       ]),
     ];
 
-    expect(searchCapabilities(noisy, "contrast")).toHaveLength(3);
+    expect(searchCapabilities(noisy, "contrast", { maxPerCapability: 3 })).toHaveLength(3);
+  });
+
+  it("returns one best file per capability for global discovery", () => {
+    const results = searchCapabilities(CAPABILITIES, "motion accessibility narration");
+    const capabilityIds = results.map((result) => result.capabilityId);
+
+    expect(new Set(capabilityIds).size).toBe(capabilityIds.length);
+  });
+
+  it("keeps several internal files available in a capability-scoped search", () => {
+    const scoped = capability("scoped", "local", "scoped", "scoped", "", [
+      ...Array.from({ length: 5 }, (_, index) =>
+        file("scoped", `references/note-${index}.md`, "contrast contrast", "reference"),
+      ),
+    ]);
+
+    expect(searchCapabilities([scoped], "contrast", { capabilityId: "scoped" })).toHaveLength(3);
+  });
+
+  it("keeps the default global shortlist compact", () => {
+    const many = Array.from({ length: 12 }, (_, index) =>
+      capability(
+        `capability-${index}`,
+        "local",
+        `capability-${index}`,
+        `capability-${index}`,
+        "contrast",
+        [file(`capability-${index}`, "SKILL.md", "contrast", "skill")],
+      ),
+    );
+
+    expect(searchCapabilities(many, "contrast")).toHaveLength(8);
   });
 
   it("returns a snippet containing the matched terms", () => {

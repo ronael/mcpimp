@@ -416,6 +416,10 @@ perte de données.
 - Registry capability-centric et IDs namespacés.
 - Ingestion GitHub et catalogues web avec provenance et overrides.
 - Recherche classée avec signaux de ressources et synonymes FR/EN.
+- Corpus versionné et benchmark de retrieval avec rang, fichier recommandé et
+  budget de contexte.
+- Shortlist globale capability-first : huit capabilities maximum et un meilleur
+  fichier chacune, sans perte de pertinence mesurée sur la référence initiale.
 - Proxy MCP upstream et transports HTTP streamable/SSE.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de

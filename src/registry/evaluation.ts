@@ -73,7 +73,10 @@ export function evaluateSearch(
   search: CapabilitySearch,
 ): SearchEvaluationReport {
   const results = cases.map((evaluationCase): SearchEvaluationCaseResult => {
-    const hits = search(evaluationCase.query, { limit: evaluationCase.limit ?? 20 });
+    const hits = search(
+      evaluationCase.query,
+      evaluationCase.limit === undefined ? undefined : { limit: evaluationCase.limit },
+    );
     const topCapabilityIds = uniqueCapabilityIds(hits);
     const expected = new Set(evaluationCase.expectedCapabilityIds);
     const relevantIndex = topCapabilityIds.findIndex((capabilityId) => expected.has(capabilityId));

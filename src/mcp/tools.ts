@@ -45,12 +45,12 @@ export const MCP_TOOLS = [
   {
     name: "search-capabilities",
     description:
-      "Ranked search across indexed capability files. Accepts several words; results include the capability id, description, matching file and snippet. Group results by capabilityId, inspect shortlisted capabilities with capability-info, then load only the selected capabilities.",
+      "Capability-first ranked search across indexed files. Global results return the best matching file for each shortlisted capability; inspect one with capability-info, then use capabilityId to search its internal files or load an exact path.",
     inputSchema: {
       type: "object",
       properties: {
         query: { type: "string", description: "Search query, one or more words." },
-        limit: { type: "number", description: "Maximum number of results (default 20)." },
+        limit: { type: "number", description: "Maximum number of results (default 8)." },
         capabilityId: { type: "string", description: "Restrict the search to one capability." },
       },
       required: ["query"],

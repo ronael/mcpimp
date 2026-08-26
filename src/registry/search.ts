@@ -28,7 +28,7 @@ import type {
 
 const EXPANSION_WEIGHT = 0.4;
 const PHRASE_BONUS = 1.6;
-const DEFAULT_LIMIT = 20;
+const DEFAULT_LIMIT = 8;
 const DEFAULT_MAX_PER_CAPABILITY = 3;
 const SNIPPET_MAX_LENGTH = 240;
 
@@ -382,7 +382,11 @@ export function searchCapabilities(
     .filter((result): result is CapabilitySearchResult => result !== undefined)
     .sort((a, b) => b.score - a.score || a.capabilityId.localeCompare(b.capabilityId) || a.path.localeCompare(b.path));
 
-  const maxPerCapability = options.maxPerCapability ?? DEFAULT_MAX_PER_CAPABILITY;
+  // Global discovery is capability-first: return the best matching file for a
+  // compact shortlist. Once a capability is selected, a scoped search may
+  // expose several internal files for progressive disclosure.
+  const maxPerCapability = options.maxPerCapability
+    ?? (options.capabilityId ? DEFAULT_MAX_PER_CAPABILITY : 1);
   const perCapability = new Map<string, number>();
   const capped: CapabilitySearchResult[] = [];
 

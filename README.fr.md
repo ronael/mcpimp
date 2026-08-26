@@ -130,8 +130,10 @@ recherche sémantique : c'est le minimum utile en attendant. Le point de
 remplacement est la fonction `expandTerm()` — y brancher des embeddings ne
 touche aucun autre fichier.
 
-Paramètres optionnels : `limit` (20 par défaut) et `capabilityId` pour
-restreindre la recherche à une capacité.
+La recherche globale renvoie par défaut une shortlist de huit capabilities, avec
+le meilleur fichier correspondant pour chacune. Utilise ensuite `capabilityId`
+pour rechercher plusieurs fichiers internes à la capability retenue. Le
+paramètre optionnel `limit` ajuste la taille maximale de la shortlist.
 
 ```bash
 curl -sS http://localhost:3901/message \
