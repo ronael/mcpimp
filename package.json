@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.6.5",
   "scripts": {
     "dev": "tsx src/local.ts",
     "sources:sync": "tsx src/cli/sources.ts",
