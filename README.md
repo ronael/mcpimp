@@ -231,6 +231,8 @@ items carrying an ID; notification-only batches receive an empty `202`.
 
 Observed client sequences and their validation level are tracked in
 [`docs/mcp-compatibility.md`](docs/mcp-compatibility.md).
+The first real-agent retrieval pilot is documented in
+[`docs/agent-outcome-evaluation.md`](docs/agent-outcome-evaluation.md).
 
 ## Public website
 

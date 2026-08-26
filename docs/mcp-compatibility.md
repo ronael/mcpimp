@@ -8,7 +8,7 @@ ne remplace pas un test du binaire client contre un serveur redémarré.
 
 | Client | Transport | Trafic observé | Contrat automatisé | Validation live après correctifs |
 |---|---|---|---|---|
-| Codex `0.149.1` et `0.149.0-alpha.4.3` | Streamable HTTP direct | `initialize`, `notifications/initialized`, `tools/list`, `resources/list`, `resources/templates/list` | Oui | À refaire |
+| Codex `0.149.1` et `0.149.0-alpha.4.3` | Streamable HTTP direct | `initialize` en `2025-06-18`, `notifications/initialized`, `tools/list`, `resources/list`, `resources/templates/list`, `tools/call` | Oui | Validé avec `0.149.1` le 26 août |
 | Codex via `mcp-remote 0.2.5` | Adaptateur HTTP | `initialize`, `notifications/initialized`, `tools/list` | Couvert par la séquence Codex | À refaire |
 | Claude Code `2.1.241` / Desktop SDK `0.3.246` | Streamable HTTP | `server/discover`, `initialize`, `notifications/initialized`, `resources/list`, `tools/list` | Oui | À refaire |
 | Client Rust `rmcp 3.1.0` | Streamable HTTP | `initialize` | Partiel | À refaire |
@@ -32,6 +32,8 @@ sondées, pas à lui seul l'absence de déconnexion ou de retry côté client.
 
 Les scénarios versionnés sont dans
 [`src/http/__tests__/client-compatibility.test.ts`](../src/http/__tests__/client-compatibility.test.ts).
+Le pilote de sélection réelle avec Codex est décrit dans
+[`agent-outcome-evaluation.md`](agent-outcome-evaluation.md).
 
 ## Protocole de validation live
 

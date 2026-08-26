@@ -440,6 +440,9 @@ perte de données.
   pour les requêtes et `202` vide pour les lots de notifications uniquement.
 - Matrice de compatibilité versionnée pour les séquences Codex et Claude
   observées ; Cursor, Kimi et les validations live restent explicitement à faire.
+- Premier pilote agent outcome avec Codex Luna : trois sélections et trois
+  fichiers corrects sur trois scénarios ; le coût de chargement des longues
+  capabilities devient le prochain signal produit à traiter.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.
