@@ -8,6 +8,11 @@ MCPIMP is a personal capability registry for AI agents. This repository hosts
 the MCP server and exposes the catalog's capabilities—such as
 `landing-page/`—through MCP tools and resources.
 
+MCPIMP is a capability intelligence and distribution layer, not an agent
+framework or workflow engine. It helps an agent or its harness find a
+capability and progressively load useful context; the calling harness remains
+responsible for planning, execution, retries, and session management.
+
 ## Model
 
 A **capability** is MCPIMP's domain unit. It is not necessarily a skill: it is
@@ -270,3 +275,6 @@ provenance and makes future synchronisation possible.
 For the complete French reference, including detailed update policies, binary
 handling, source examples, and client-specific setup, see
 [README.fr.md](README.fr.md).
+
+The project’s priorities and longer-term evolution are tracked in the
+[product roadmap](docs/roadmap.md).

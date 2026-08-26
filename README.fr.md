@@ -8,6 +8,12 @@ Registry personnel de capacités pour agents IA. Le serveur MCP vit dans ce
 dépôt et expose les capacités du catalogue, comme `landing-page/`, via des
 outils et ressources MCP.
 
+MCPIMP est une couche d'intelligence et de distribution de capabilities, pas
+un framework d'agent ni un moteur de workflow. Il aide un agent ou son harness
+à trouver une capability et à charger progressivement le contexte utile ; le
+harness appelant reste responsable de la planification, de l'exécution, des
+reprises et de la gestion de session.
+
 ## Modèle
 
 Une **capability** est l'unité métier de MCPIMP. Ce n'est pas forcément un
@@ -618,3 +624,6 @@ conservées, et la resynchronisation reste possible.
 Les plugins Codex restent un format possible plus tard. Dans cette v1, l'unité
 métier est la capacité : elle peut contenir un skill, des ressources, des
 scripts, un MCP upstream, puis éventuellement un plugin dédié.
+
+Les priorités et l’évolution à plus long terme du projet sont suivies dans la
+[roadmap produit](docs/roadmap.md).
