@@ -38,6 +38,9 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Evaluate capability retrieval
+        run: pnpm evaluate:search
+
       - name: Run typecheck
         run: pnpm typecheck
 
