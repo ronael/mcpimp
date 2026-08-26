@@ -32,6 +32,7 @@ const PHRASE_BONUS = 1.6;
 const DEFAULT_LIMIT = 8;
 const DEFAULT_MAX_PER_CAPABILITY = 3;
 const SNIPPET_MAX_LENGTH = 240;
+const BODY_TERM_FREQUENCY_SATURATION_K = 1.2;
 
 const FIELD_WEIGHTS = {
   capabilityName: 6,
@@ -183,9 +184,18 @@ function addField(
   const terms = tokenize(value);
   if (terms.length > 0) fieldTerms.set(field, new Set(terms));
 
+  const frequencies = new Map<string, number>();
   for (const token of terms) {
-    target.set(token, (target.get(token) || 0) + weight);
+    frequencies.set(token, (frequencies.get(token) || 0) + 1);
     collect?.add(token);
+  }
+
+  for (const [token, frequency] of frequencies) {
+    const weightedFrequency = field === "body"
+      ? ((frequency * (BODY_TERM_FREQUENCY_SATURATION_K + 1))
+        / (frequency + BODY_TERM_FREQUENCY_SATURATION_K)) * weight
+      : frequency * weight;
+    target.set(token, (target.get(token) || 0) + weightedFrequency);
   }
 }
 
@@ -421,6 +431,7 @@ export function searchCapabilities(
                 fileWeight: Number(fileWeight.toFixed(4)),
                 resourceIntentWeight: Number(intentWeight.toFixed(4)),
                 phraseBonus,
+                bodyTermFrequencySaturationK: BODY_TERM_FREQUENCY_SATURATION_K,
                 terms: queryTerms
                   .filter(({ term }) => document.weights.has(term))
                   .map(({ term, root, weight }) => ({

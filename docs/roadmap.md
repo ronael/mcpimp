@@ -425,6 +425,9 @@ perte de données.
 - Normalisation commune des requêtes et vocabulaires d'intention : les pluriels
   FR/EN de ressources conservent leur bonus et les deux cas concernés passent au
   rang 1 dans le corpus.
+- Saturation de la fréquence des termes dans le corps : les longs documents ne
+  gagnent plus par répétition seule ; le corpus atteint 91,7 % de `Success@1`,
+  100 % de `Recall@3` et 100 % de précision du fichier recommandé.
 - Proxy MCP upstream et transports HTTP streamable/SSE.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de

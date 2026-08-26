@@ -282,6 +282,7 @@ describe("searchCapabilities", () => {
       fileWeight: 1.4,
       resourceIntentWeight: 1,
       phraseBonus: 1,
+      bodyTermFrequencySaturationK: 1.2,
     });
     expect(top.diagnostics?.lexicalScore).toBeGreaterThan(0);
     expect(top.diagnostics?.terms).toEqual(expect.arrayContaining([
@@ -304,6 +305,17 @@ describe("searchCapabilities", () => {
 
     expect(phrase.diagnostics?.phraseBonus).toBe(1.6);
     expect(resource.diagnostics?.resourceIntentWeight).toBeGreaterThan(1);
+  });
+
+  it("bounds repeated terms in body text", () => {
+    const repeated = capability("repeated", "local", "repeated", "repeated", "", [
+      file("repeated", "notes.md", "contrast ".repeat(100), "reference"),
+    ]);
+    const [result] = searchCapabilities([repeated], "contrast", { diagnostic: true });
+    const term = result.diagnostics?.terms.find(({ term }) => term === "contrast");
+
+    expect(term?.documentWeight).toBeGreaterThan(1);
+    expect(term?.documentWeight).toBeLessThanOrEqual(2.2);
   });
 
   it("skips files that have no indexable text", () => {

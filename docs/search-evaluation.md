@@ -103,6 +103,29 @@ Les capabilities de ressources UI et motion passent toutes deux du rang 2 au
 rang 1. La landing page générique reste au rang 4 et constitue le dernier échec
 top 3 du corpus actuel.
 
+## Après saturation de la fréquence dans le corps — 26 août 2026
+
+La fréquence d'un terme dans le corps d'un fichier suit désormais une
+saturation de type BM25 (`k = 1,2`). Une première occurrence conserve son poids,
+mais répéter le même mot ne peut plus augmenter son signal linéairement. Les
+champs éditoriaux courts — nom, description, tags, chemin et titres — conservent
+leur fréquence et leur pondération actuelles.
+
+| Mesure | Avant saturation | Après saturation |
+|---|---:|---:|
+| `Success@1` | 83,3 % | 91,7 % |
+| `Recall@3` | 91,7 % | 100 % |
+| MRR | 0,8819 | 0,9583 |
+| Précision du fichier recommandé | 100 % | 100 % |
+| Respect du budget de contexte | 100 % | 100 % |
+| Volume moyen | 7 158 | 7 180 caractères |
+| Volume maximal | 8 474 | 8 472 caractères |
+
+La landing page générique passe du rang 4 au rang 1. Aucun autre cas du corpus
+ne régresse. Cette règle limite l'avantage mécanique des documents très longs ;
+elle ne constitue pas encore une normalisation complète par longueur de
+document.
+
 ## Règles d'évolution du corpus
 
 - Partir de formulations utilisateur ou agent réelles, en français et en anglais.
@@ -124,7 +147,8 @@ L'outil MCP accepte `diagnostic: true`. Chaque résultat contient alors :
 - les champs correspondants et leurs poids ;
 - le poids du type et du chemin de fichier ;
 - le multiplicateur d'intention ressource ;
-- le bonus de phrase exacte.
+- le bonus de phrase exacte ;
+- la constante de saturation appliquée à la fréquence des termes du corps.
 
 Ce mode sert aux benchmarks et aux incidents de ranking. Il reste désactivé par
 défaut, car son payload détaillé contredirait l'objectif de contexte minimal. Le

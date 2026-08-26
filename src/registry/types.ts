@@ -181,6 +181,8 @@ export interface CapabilitySearchDiagnostics {
   fileWeight: number;
   resourceIntentWeight: number;
   phraseBonus: number;
+  /** BM25-style saturation constant applied to repeated terms in body text. */
+  bodyTermFrequencySaturationK: number;
   terms: Array<{
     term: string;
     root: string;
