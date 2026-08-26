@@ -217,6 +217,11 @@ curl -sS http://localhost:3901/message \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
 
+MCPIMP advertises concrete resources and therefore answers the standard
+`resources/templates/list` client probe with an empty `resourceTemplates` list.
+Non-standard probes such as `server/discover` intentionally receive JSON-RPC
+`-32601 Method not found` rather than a proprietary compatibility response.
+
 ## Public website
 
 The public static website lives in `site/` and is deployed to GitHub Pages by

@@ -429,6 +429,8 @@ perte de données.
   gagnent plus par répétition seule ; le corpus atteint 91,7 % de `Success@1`,
   100 % de `Recall@3` et 100 % de précision du fichier recommandé.
 - Proxy MCP upstream et transports HTTP streamable/SSE.
+- Sonde MCP `resources/templates/list` prise en charge avec une liste vide ; les
+  sondes non standard comme `server/discover` restent explicitement refusées.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.

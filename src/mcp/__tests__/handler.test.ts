@@ -88,6 +88,34 @@ describe("MCP handler", () => {
     expect(read.result.contents[0].text).toContain("# Landing Page");
   });
 
+  it("returns an empty list for the standard resource-template probe", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 51,
+      method: "resources/templates/list",
+    });
+
+    expect(response).toEqual({
+      jsonrpc: "2.0",
+      id: 51,
+      result: { resourceTemplates: [] },
+    });
+  });
+
+  it("keeps non-standard discovery probes as method-not-found errors", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 52,
+      method: "server/discover",
+    });
+
+    expect(response).toMatchObject({
+      error: { code: -32601, message: "Unknown method: server/discover" },
+    });
+  });
+
   it("loads one exact capability file for progressive disclosure", async () => {
     const handle = await createHandler();
     const response: any = await handle({

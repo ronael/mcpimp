@@ -46,6 +46,10 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
         }
         case "resources/list":
           return jsonRpcSuccess(id, { resources: registry.listResources() });
+        case "resources/templates/list":
+          // MCPIMP currently exposes concrete skill:// resources only. Clients
+          // may still probe this standard method when resources are advertised.
+          return jsonRpcSuccess(id, { resourceTemplates: [] });
         case "resources/read": {
           const params = request.params || {};
           if (typeof params.uri !== "string") throw new Error("Missing resource uri");
