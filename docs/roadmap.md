@@ -422,6 +422,9 @@ perte de données.
   fichier chacune, sans perte de pertinence mesurée sur la référence initiale.
 - Diagnostic de ranking optionnel : termes et IDF, champs, couverture, poids de
   fichier, intention ressource et bonus de phrase, sans alourdir le mode normal.
+- Normalisation commune des requêtes et vocabulaires d'intention : les pluriels
+  FR/EN de ressources conservent leur bonus et les deux cas concernés passent au
+  rang 1 dans le corpus.
 - Proxy MCP upstream et transports HTTP streamable/SSE.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de

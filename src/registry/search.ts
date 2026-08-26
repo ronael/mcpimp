@@ -43,24 +43,6 @@ const FIELD_WEIGHTS = {
   body: 1,
 } as const;
 
-const RESOURCE_QUERY_TERMS = new Set(["catalogue", "gallery", "gallerie", "inspiration", "lien", "link", "reference", "resource", "ressource"]);
-const RESOURCE_CAPABILITY_TERMS = new Set(["inspiration", "lien", "link", "reference", "resource", "ressource"]);
-
-const RESOURCE_DOMAINS = [
-  {
-    queryTerms: new Set(["ai", "agent", "anime", "animated", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
-    capabilityTerms: new Set(["ai", "agent", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
-  },
-  {
-    queryTerms: new Set(["animation", "badge", "card", "easing", "modal", "motion", "number", "resize", "timing", "transition"]),
-    capabilityTerms: new Set(["animation", "easing", "motion", "timing", "transition"]),
-  },
-  {
-    queryTerms: new Set(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
-    capabilityTerms: new Set(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
-  },
-] as const;
-
 /**
  * Not every file is equally worth surfacing. A `BUNDLE.md` concatenates the whole
  * capability, so it matches almost any query without being the useful answer; data
@@ -126,6 +108,40 @@ function singularize(token: string): string {
   if (token.length > 3 && token.endsWith("s") && !token.endsWith("ss")) return token.slice(0, -1);
   return token;
 }
+
+function normalizedTermSet(values: string[]): Set<string> {
+  return new Set(values.flatMap((value) => tokenize(value)));
+}
+
+// Normalize intent vocabularies with the same tokenizer as queries and indexed
+// content. Hand-written raw sets silently missed plurals such as `ressources`,
+// which the lightweight stemmer represents as `ressourc`.
+const RESOURCE_QUERY_TERMS = normalizedTermSet([
+  "catalogue", "catalogues", "gallery", "galleries", "galerie", "galeries",
+  "inspiration", "inspirations", "lien", "liens", "link", "links",
+  "reference", "references", "référence", "références", "resource",
+  "resources", "ressource", "ressources",
+]);
+const RESOURCE_CAPABILITY_TERMS = normalizedTermSet([
+  "inspiration", "inspirations", "lien", "liens", "link", "links",
+  "reference", "references", "référence", "références", "resource",
+  "resources", "ressource", "ressources",
+]);
+
+const RESOURCE_DOMAINS = [
+  {
+    queryTerms: normalizedTermSet(["ai", "agent", "anime", "animated", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
+    capabilityTerms: normalizedTermSet(["ai", "agent", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
+  },
+  {
+    queryTerms: normalizedTermSet(["animation", "badge", "card", "easing", "modal", "motion", "number", "resize", "timing", "transition"]),
+    capabilityTerms: normalizedTermSet(["animation", "easing", "motion", "timing", "transition"]),
+  },
+  {
+    queryTerms: normalizedTermSet(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
+    capabilityTerms: normalizedTermSet(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
+  },
+] as const;
 
 function normalizeText(value: string): string {
   return value

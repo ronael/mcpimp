@@ -83,6 +83,26 @@ Le volume moyen baisse d'environ 58,6 % sans dégradation des mesures de
 pertinence du corpus. Les rangs 2 des ressources UI et motion, puis le rang 4 de
 la landing page générique, restent des sujets de ranking distincts.
 
+## Après normalisation de l'intention ressource — 26 août 2026
+
+Les vocabulaires d'intention utilisent maintenant le même tokenizer que les
+requêtes et les documents. Les pluriels français et anglais, notamment
+`ressources` et `resources`, ne perdent plus leur bonus après stemming.
+
+| Mesure | Shortlist initiale | Après normalisation |
+|---|---:|---:|
+| `Success@1` | 66,7 % | 83,3 % |
+| `Recall@3` | 91,7 % | 91,7 % |
+| MRR | 0,7986 | 0,8819 |
+| Précision du fichier recommandé | 100 % | 100 % |
+| Respect du budget de contexte | 100 % | 100 % |
+| Volume moyen | 7 157 | 7 158 caractères |
+| Volume maximal | 8 474 | 8 474 caractères |
+
+Les capabilities de ressources UI et motion passent toutes deux du rang 2 au
+rang 1. La landing page générique reste au rang 4 et constitue le dernier échec
+top 3 du corpus actuel.
+
 ## Règles d'évolution du corpus
 
 - Partir de formulations utilisateur ou agent réelles, en français et en anglais.

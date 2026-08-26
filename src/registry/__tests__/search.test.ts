@@ -351,6 +351,20 @@ describe("searchCapabilities", () => {
     expect(top.path).toBe("references/component-links.md");
   });
 
+  it("detects French and English plural resource intents after token normalization", () => {
+    const [french] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "je cherche des ressources pour composants UI animés shadcn",
+    );
+    const [english] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "resources for animated UI components shadcn",
+    );
+
+    expect(french.capabilityId).toBe("component-resources");
+    expect(english.capabilityId).toBe("component-resources");
+  });
+
   it("ranks motion resources first when a transition query asks for references", () => {
     const [top] = searchCapabilities(
       RESOURCE_INTENT_CAPABILITIES,
