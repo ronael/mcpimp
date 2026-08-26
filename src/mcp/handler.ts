@@ -14,6 +14,8 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
 
     try {
       switch (request.method) {
+        case "ping":
+          return jsonRpcSuccess(id, {});
         case "initialize":
           return jsonRpcSuccess(id, {
             protocolVersion: "2025-03-26",

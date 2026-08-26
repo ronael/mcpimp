@@ -12,6 +12,16 @@ async function createHandler() {
 }
 
 describe("MCP handler", () => {
+  it("answers the standard connection heartbeat", async () => {
+    const handle = await createHandler();
+
+    await expect(handle({ jsonrpc: "2.0", id: "heartbeat", method: "ping" })).resolves.toEqual({
+      jsonrpc: "2.0",
+      id: "heartbeat",
+      result: {},
+    });
+  });
+
   it("initializes with tools and resources capabilities", async () => {
     const handle = await createHandler();
 

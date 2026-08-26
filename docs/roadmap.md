@@ -433,6 +433,7 @@ perte de données.
   sondes non standard comme `server/discover` restent explicitement refusées.
 - Codes d'erreur JSON-RPC différenciés pour les méthodes inconnues, paramètres
   invalides, ressources absentes et erreurs internes.
+- Heartbeat MCP `ping` pris en charge avec une réponse vide immédiate.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.
