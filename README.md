@@ -222,6 +222,18 @@ Start the local server first:
 pnpm run dev
 ```
 
+Run the read-only operational diagnostic when setup or startup is unclear:
+
+```bash
+pnpm run doctor
+```
+
+It checks the catalog, activity-log path, local port, and required upstream
+environment variables. It reports variable names only, never their values. If
+the default port is already occupied, MCPIMP identifies the listening PID and
+suggests either checking the running instance or selecting another port.
+`SIGINT` and `SIGTERM` stop the server cleanly and flush the activity log.
+
 Use `http://localhost:3901/message` for streamable HTTP clients and
 `http://localhost:3901/sse` for SSE-only clients. Current Codex and Claude Code
 clients can connect directly:
@@ -282,6 +294,7 @@ pnpm run test
 pnpm run typecheck
 pnpm run build
 pnpm run sources:sync   # external-source status (read-only)
+pnpm run doctor         # local runtime diagnostic (read-only)
 pnpm run dev
 ```
 

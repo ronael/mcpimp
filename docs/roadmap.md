@@ -1,6 +1,6 @@
 # MCPIMP — roadmap produit
 
-Dernier cadrage produit : 26 août 2026
+Dernier cadrage produit : 27 août 2026
 
 ## Rôle de ce document
 
@@ -74,6 +74,7 @@ Le produit évolue selon six axes :
 | Ingestion | GitHub et catalogues web, provenance, hashes, licences et overrides |
 | MCP | HTTP streamable, SSE legacy, tools, resources et proxy des tools upstream |
 | Sécurité d’ingestion | Validation des chemins et hôtes, plafonds, contenu inerte, secrets via environnement |
+| Opérations locales | Doctor en lecture seule, erreurs de port actionnables et arrêt avec flush du journal |
 | Observabilité locale | Activité en mémoire, NDJSON persistant, expurgation et drawer de détail |
 | Interface | Landing et documentation statiques, dashboard dynamique, en anglais et français |
 | Qualité | Tests unitaires et d’intégration, typecheck et snapshot de build |
@@ -86,11 +87,10 @@ La **phase 1 — stabiliser la v1** est active. L’ordre d’exécution recomma
 |---|---|---|
 | 1 | Socle CI de P1.6 | Protéger tous les changements suivants par tests, typecheck et build |
 | 2 | Récupération et contexte minimal P1.1 | Mesurer la sélection d'une capability et le coût du contexte avant d'agrandir le catalogue |
-| 3 | Cycle de vie P1.3 | Corriger les erreurs de démarrage et d’arrêt déjà rencontrées en usage réel |
-| 4 | Compatibilité P1.2 | Formaliser les comportements observés avec Codex, Claude et les autres clients |
-| 5 | Exactitude de sync P1.5 | Éviter qu’une suppression ou collision amont reste silencieuse |
-| 6 | Observabilité P1.4 | Borner les logs et rendre les incidents filtrables après stabilisation du protocole |
-| 7 | Validation visuelle et déploiement P1.6 | Fermer la v1 sur les deux surfaces publiques |
+| 3 | Compatibilité P1.2 | Formaliser les comportements observés avec Codex, Claude et les autres clients |
+| 4 | Exactitude de sync P1.5 | Éviter qu’une suppression ou collision amont reste silencieuse |
+| 5 | Observabilité P1.4 | Borner les logs et rendre les incidents filtrables après stabilisation du protocole |
+| 6 | Validation visuelle et déploiement P1.6 | Fermer la v1 sur les deux surfaces publiques |
 
 Ce séquencement peut changer pour une correction de sécurité ou de perte de
 données, mais pas simplement pour ajouter une fonctionnalité plus visible.
@@ -165,20 +165,6 @@ inattendu peut être expliqué sans lire manuellement tout le catalogue.
 
 Critère de sortie : aucun client supporté ne se déconnecte ou ne boucle à cause
 d’une réponse MCPIMP invalide ; les écarts connus sont documentés.
-
-### P1.3 — cycle de vie du serveur local
-
-- Transformer `EADDRINUSE` en message actionnable indiquant le PID et la commande
-  de diagnostic, sans stack trace brute.
-- Gérer proprement `SIGINT` et `SIGTERM`, notamment la fermeture et le flush du
-  journal.
-- Ajouter une commande `doctor` ou équivalente pour vérifier port, catalogue,
-  variables upstream et permissions d’écriture.
-- Décider si le rechargement du catalogue sans redémarrage est nécessaire après
-  mesure de l’usage réel.
-
-Critère de sortie : démarrage, arrêt et diagnostic sont compréhensibles sans
-inspection manuelle des processus.
 
 ### P1.4 — observabilité exploitable
 
@@ -458,3 +444,9 @@ perte de données.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.
+- Cycle de vie local fiabilisé : `EADDRINUSE` indique le PID et les actions
+  possibles sans stack brute, `SIGINT`/`SIGTERM` ferment le serveur et flushent
+  le journal, et `pnpm run doctor` contrôle en lecture seule le catalogue, le
+  port, les permissions du journal et les variables upstream sans révéler leurs
+  valeurs. Le rechargement à chaud reste hors périmètre jusqu’à ce qu’un usage
+  réel le justifie.

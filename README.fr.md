@@ -461,6 +461,20 @@ Lance d'abord le serveur local :
 pnpm run dev
 ```
 
+En cas de doute sur la configuration ou le démarrage, lance le diagnostic
+opérationnel en lecture seule :
+
+```bash
+pnpm run doctor
+```
+
+Il vérifie le catalogue, l’emplacement du journal d’activité, le port local et
+les variables d’environnement requises par les upstreams. Seuls les noms des
+variables sont affichés, jamais leurs valeurs. Si le port par défaut est déjà
+occupé, MCPIMP indique le PID à l’écoute et propose de contrôler l’instance
+existante ou de choisir un autre port. `SIGINT` et `SIGTERM` arrêtent proprement
+le serveur et vident le buffer du journal.
+
 ### Kimi Code CLI
 
 Ajoute un serveur au niveau **projet** (ce dépôt) dans `.kimi-code/mcp.json` :
@@ -582,6 +596,7 @@ pnpm run test
 pnpm run typecheck
 pnpm run build
 pnpm run sources:sync   # état des sources externes (lecture seule)
+pnpm run doctor         # diagnostic local en lecture seule
 pnpm run dev
 ```
 
