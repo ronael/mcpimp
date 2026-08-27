@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
+import { extractLinkedCapabilityPaths } from "../markdown-links";
 import { rankMarkdownSections } from "../section-search";
 import { createMcpHandler } from "../../mcp/handler";
 import { HEADING_EVALUATION_CORPUS } from "../../../test/evaluation/heading-corpus";
@@ -181,8 +182,17 @@ describe("design capability catalog", () => {
       const markdown = registry.getCapability(entry.capabilityId)?.files
         .find((file) => file.path === entry.path)?.text;
       expect(markdown, `${entry.capabilityId}/${entry.path} should exist`).toBeTruthy();
-      expect(rankMarkdownSections(markdown || "", entry.query, 3)[0]?.heading)
-        .toBe(entry.expectedHeading);
+      const [top] = rankMarkdownSections(markdown || "", entry.query, 3);
+      expect(top?.heading).toBe(entry.expectedHeading);
+
+      if (entry.expectedLinkedPaths) {
+        const capability = registry.getCapability(entry.capabilityId);
+        expect(extractLinkedCapabilityPaths(
+          top?.text || "",
+          entry.path,
+          capability?.files.map((file) => file.path) || [],
+        )).toEqual(entry.expectedLinkedPaths);
+      }
     }
   });
 });

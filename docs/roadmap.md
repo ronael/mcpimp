@@ -135,9 +135,9 @@ le minimum de contexte utile. Améliorer les poids de ranking n'est qu'un moyen.
   résultats.
 - Distinguer le point d'entrée principal, aujourd'hui généralement `SKILL.md`,
   du contexte recommandé pour une intention et des fichiers à charger à une
-  étape particulière. Le shortlist de headings couvre maintenant deux
-  capabilities et quatre intentions ; le prochain cas concret est un heading
-  qui route explicitement vers un autre fichier.
+  étape particulière. Le shortlist de headings couvre maintenant trois
+  capabilities et cinq intentions ; deux routeurs internes réels exposent leurs
+  chemins liés sans les transformer en dépendances obligatoires.
 - Examiner le comportement par défaut de `load-capability`, qui peut actuellement
   charger une capability complète, sans casser les clients existants.
 - Signaler les recherches sans résultat ou à faible confiance afin d’orienter
@@ -451,8 +451,9 @@ perte de données.
 - Revalidation avec deux agents Luna : sélection de capability conservée et
   contenu chargé réduit de 91,8 %, mais tokens CLI en hausse de 37,0 % ; le
   shortlist/ranking de headings selon la requête réduit ensuite les outlines de
-  49,7 % sur ces deux cas, avec quatre attentes de heading au rang 1 dans le
-  corpus versionné.
+  49,7 % sur ces deux cas, avec cinq attentes de heading au rang 1 dans le corpus
+  versionné ; deux headings routeurs exposent uniquement des fichiers internes
+  validés par le registry.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.

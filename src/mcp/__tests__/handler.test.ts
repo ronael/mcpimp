@@ -241,6 +241,29 @@ describe("MCP handler", () => {
     });
   });
 
+  it("exposes validated internal paths linked by a ranked heading", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 64,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: {
+          id: "landing-page",
+          path: "SKILL.md",
+          query: "workflow drafting",
+        },
+      },
+    });
+    const summary = JSON.parse(response.result.content[0].text);
+
+    expect(summary.files[0].outline[0]).toMatchObject({
+      heading: "Workflow",
+      linkedPaths: ["references/source.md"],
+    });
+  });
+
   it("returns a JSON-RPC error for missing resources", async () => {
     const handle = await createHandler();
     const response: any = await handle({

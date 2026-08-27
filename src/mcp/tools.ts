@@ -1,5 +1,6 @@
 import type { Capability, CapabilityRegistry } from "../registry/types";
 import { extractMarkdownSections, isMarkdownEntrypoint } from "../registry/frontmatter";
+import { extractLinkedCapabilityPaths } from "../registry/markdown-links";
 import { rankMarkdownSections } from "../registry/section-search";
 import { JsonRpcError } from "./protocol";
 import type { UpstreamMcpGateway } from "./upstream";
@@ -16,7 +17,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "capability-info",
-    description: "Get metadata, provenance and indexed files for one capability. Pass path and query to receive a compact ranked Markdown entrypoint shortlist; path alone returns the full outline. Prefer entrypoint: true because false identifies a document wrapper equivalent to the full file.",
+    description: "Get metadata, provenance and indexed files for one capability. Pass path and query to receive a compact ranked Markdown entrypoint shortlist, including linkedPaths for mentioned internal files; path alone returns the full outline. Prefer entrypoint: true because false identifies a document wrapper equivalent to the full file.",
     inputSchema: {
       type: "object",
       properties: {
@@ -163,15 +164,26 @@ function summarizeCapability(
                 ? rankMarkdownSections(file.text, query, headingLimit)
                 : sections;
 
-              return selected.map((section, index) => ({
-                heading: section.heading,
-                level: section.level,
-                characters: section.text.length,
-                entrypoint: query ? true : isMarkdownEntrypoint(sections, index),
-                ...(query && diagnostic && "score" in section && "matchedTerms" in section
-                  ? { score: section.score, matchedTerms: section.matchedTerms }
-                  : {}),
-              }));
+              return selected.map((section, index) => {
+                const linkedPaths = query
+                  ? extractLinkedCapabilityPaths(
+                      section.text,
+                      file.path,
+                      capability.files.map((candidate) => candidate.path),
+                    )
+                  : [];
+
+                return {
+                  heading: section.heading,
+                  level: section.level,
+                  characters: section.text.length,
+                  entrypoint: query ? true : isMarkdownEntrypoint(sections, index),
+                  ...(linkedPaths.length > 0 ? { linkedPaths } : {}),
+                  ...(query && diagnostic && "score" in section && "matchedTerms" in section
+                    ? { score: section.score, matchedTerms: section.matchedTerms }
+                    : {}),
+                };
+              });
             })(),
             ...(query
               ? {

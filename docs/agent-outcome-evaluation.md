@@ -93,9 +93,10 @@ l'intention et n'en retourne que cinq par défaut. Le mode sans `query` conserve
 l'outline complet pour compatibilité. Les scores et termes reconnus restent
 disponibles avec `diagnostic: true`, sans alourdir la réponse normale.
 
-Le corpus versionné couvre quatre intentions sur deux capabilities : workflow
-d'architecture, intake, structure de landing page et typographie. Les quatre
-headings attendus arrivent au rang 1. Sur les deux requêtes du pilote agent :
+Le corpus versionné couvre maintenant cinq intentions sur trois capabilities :
+workflow d'architecture, intake, structure de landing page, typographie et
+ressources de composants. Les cinq headings attendus arrivent au rang 1. Sur les
+deux requêtes du pilote agent :
 
 | Outline | Complet | Shortlist | Réduction |
 |---|---:|---:|---:|
@@ -103,10 +104,14 @@ headings attendus arrivent au rang 1. Sur les deux requêtes du pilote agent :
 | Landing page | 7 012 | 2 931 caractères | 58,2 % |
 | Total | 8 702 | 4 380 caractères | 49,7 % |
 
-Ces chiffres mesurent le payload MCP, pas les tokens d'un nouveau run agent. Le
-prochain point à traiter est le routage explicite d'un heading vers un autre
-fichier, observé avec `Référence principale`, avant d'ajouter des champs
-génériques de workflow ou de dépendances.
+Ces chiffres mesurent le payload MCP, pas les tokens d'un nouveau run agent.
+
+Les headings classés exposent aussi `linkedPaths` lorsqu'ils mentionnent un
+fichier existant dans la même capability. Le contrat est validé sur deux cas
+réels : `Workflow` route vers le blueprint d'architecture et vers les références
+de composants. MCPIMP n'infère pas que ces liens sont obligatoires et ne charge
+rien automatiquement. Un prochain pilote agent devra vérifier si le harness suit
+le bon lien au bon moment avant d'ajouter des relations plus riches.
 
 ## Limites
 
