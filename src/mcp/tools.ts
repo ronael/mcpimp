@@ -14,7 +14,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "capability-info",
-    description: "Get metadata, provenance and indexed files for one capability. Pass a path to inspect its Markdown outline before loading context.",
+    description: "Get metadata, provenance and indexed files for one capability. Pass a path to inspect its Markdown outline before loading context; prefer headings marked entrypoint: true because entrypoint: false identifies a document wrapper equivalent to loading the full file.",
     inputSchema: {
       type: "object",
       properties: {
@@ -145,11 +145,18 @@ function summarizeCapability(registry: CapabilityRegistry, id: string, requested
       layer: file.layer,
       ...(requestedPath && file.mimeType === "text/markdown" && typeof file.text === "string"
         ? {
-            outline: extractMarkdownSections(file.text).map((section) => ({
-              heading: section.heading,
-              level: section.level,
-              characters: section.text.length,
-            })),
+            outline: (() => {
+              const sections = extractMarkdownSections(file.text);
+              const firstHeadingWrapsDocument = sections.length > 1
+                && sections.slice(1).every((section) => section.level > sections[0].level);
+
+              return sections.map((section, index) => ({
+                heading: section.heading,
+                level: section.level,
+                characters: section.text.length,
+                entrypoint: !(index === 0 && firstHeadingWrapsDocument),
+              }));
+            })(),
           }
         : {}),
     })),

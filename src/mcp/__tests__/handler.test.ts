@@ -157,8 +157,8 @@ describe("MCP handler", () => {
 
     expect(summary.files).toHaveLength(1);
     expect(summary.files[0].outline).toEqual([
-      expect.objectContaining({ heading: "Source", level: 1 }),
-      expect.objectContaining({ heading: "Example Source", level: 2 }),
+      expect.objectContaining({ heading: "Source", level: 1, entrypoint: false }),
+      expect.objectContaining({ heading: "Example Source", level: 2, entrypoint: true }),
     ]);
 
     const loaded: any = await handle({

@@ -445,7 +445,12 @@ perte de données.
   capabilities devient le prochain signal produit à traiter.
 - Outline Markdown ciblé via `capability-info(id, path)` et chargement d'un
   heading complet via `load-capability` : réduction mesurée de 60,9 à 70,8 % sur
-  deux capabilities réelles, sans troncature arbitraire.
+  deux capabilities réelles, sans troncature arbitraire ; les titres racines qui
+  enveloppent un document sont distingués des entrypoints réellement progressifs.
+- Revalidation avec deux agents Luna : sélection de capability conservée et
+  contenu chargé réduit de 91,8 %, mais tokens CLI en hausse de 37,0 % ; le
+  shortlist/ranking de headings selon la requête devient le prochain levier avant
+  d'enrichir le contrat harness.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.

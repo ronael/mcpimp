@@ -54,6 +54,41 @@ avec ses sous-sections. Sur les deux cas réels utilisés pour valider ce contra
 
 Ce mécanisme ne choisit pas encore automatiquement le heading selon l'intention.
 Il fournit au harness une primitive explicable et non destructive pour le faire.
+Un titre racine qui enveloppe tout le document reste chargeable, mais il est
+signalé par `entrypoint: false` dans l'outline afin qu'un agent ne le confonde pas
+avec un point d'entrée progressif.
+
+## Revalidation agent du 27 août 2026
+
+Les deux scénarios qui chargeaient les plus longs fichiers ont été rejoués avec
+Luna, dans les mêmes conditions d'isolation. L'agent devait cette fois appeler
+`capability-info`, choisir un heading marqué `entrypoint: true`, puis le charger.
+Le résultat brut est versionné dans
+[`test/evaluation/codex-progressive-entrypoint-pilot.json`](../test/evaluation/codex-progressive-entrypoint-pilot.json).
+
+Un premier passage exploratoire a révélé que Luna confondait le titre racine de
+`frontend-architecture` avec une section progressive. Ce signal a conduit à
+ajouter le marqueur `entrypoint` avant de rejouer les deux scénarios comparables.
+
+| Scénario | Capability | Heading choisi | Qualité du contexte initial |
+|---|---|---|---|
+| Architecture frontend | `frontend-architecture` | `Référence principale` | route vers le blueprint détaillé, mais ne suffit pas encore à exécuter la tâche |
+| Landing page premium | `elaya-design-landing-page-design` | `A1. Intake` | intake directement exploitable pour commencer |
+
+| Mesure sur les deux scénarios | Chargement complet | Progressif | Évolution |
+|---|---:|---:|---:|
+| Contenu chargé | 20 769 caractères | 1 703 caractères | −91,8 % |
+| Toutes les réponses MCP | 36 023 caractères | 25 659 caractères | −28,8 % |
+| Tokens rapportés par la CLI | 45 804 | 62 758 | +37,0 % |
+
+La primitive est donc validée pour borner le contenu chargé et les deux agents
+conservent la bonne sélection de capability. Elle ne démontre pas encore une
+économie globale de tokens : l'appel supplémentaire et surtout l'outline de
+7 012 caractères de la landing page annulent une partie du gain. Le prochain
+incrément pertinent est un shortlist/ranking de headings dépendant de la requête,
+avec la possibilité de suivre explicitement un entrypoint qui route vers un autre
+fichier. Il faut mesurer ce contrat avant d'ajouter des champs génériques de
+workflow ou de dépendances.
 
 ## Limites
 
@@ -61,6 +96,9 @@ Il fournit au harness une primitive explicable et non destructive pour le faire.
   conclure sur la stabilité statistique.
 - Les tokens CLI incluent le démarrage de l'agent, les outils et le raisonnement ;
   ils ne mesurent pas seulement les payloads MCPIMP.
+- La revalidation progressive utilise le pilote précédent comme baseline, pas
+  une paire A/B simultanée ; les écarts de tokens incluent donc la variance du
+  modèle et ne doivent pas être interprétés comme une mesure statistique.
 - Ce pilote daté ne tourne pas en CI afin d'éviter coût, variance et dépendance
   réseau. Une automatisation ultérieure devra conserver les sorties brutes et
   exécuter plusieurs répétitions.

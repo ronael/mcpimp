@@ -121,8 +121,16 @@ describe("design capability catalog", () => {
     const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const handle = createMcpHandler(registry);
     const cases = [
-      { id: "elaya-design-landing-page-design", heading: "PART A — Strategy and structure" },
-      { id: "frontend-architecture", heading: "Workflow" },
+      {
+        id: "elaya-design-landing-page-design",
+        heading: "PART A — Strategy and structure",
+        firstHeadingIsEntrypoint: true,
+      },
+      {
+        id: "frontend-architecture",
+        heading: "Workflow",
+        firstHeadingIsEntrypoint: false,
+      },
     ];
 
     for (const [index, entry] of cases.entries()) {
@@ -136,7 +144,13 @@ describe("design capability catalog", () => {
         },
       });
       const outline = JSON.parse(info.result.content[0].text).files[0].outline;
-      expect(outline).toContainEqual(expect.objectContaining({ heading: entry.heading }));
+      expect(outline).toContainEqual(expect.objectContaining({
+        heading: entry.heading,
+        entrypoint: true,
+      }));
+      expect(outline[0]).toEqual(expect.objectContaining({
+        entrypoint: entry.firstHeadingIsEntrypoint,
+      }));
 
       const full: any = await handle({
         jsonrpc: "2.0",
