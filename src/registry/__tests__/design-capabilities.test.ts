@@ -182,8 +182,14 @@ describe("design capability catalog", () => {
       const markdown = registry.getCapability(entry.capabilityId)?.files
         .find((file) => file.path === entry.path)?.text;
       expect(markdown, `${entry.capabilityId}/${entry.path} should exist`).toBeTruthy();
-      const [top] = rankMarkdownSections(markdown || "", entry.query, 3);
-      expect(top?.heading).toBe(entry.expectedHeading);
+      const ranked = rankMarkdownSections(markdown || "", entry.query, 3);
+      const [top] = ranked;
+      expect(
+        ranked.findIndex((section) => section.heading === entry.expectedHeading),
+        `${entry.id} should rank ${entry.expectedHeading}`,
+      ).toBeGreaterThanOrEqual(0);
+      expect(ranked.findIndex((section) => section.heading === entry.expectedHeading))
+        .toBeLessThan(entry.maxExpectedRank || 1);
 
       if (entry.expectedLinkedPaths) {
         const capability = registry.getCapability(entry.capabilityId);

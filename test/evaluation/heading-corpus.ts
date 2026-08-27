@@ -4,6 +4,7 @@ export interface HeadingEvaluationCase {
   path: string;
   query: string;
   expectedHeading: string;
+  maxExpectedRank?: number;
   expectedLinkedPaths?: string[];
 }
 
@@ -45,5 +46,13 @@ export const HEADING_EVALUATION_CORPUS: HeadingEvaluationCase[] = [
     query: "références inspiration composants UI workflow",
     expectedHeading: "Workflow",
     expectedLinkedPaths: ["references/component-inspiration-links.md"],
+  },
+  {
+    id: "frontend-blueprint-reconstruction-fr",
+    capabilityId: "frontend-architecture",
+    path: "references/src-architecture-blueprint.md",
+    query: "restructurer frontend TypeScript domaine pur ports adapters Zustand",
+    expectedHeading: "18. Ordre de reconstruction pour une IA",
+    maxExpectedRank: 3,
   },
 ];

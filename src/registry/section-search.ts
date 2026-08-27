@@ -6,6 +6,7 @@ const DEFAULT_LIMIT = 5;
 const HEADING_WEIGHT = 3;
 const BODY_WEIGHT = 1;
 const EXPANSION_WEIGHT = 0.4;
+const SECTION_ALIAS_WEIGHT = 0.7;
 const MIN_SECTION_CHARACTERS_FOR_SIZE_PENALTY = 240;
 
 // Narrow morphology and bilingual aliases observed in section-level queries.
@@ -15,6 +16,7 @@ const SECTION_ALIASES = new Map<string, string[]>([
   ["public", ["audience", "target", "icp"]],
   ["cible", ["audience", "target", "icp"]],
   ["visuelle", ["visual", "visuel", "imagery"]],
+  ["restructurer", ["reconstruction", "refactor", "refonte", "rebuild"]],
 ]);
 
 export interface RankedMarkdownSection extends MarkdownSection {
@@ -58,7 +60,7 @@ export function rankMarkdownSections(
         { term: literal, weight: 1 },
         ...expandTerm(literal).map((term) => ({ term, weight: EXPANSION_WEIGHT })),
         ...(SECTION_ALIASES.get(literal) || [])
-          .map((term) => ({ term, weight: EXPANSION_WEIGHT })),
+          .map((term) => ({ term, weight: SECTION_ALIAS_WEIGHT })),
       ];
       let bestWeight = 0;
 

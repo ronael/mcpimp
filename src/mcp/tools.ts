@@ -17,7 +17,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "capability-info",
-    description: "Get metadata, provenance and indexed files for one capability. Pass path and query to receive a compact ranked Markdown entrypoint shortlist, including linkedPaths for mentioned internal files; path alone returns the full outline. Prefer entrypoint: true because false identifies a document wrapper equivalent to the full file.",
+    description: "Get metadata, provenance and indexed files for one capability. Pass path and query to receive a compact ranked Markdown entrypoint shortlist, including linkedPaths and linkedFiles metadata for mentioned internal files; inspect large linked Markdown with capability-info before loading it. Path alone returns the full outline.",
     inputSchema: {
       type: "object",
       properties: {
@@ -172,13 +172,23 @@ function summarizeCapability(
                       capability.files.map((candidate) => candidate.path),
                     )
                   : [];
+                const linkedFiles = linkedPaths.flatMap((path) => {
+                  const linked = capability.files.find((candidate) => candidate.path === path);
+                  if (!linked) return [];
+                  return [{
+                    path: linked.path,
+                    mimeType: linked.mimeType,
+                    bytes: linked.bytes,
+                    ...(typeof linked.text === "string" ? { characters: linked.text.length } : {}),
+                  }];
+                });
 
                 return {
                   heading: section.heading,
                   level: section.level,
                   characters: section.text.length,
                   entrypoint: query ? true : isMarkdownEntrypoint(sections, index),
-                  ...(linkedPaths.length > 0 ? { linkedPaths } : {}),
+                  ...(linkedPaths.length > 0 ? { linkedPaths, linkedFiles } : {}),
                   ...(query && diagnostic && "score" in section && "matchedTerms" in section
                     ? { score: section.score, matchedTerms: section.matchedTerms }
                     : {}),

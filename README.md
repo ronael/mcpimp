@@ -114,10 +114,13 @@ count. Set `diagnostic: true` to include heading scores and matched terms.
 Loading a heading returns that complete section and its nested subsections, so
 context is reduced without cutting instructions at an arbitrary boundary.
 
-Ranked entries also expose `linkedPaths` when their section mentions another
-file that exists inside the same capability. These paths are navigation hints,
-not required dependencies or permission to execute content. External and
-missing paths are never surfaced as internal links.
+Ranked entries also expose `linkedPaths` and `linkedFiles` metadata when their
+section mentions another file that exists inside the same capability. The
+metadata includes MIME type, bytes and text characters so a harness can load a
+small file directly or inspect a large Markdown file with another
+`capability-info(id, linkedPath, query)` call before choosing a heading. These
+links are navigation hints, not required dependencies or permission to execute
+content. External and missing paths are never surfaced as internal links.
 
 ```bash
 curl -sS http://localhost:3901/message \

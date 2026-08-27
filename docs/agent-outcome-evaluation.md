@@ -106,12 +106,36 @@ deux requêtes du pilote agent :
 
 Ces chiffres mesurent le payload MCP, pas les tokens d'un nouveau run agent.
 
-Les headings classés exposent aussi `linkedPaths` lorsqu'ils mentionnent un
-fichier existant dans la même capability. Le contrat est validé sur deux cas
-réels : `Workflow` route vers le blueprint d'architecture et vers les références
-de composants. MCPIMP n'infère pas que ces liens sont obligatoires et ne charge
-rien automatiquement. Un prochain pilote agent devra vérifier si le harness suit
-le bon lien au bon moment avant d'ajouter des relations plus riches.
+Les headings classés exposent aussi `linkedPaths` et `linkedFiles` lorsqu'ils
+mentionnent un fichier existant dans la même capability. `linkedFiles` ajoute le
+type MIME, les octets et les caractères du texte afin que le harness puisse
+décider s'il inspecte encore le fichier avant de le charger. MCPIMP n'infère pas
+que ces liens sont obligatoires et ne charge rien automatiquement.
+
+## Pilote agent : routage vers les fichiers liés
+
+Deux sessions Luna isolées ont d'abord suivi correctement `Workflow` vers le
+blueprint d'architecture et vers les références de composants. Ce premier
+passage a révélé que suivre un chemin sans connaître sa taille chargeait 53 711
+caractères pour le blueprint.
+
+Après ajout des métadonnées de taille, le protocole a été rejoué : un Markdown
+de plus de 12 000 caractères est d'abord inspecté avec `capability-info`; un
+petit fichier est chargé directement. Luna a alors choisi
+`18. Ordre de reconstruction pour une IA` dans le blueprint et n'a chargé aucun
+fichier supplémentaire.
+
+| Mesure sur deux scénarios | Routage direct | Routage adaptatif | Évolution |
+|---|---:|---:|---:|
+| Toutes les réponses MCP | 74 304 | 24 074 caractères | −67,6 % |
+| Contenu chargé | 58 053 | 5 473 caractères | −90,6 % |
+| Tokens rapportés par la CLI | 66 276 | 58 186 | −12,2 % |
+
+Le résultat brut est versionné dans
+[`test/evaluation/codex-linked-path-routing-pilot.json`](../test/evaluation/codex-linked-path-routing-pilot.json).
+La baisse des tokens CLI reste indicative avec une seule exécution. La décision
+de seuil appartient encore au harness ; MCPIMP fournit les signaux et les
+entrypoints, pas une politique d'orchestration.
 
 ## Limites
 

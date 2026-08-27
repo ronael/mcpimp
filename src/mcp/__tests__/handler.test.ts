@@ -261,6 +261,12 @@ describe("MCP handler", () => {
     expect(summary.files[0].outline[0]).toMatchObject({
       heading: "Workflow",
       linkedPaths: ["references/source.md"],
+      linkedFiles: [{
+        path: "references/source.md",
+        mimeType: "text/markdown",
+        bytes: expect.any(Number),
+        characters: expect.any(Number),
+      }],
     });
   });
 
