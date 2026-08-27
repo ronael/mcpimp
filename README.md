@@ -82,7 +82,7 @@ skill://ui-ux-pro-max/references/quick-reference.md
 | Tool | Purpose |
 |---|---|
 | `list-capabilities` | Lists available capabilities and their origin |
-| `capability-info` | Returns metadata and files, or one file's Markdown outline with `path` |
+| `capability-info` | Returns metadata/files, a full Markdown outline with `path`, or a ranked heading shortlist with `path` + `query` |
 | `load-capability` | Loads a capability, exact file, or complete Markdown heading subtree |
 | `search-capabilities` | Searches indexed files and ranks results |
 | `list-upstreams` | Checks configured upstream MCP servers |
@@ -103,13 +103,16 @@ For a long Markdown entrypoint, inspect its outline before loading context:
 
 ```txt
 search-capabilities(query)
-→ capability-info(id, path: "SKILL.md")
+→ capability-info(id, path: "SKILL.md", query)
 → load-capability(id, path: "SKILL.md", heading: "Workflow")
 ```
 
-Each outline entry reports its heading level and character count. Loading a
-heading returns that complete section and its nested subsections, so context is
-reduced without cutting instructions at an arbitrary character boundary.
+With `query`, the outline is ranked and limited to five headings by default
+(`headingLimit`, maximum 8). Without it, the complete document-order outline is
+returned for compatibility. Each entry reports its heading level and character
+count. Set `diagnostic: true` to include heading scores and matched terms.
+Loading a heading returns that complete section and its nested subsections, so
+context is reduced without cutting instructions at an arbitrary boundary.
 
 ```bash
 curl -sS http://localhost:3901/message \

@@ -53,6 +53,30 @@ describe("MCP activity log", () => {
     })).toEqual({ id: "landing-page", path: "SKILL.md", heading: "Workflow" });
   });
 
+  it("keeps the bounded heading-ranking parameters", () => {
+    expect(activityParameters({
+      jsonrpc: "2.0",
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: {
+          id: "landing-page",
+          path: "SKILL.md",
+          query: "premium conversion",
+          headingLimit: 3,
+          diagnostic: true,
+          ignored: "hidden",
+        },
+      },
+    })).toEqual({
+      id: "landing-page",
+      path: "SKILL.md",
+      query: "premium conversion",
+      headingLimit: 3,
+      diagnostic: true,
+    });
+  });
+
   it("records only field names and types for upstream tool arguments", () => {
     const parameters = activityParameters({
       jsonrpc: "2.0",

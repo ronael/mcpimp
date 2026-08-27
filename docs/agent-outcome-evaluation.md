@@ -84,11 +84,29 @@ ajouter le marqueur `entrypoint` avant de rejouer les deux scénarios comparable
 La primitive est donc validée pour borner le contenu chargé et les deux agents
 conservent la bonne sélection de capability. Elle ne démontre pas encore une
 économie globale de tokens : l'appel supplémentaire et surtout l'outline de
-7 012 caractères de la landing page annulent une partie du gain. Le prochain
-incrément pertinent est un shortlist/ranking de headings dépendant de la requête,
-avec la possibilité de suivre explicitement un entrypoint qui route vers un autre
-fichier. Il faut mesurer ce contrat avant d'ajouter des champs génériques de
-workflow ou de dépendances.
+7 012 caractères de la landing page annulent une partie du gain.
+
+## Incrément suivant : shortlist de headings
+
+`capability-info(id, path, query)` classe désormais les sections selon
+l'intention et n'en retourne que cinq par défaut. Le mode sans `query` conserve
+l'outline complet pour compatibilité. Les scores et termes reconnus restent
+disponibles avec `diagnostic: true`, sans alourdir la réponse normale.
+
+Le corpus versionné couvre quatre intentions sur deux capabilities : workflow
+d'architecture, intake, structure de landing page et typographie. Les quatre
+headings attendus arrivent au rang 1. Sur les deux requêtes du pilote agent :
+
+| Outline | Complet | Shortlist | Réduction |
+|---|---:|---:|---:|
+| Architecture frontend | 1 690 | 1 449 caractères | 14,3 % |
+| Landing page | 7 012 | 2 931 caractères | 58,2 % |
+| Total | 8 702 | 4 380 caractères | 49,7 % |
+
+Ces chiffres mesurent le payload MCP, pas les tokens d'un nouveau run agent. Le
+prochain point à traiter est le routage explicite d'un heading vers un autre
+fichier, observé avec `Référence principale`, avant d'ajouter des champs
+génériques de workflow ou de dépendances.
 
 ## Limites
 

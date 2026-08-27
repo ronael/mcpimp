@@ -94,6 +94,13 @@ export interface MarkdownSection {
   text: string;
 }
 
+/** False only for a leading title that structurally wraps every later heading. */
+export function isMarkdownEntrypoint(sections: MarkdownSection[], index: number): boolean {
+  return !(index === 0
+    && sections.length > 1
+    && sections.slice(1).every((section) => section.level > sections[0].level));
+}
+
 /** Complete ATX-heading sections, including nested subsections until a peer or parent starts. */
 export function extractMarkdownSections(markdown: string): MarkdownSection[] {
   const lines = markdown.split(/\r?\n/);

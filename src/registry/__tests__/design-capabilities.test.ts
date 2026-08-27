@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
+import { rankMarkdownSections } from "../section-search";
 import { createMcpHandler } from "../../mcp/handler";
+import { HEADING_EVALUATION_CORPUS } from "../../../test/evaluation/heading-corpus";
 
 const CATALOG_ROOT = resolve("catalog/capabilities");
 
@@ -170,6 +172,17 @@ describe("design capability catalog", () => {
 
       expect(partial.result.content[0].text).toContain(entry.heading);
       expect(partial.result.content[0].text.length).toBeLessThan(full.result.content[0].text.length / 2);
+    }
+  });
+
+  it("ranks useful headings for real agent intentions", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
+    for (const entry of HEADING_EVALUATION_CORPUS) {
+      const markdown = registry.getCapability(entry.capabilityId)?.files
+        .find((file) => file.path === entry.path)?.text;
+      expect(markdown, `${entry.capabilityId}/${entry.path} should exist`).toBeTruthy();
+      expect(rankMarkdownSections(markdown || "", entry.query, 3)[0]?.heading)
+        .toBe(entry.expectedHeading);
     }
   });
 });

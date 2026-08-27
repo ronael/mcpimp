@@ -161,6 +161,53 @@ describe("MCP handler", () => {
       expect.objectContaining({ heading: "Example Source", level: 2, entrypoint: true }),
     ]);
 
+    const rankedInfo: any = await handle({
+      jsonrpc: "2.0",
+      id: 611,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: {
+          id: "landing-page",
+          path: "references/source.md",
+          query: "example source",
+          headingLimit: 1,
+          diagnostic: true,
+        },
+      },
+    });
+    const rankedSummary = JSON.parse(rankedInfo.result.content[0].text);
+
+    expect(rankedSummary.files[0]).toMatchObject({
+      outlineRanked: true,
+      outlineTotal: 1,
+      outline: [expect.objectContaining({
+        heading: "Example Source",
+        entrypoint: true,
+        matchedTerms: ["example", "source"],
+      })],
+    });
+
+    const compactInfo: any = await handle({
+      jsonrpc: "2.0",
+      id: 612,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: {
+          id: "landing-page",
+          path: "references/source.md",
+          query: "example source",
+          headingLimit: 1,
+        },
+      },
+    });
+    const compactSummary = JSON.parse(compactInfo.result.content[0].text);
+
+    expect(compactSummary.files[0].outline[0]).not.toHaveProperty("score");
+    expect(compactInfo.result.content[0].text.length)
+      .toBeLessThan(rankedInfo.result.content[0].text.length);
+
     const loaded: any = await handle({
       jsonrpc: "2.0",
       id: 62,
@@ -174,6 +221,24 @@ describe("MCP handler", () => {
     expect(loaded.result.content[0].text).toContain("## Example Source");
     expect(loaded.result.content[0].text).toContain("https://example.com/source");
     expect(loaded.result.content[0].text).not.toContain("Reference material for the capability");
+  });
+
+  it("requires an exact path when ranking Markdown headings", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 63,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: { id: "landing-page", query: "conversion" },
+      },
+    });
+
+    expect(response.error).toMatchObject({
+      code: -32602,
+      message: "Heading query requires an exact capability path",
+    });
   });
 
   it("returns a JSON-RPC error for missing resources", async () => {
