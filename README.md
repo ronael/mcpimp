@@ -204,7 +204,14 @@ pnpm sources:sync --apply                      # imports new capabilities
 pnpm sources:sync --apply ui-skills-improve-ui # accepts one update
 pnpm sources:sync --apply ibelick-ui-skills    # accepts a whole source
 pnpm sources:sync --json                       # machine-readable output
+pnpm capabilities:review                       # lists imports requiring review
+pnpm capabilities:review -- ui-skills-improve-ui --reviewer <name>
 ```
+
+The sync report also keeps removed or renamed upstream capabilities visible,
+excludes catalogue repositories already owned by a declared source, and reports
+same-path collisions between `upstream/` and `overrides/` as identical or
+divergent. It never deletes a disappeared capability automatically.
 
 Imported content is stored as follows:
 
@@ -225,6 +232,10 @@ hosts are validated, and no secret is forwarded except an optional
 preserves them and they are never exposed as loadable capability resources.
 Reviewed imported guidance remains subordinate to user and project
 instructions; scripts stay inert in every review state.
+
+The dashboard review queue is read-only. Attesting content remains a deliberate
+local CLI action so a browser page or agent cannot approve upstream guidance on
+the user's behalf.
 
 ## Connect through MCP
 

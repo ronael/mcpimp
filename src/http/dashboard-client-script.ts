@@ -18,6 +18,7 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   const backdrop = document.querySelector("#backdrop");
   const drawerContent = document.querySelector("#drawerContent");
   const activityRows = document.querySelector("#activityRows");
+  const reviewCopyButtons = [...document.querySelectorAll("[data-review-command]")];
   const activityCopy = ${JSON.stringify({
     empty: copy.activityEmpty,
     error: copy.activityError,
@@ -25,12 +26,13 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     labels: copy.activityDetailLabels,
   })};
   const activityDate = new Intl.DateTimeFormat(${JSON.stringify(copy.htmlLang)}, { dateStyle: "short", timeStyle: "medium" });
+  const reviewCopy = ${JSON.stringify({ idle: copy.reviewCopyCommand, copied: copy.reviewCopied })};
   let drawerTrigger = null;
   let query = "";
   let origin = "all";
 
   function showView(id) {
-    const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "connect", "capabilities", "upstreams", "activity", "tools"].includes(id) ? id : "overview";
+    const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "connect", "capabilities", "review", "upstreams", "activity", "tools"].includes(id) ? id : "overview";
     views.forEach((view) => view.classList.toggle("on", view.dataset.view === viewId));
     navLinks.forEach((link) => link.classList.toggle("act", link.dataset.nav === viewId));
   }
@@ -313,6 +315,22 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
       origin = button.dataset.originFilter;
       originButtons.forEach((candidate) => candidate.classList.toggle("act", candidate === button));
       filterRows();
+    });
+  });
+  reviewCopyButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const command = button.dataset.reviewCommand;
+      if (!command) return;
+      try {
+        await navigator.clipboard.writeText(command);
+        const label = button.querySelector("span");
+        if (label) label.textContent = reviewCopy.copied;
+        window.setTimeout(() => {
+          if (label) label.textContent = reviewCopy.idle;
+        }, 1600);
+      } catch {
+        button.setAttribute("title", command);
+      }
     });
   });
   kindSelect?.addEventListener("change", filterRows);

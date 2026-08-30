@@ -200,6 +200,13 @@ persistance sur chaque runtime.
 
 ### P1.5 — exactitude de la synchronisation
 
+Livré : le rapport compare désormais chaque découverte avec les manifests déjà
+gérés. Les suppressions et renommages restent visibles sans suppression locale,
+les dépôts déjà déclarés sont exclus des candidats de catalogue, et les
+collisions `upstream/overrides` indiquent si les contenus sont identiques ou
+divergents. Les régressions couvrent suppressions, renommages et changements de
+namespace.
+
 - Signaler une capability disparue de sa source au lieu de la faire disparaître
   silencieusement du rapport.
 - Exclure des candidats de catalogue les dépôts déjà couverts par une autre
@@ -241,6 +248,12 @@ fichiers et logs.
   observable.
 
 ### P2.2 — workflow de mise à jour
+
+Premier socle livré : une file de revue compacte expose les imports
+`unreviewed` ou `review-required`, et `pnpm capabilities:review` écrit une
+attestation atomique liée au `contentHash` courant. Le dashboard reste en
+lecture seule ; l'application et l'attestation restent des actions CLI locales
+explicites.
 
 - Fournir un aperçu lisible des ajouts, mises à jour, suppressions et conflits.
 - Conserver l’application des changements comme action explicite et ciblée.

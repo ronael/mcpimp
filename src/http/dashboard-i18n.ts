@@ -7,6 +7,7 @@ export interface DashboardCopy {
     overview: string;
     connect: string;
     capabilities: string;
+    review: string;
     discovery: string;
     endpoints: string;
     tools: string;
@@ -74,6 +75,21 @@ export interface DashboardCopy {
   sortSync: string;
   resultCount: (visible: number, total: number) => string;
   noResults: string;
+  reviewKicker: string;
+  reviewTitle: string;
+  reviewIntro: string;
+  reviewEmpty: string;
+  reviewCommand: string;
+  reviewCopyCommand: string;
+  reviewCopied: string;
+  reviewHeaders: {
+    capability: string;
+    source: string;
+    status: string;
+    currentHash: string;
+    reviewedHash: string;
+    action: string;
+  };
   distributionTitle: string;
   distributionMeta: string;
   local: string;
@@ -152,6 +168,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       overview: "Overview",
       connect: "Connect an agent",
       capabilities: "Capabilities",
+      review: "Review",
       discovery: "Discovery",
       endpoints: "Endpoints",
       tools: "Tools",
@@ -227,6 +244,21 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     sortSync: "Sort · latest sync",
     resultCount: (visible, total) => `${visible} / ${total} visible`,
     noResults: "No capability matches these filters.",
+    reviewKicker: "Trust · local attestation",
+    reviewTitle: "Review queue",
+    reviewIntro: "Imported content remains usable but untrusted until a person attests its exact current content hash. Approval is deliberately local and explicit.",
+    reviewEmpty: "Every imported capability matches its latest local review.",
+    reviewCommand: "Run this command after inspecting the source and effective files:",
+    reviewCopyCommand: "Copy command",
+    reviewCopied: "Copied",
+    reviewHeaders: {
+      capability: "Capability",
+      source: "Source",
+      status: "Status",
+      currentHash: "Current hash",
+      reviewedHash: "Reviewed hash",
+      action: "Review command",
+    },
     distributionTitle: "Distribution",
     distributionMeta: "origin · type",
     local: "local",
@@ -308,6 +340,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       overview: "Vue d'ensemble",
       connect: "Connecter un agent",
       capabilities: "Capabilities",
+      review: "Revue",
       discovery: "Découverte",
       endpoints: "Endpoints",
       tools: "Tools",
@@ -383,6 +416,21 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     sortSync: "Tri · synchro récente",
     resultCount: (visible, total) => `${visible} / ${total} visibles`,
     noResults: "Aucune capacité ne correspond à ces filtres.",
+    reviewKicker: "Confiance · attestation locale",
+    reviewTitle: "File de revue",
+    reviewIntro: "Le contenu importé reste utilisable mais non fiable tant qu'une personne n'a pas attesté son content hash exact. L'approbation reste volontairement locale et explicite.",
+    reviewEmpty: "Toutes les capabilities importées correspondent à leur dernière revue locale.",
+    reviewCommand: "Exécute cette commande après inspection de la source et des fichiers effectifs :",
+    reviewCopyCommand: "Copier la commande",
+    reviewCopied: "Copiée",
+    reviewHeaders: {
+      capability: "Capability",
+      source: "Source",
+      status: "Statut",
+      currentHash: "Hash courant",
+      reviewedHash: "Hash revu",
+      action: "Commande de revue",
+    },
     distributionTitle: "Répartition",
     distributionMeta: "origine · type",
     local: "locale",

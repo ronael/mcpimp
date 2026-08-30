@@ -8,6 +8,7 @@
     "dev": "tsx src/local.ts",
     "doctor": "tsx src/cli/doctor.ts",
     "sources:sync": "tsx src/cli/sources.ts",
+    "capabilities:review": "tsx src/cli/review.ts",
     "generate:snapshot": "tsx scripts/build/generate-snapshot.ts",
     "build": "tsx scripts/build/generate-snapshot.ts && tsc --noEmit",
     "cf:dev": "tsx scripts/build/generate-snapshot.ts && wrangler dev",

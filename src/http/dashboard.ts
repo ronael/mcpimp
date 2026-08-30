@@ -146,6 +146,8 @@ function renderDrawerTemplates(registry: CapabilityRegistry, copy: DashboardCopy
         ? `<span class="chip info plain">${escapeHtml(copy.imported)}</span>`
         : `<span class="chip ok plain">${escapeHtml(copy.local)}</span>`;
       const kindChip = `<span class="chip ${chipClassForKind(kind)} plain">${escapeHtml(kind)}</span>`;
+      const reviewStatus = capability.review?.status || (capability.origin ? "unreviewed" : "local");
+      const reviewChip = `<span class="chip ${reviewStatus === "reviewed" || reviewStatus === "local" ? "ok" : "warn"} plain">${escapeHtml(reviewStatus)}</span>`;
       const fileRows = capability.files
         .map((file) => {
           const size = file.binary ? `${file.bytes} B` : String(file.lines);
@@ -164,7 +166,7 @@ function renderDrawerTemplates(registry: CapabilityRegistry, copy: DashboardCopy
           <button class="d-close" type="button" aria-label="${escapeAttribute(copy.close)}"><i class="ph ph-x" aria-hidden="true"></i></button>
         </div>
         <div class="d-title">${escapeHtml(capability.name)}</div>
-        <div class="d-chips">${originChip}${kindChip}</div>
+        <div class="d-chips">${originChip}${kindChip}${reviewChip}</div>
         <p class="d-desc">${escapeHtml(capability.description || copy.noDescription)}</p>
         <div class="d-sec">
           <div class="cs-h"><i class="ph ph-files" aria-hidden="true"></i>${escapeHtml(copy.filesTitle)} · ${capability.files.length}</div>
@@ -227,6 +229,7 @@ function renderMobileNav(copy: DashboardCopy): string {
     <a href="#overview" data-nav="overview" class="act">${escapeHtml(copy.nav.overview)}</a>
     <a href="#connect" data-nav="connect">${escapeHtml(copy.nav.connect)}</a>
     <a href="#capabilities" data-nav="capabilities">${escapeHtml(copy.nav.capabilities)}</a>
+    <a href="#review" data-nav="review">${escapeHtml(copy.nav.review)}</a>
     <a href="#upstreams" data-nav="upstreams">${escapeHtml(copy.nav.upstreams)}</a>
     <a href="#activity" data-nav="activity">${escapeHtml(copy.nav.activity)}</a>
     <a href="#tools" data-nav="tools">${escapeHtml(copy.nav.tools)}</a>
@@ -234,6 +237,9 @@ function renderMobileNav(copy: DashboardCopy): string {
 }
 
 function renderSidebar(data: DashboardData, copy: DashboardCopy, language: DashboardLanguage, links: DashboardLinks): string {
+  const reviewCount = data.capabilities.filter(
+    (capability) => capability.origin && capability.review?.status !== "reviewed",
+  ).length;
   const agentGuidePath =
     links.agentGuidePath ||
     (language === "fr"
@@ -262,6 +268,7 @@ function renderSidebar(data: DashboardData, copy: DashboardCopy, language: Dashb
       <a href="#overview" data-nav="overview" class="act"><i class="ph ph-squares-four" aria-hidden="true"></i>${escapeHtml(copy.nav.overview)}</a>
       <a href="#connect" data-nav="connect"><i class="ph ph-plugs" aria-hidden="true"></i>${escapeHtml(copy.nav.connect)}</a>
       <a href="#capabilities" data-nav="capabilities"><i class="ph ph-circles-three-plus" aria-hidden="true"></i>${escapeHtml(copy.nav.capabilities)}<span class="cnt">${data.capabilities.length}</span></a>
+      <a href="#review" data-nav="review"><i class="ph ph-seal-check" aria-hidden="true"></i>${escapeHtml(copy.nav.review)}<span class="cnt">${reviewCount}</span></a>
       <a href="#upstreams" data-nav="upstreams"><i class="ph ph-network" aria-hidden="true"></i>${escapeHtml(copy.nav.upstreams)}<span class="cnt">${data.upstreams.length}</span></a>
       <a href="#activity" data-nav="activity"><i class="ph ph-pulse" aria-hidden="true"></i>${escapeHtml(copy.nav.activity)}<span class="live-dot" aria-hidden="true"></span></a>
       <a href="#tools" data-nav="tools"><i class="ph ph-wrench" aria-hidden="true"></i>${escapeHtml(copy.nav.tools)}<span class="cnt">${MCP_TOOLS.length + copy.endpoints.length}</span></a>
@@ -456,6 +463,35 @@ function renderKindOptions(capabilities: Capability[]): string {
     .join("");
 }
 
+function shortHash(hash: string | undefined): string {
+  if (!hash) return "n/a";
+  return hash.length > 19 ? `${hash.slice(0, 19)}…` : hash;
+}
+
+function renderReviewRows(capabilities: Capability[], copy: DashboardCopy): string {
+  const pending = capabilities.filter(
+    (capability) => capability.origin && capability.review?.status !== "reviewed",
+  );
+  if (pending.length === 0) {
+    return `<tr><td colspan="6" class="review-empty">${escapeHtml(copy.reviewEmpty)}</td></tr>`;
+  }
+
+  return pending
+    .map((capability) => {
+      const status = capability.review?.status === "review-required" ? "review-required" : "unreviewed";
+      const command = `pnpm capabilities:review -- ${capability.id} --reviewer <name>`;
+      return `<tr>
+        <td><a class="capname" href="#capability-${escapeAttribute(anchorId(capability.id))}"><strong>${escapeHtml(capability.name)}</strong><span class="cid">${escapeHtml(capability.id)}</span></a></td>
+        <td class="mono">${escapeHtml(capability.origin!.sourceId)}</td>
+        <td><span class="chip warn plain">${escapeHtml(status)}</span></td>
+        <td class="mono" title="${escapeAttribute(capability.origin!.contentHash || "")}">${escapeHtml(shortHash(capability.origin!.contentHash))}</td>
+        <td class="mono" title="${escapeAttribute(capability.review?.reviewedContentHash || "")}">${escapeHtml(shortHash(capability.review?.reviewedContentHash))}</td>
+        <td><button class="review-copy" type="button" data-review-command="${escapeAttribute(command)}" aria-label="${escapeAttribute(`${copy.reviewCopyCommand}: ${capability.name}`)}"><i class="ph ph-copy" aria-hidden="true"></i><span>${escapeHtml(copy.reviewCopyCommand)}</span></button></td>
+      </tr>`;
+    })
+    .join("");
+}
+
 
 export function renderDashboard(registry: CapabilityRegistry, language: DashboardLanguage = "en", links: DashboardLinks = {}): string {
   const capabilities = registry.listCapabilities();
@@ -553,6 +589,26 @@ ${DASHBOARD_STYLES}
       <div class="cap-details" inert aria-hidden="true">
         ${renderCapabilityResources(registry, copy)}
       </div>
+    </section>
+
+    <section class="view" id="review" data-view="review">
+      <div class="v-head">
+        <div>
+          <div class="kicker">${escapeHtml(copy.reviewKicker)}</div>
+          <h1>${escapeHtml(copy.reviewTitle)}</h1>
+          <p class="sub">${escapeHtml(copy.reviewIntro)}</p>
+        </div>
+      </div>
+      <section class="panel review-panel">
+        <div class="p-h"><h2><i class="ph ph-shield-check" aria-hidden="true"></i>${escapeHtml(copy.reviewTitle)}</h2><span class="p-meta">contentHash</span></div>
+        <p class="review-summary">${escapeHtml(copy.reviewCommand)}</p>
+        <div class="tbl-wrap">
+          <table class="tbl review-table">
+            <thead><tr><th>${escapeHtml(copy.reviewHeaders.capability)}</th><th>${escapeHtml(copy.reviewHeaders.source)}</th><th>${escapeHtml(copy.reviewHeaders.status)}</th><th>${escapeHtml(copy.reviewHeaders.currentHash)}</th><th>${escapeHtml(copy.reviewHeaders.reviewedHash)}</th><th>${escapeHtml(copy.reviewHeaders.action)}</th></tr></thead>
+            <tbody id="reviewRows">${renderReviewRows(capabilities, copy)}</tbody>
+          </table>
+        </div>
+      </section>
     </section>
 
     <section class="view" id="upstreams" data-view="upstreams">

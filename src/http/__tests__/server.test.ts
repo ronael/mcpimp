@@ -352,6 +352,20 @@ describe("Hono server", () => {
     expect(html).toContain("Sources &amp; références");
   });
 
+  it("renders a compact review queue for imported capabilities", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(resolve("test/fixtures/synced-capabilities"));
+    const app = createServer(registry);
+    const response = await app.request("/dashboard");
+    const html = await response.text();
+
+    expect(html).toContain('href="#review"');
+    expect(html).toContain('id="reviewRows"');
+    expect(html).toContain("without-review");
+    expect(html).toContain("unreviewed");
+    expect(html).toContain("pnpm capabilities:review -- without-review --reviewer");
+    expect(html).not.toContain("review-card");
+  });
+
   it("serves static docs through the same server when configured", async () => {
     const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
     const app = createServer(registry, {
