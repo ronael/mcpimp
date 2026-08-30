@@ -396,12 +396,14 @@ describe("syncSources", () => {
     expect(report.entries[0]).toMatchObject({ status: "update-available", applied: true });
   });
 
-  it("removes upstream files that disappeared, but keeps local overrides", async () => {
+  it("removes upstream files that disappeared, but keeps local overrides and routing metadata", async () => {
     const github = installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
     await run([githubSource()], { apply: true });
 
     const overridePath = join(root, "catalog/capabilities/ui/improve-ui/overrides/mcpimp-notes.md");
     await writeFile(overridePath, "# MCPIMP notes\n\nLocal guidance.\n", "utf-8");
+    const routingPath = join(root, "catalog/capabilities/ui/improve-ui/ROUTING.json");
+    await writeFile(routingPath, JSON.stringify({ schemaVersion: 1, role: "specialist" }), "utf-8");
 
     github.remove("skills/improve-ui/references/plan.md", NEXT_COMMIT);
     await run([githubSource()], { apply: true, targets: ["ui-improve-ui"] });
@@ -410,6 +412,7 @@ describe("syncSources", () => {
       readFile(join(root, "catalog/capabilities/ui/improve-ui/upstream/references/plan.md"), "utf-8"),
     ).rejects.toThrow();
     expect(await readFile(overridePath, "utf-8")).toContain("Local guidance");
+    expect(await readFile(routingPath, "utf-8")).toContain('"role":"specialist"');
   });
 
   it("reports an unavailable source without aborting the run", async () => {

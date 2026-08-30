@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "role": "specialist",
+  "taskModes": ["create", "redesign", "audit", "research"],
+  "useWhen": [
+    "new visual page requiring structural variety",
+    "anti-generic landing page design",
+    "explicit Hallmark invocation",
+    "study a visual reference before redesign"
+  ],
+  "avoidWhen": [
+    "read-only audit against an existing local design system",
+    "pure accessibility correction",
+    "backend or domain architecture"
+  ],
+  "conflictsWith": ["elaya-design-landing-page-design", "taste-skill", "ui-ux-pro-max"],
+  "complements": ["ui-skills-fixing-accessibility", "motion-design-resources"]
+}

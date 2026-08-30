@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "role": "orchestrator",
+  "taskModes": ["create", "redesign"],
+  "useWhen": [
+    "landing page requiring multiple specialized capabilities",
+    "marketing page implementation from product audience and content",
+    "landing page redesign preserving project constraints"
+  ],
+  "avoidWhen": [
+    "single component only",
+    "read-only audit without implementation",
+    "backend or domain architecture"
+  ],
+  "conflictsWith": [],
+  "complements": [
+    "elaya-design-landing-page-design",
+    "ui-skills-fixing-accessibility",
+    "motion-design-resources"
+  ]
+}

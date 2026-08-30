@@ -109,6 +109,20 @@ export interface CapabilityComponents {
   mcp: boolean;
 }
 
+export type CapabilityTaskMode = "create" | "redesign" | "audit" | "fix" | "review" | "research" | "integrate";
+export type CapabilityRoutingRole = "orchestrator" | "specialist" | "generalist" | "resource" | "connector";
+
+/** Local MCPIMP-owned selection metadata. Never imported from upstream content. */
+export interface CapabilityRoutingCard {
+  schemaVersion: 1;
+  role: CapabilityRoutingRole;
+  taskModes: CapabilityTaskMode[];
+  useWhen: string[];
+  avoidWhen: string[];
+  conflictsWith: string[];
+  complements: string[];
+}
+
 export interface Capability {
   /** Public stable id, e.g. ui-skills-improve-ui or landing-page. */
   id: string;
@@ -121,6 +135,7 @@ export interface Capability {
   tags?: string[];
   /** Detected components (skill, mcp, future components). */
   components: CapabilityComponents;
+  routing?: CapabilityRoutingCard;
   rootPath?: string;
   files: CapabilityFile[];
   mcp?: CapabilityMcpConfig;

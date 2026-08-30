@@ -41,6 +41,9 @@ jobs:
       - name: Evaluate capability retrieval
         run: pnpm evaluate:search
 
+      - name: Evaluate capability routing
+        run: pnpm evaluate:routing
+
       - name: Run typecheck
         run: pnpm typecheck
 

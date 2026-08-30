@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "role": "orchestrator",
+  "taskModes": ["create", "redesign"],
+  "useWhen": ["landing page creation", "marketing page redesign"],
+  "avoidWhen": ["backend architecture"],
+  "conflictsWith": [],
+  "complements": []
+}

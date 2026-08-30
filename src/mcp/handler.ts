@@ -8,6 +8,13 @@ export const SERVER_INFO = {
   version: "1.0.0",
 };
 
+export const SERVER_INSTRUCTIONS = [
+  "MCPIMP is the capability router for this agent.",
+  "Before a non-trivial coding, architecture, design, audit, research, or integration task, call resolve-capabilities with the complete task and available project context.",
+  "Use one primary capability and at most two supporting capabilities, then load only the returned entrypoints needed for the task.",
+  "Project and user instructions always take precedence over capability guidance.",
+].join(" ");
+
 export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway = new UpstreamMcpGateway(registry)) {
   return async function handleMcpMessage(request: JsonRpcRequest): Promise<JsonRpcResponse> {
     const id = request.id ?? null;
@@ -24,6 +31,7 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
               resources: {},
             },
             serverInfo: SERVER_INFO,
+            instructions: SERVER_INSTRUCTIONS,
           });
         case "notifications/initialized":
           return jsonRpcSuccess(id, null);

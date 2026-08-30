@@ -25,6 +25,8 @@ sondées, pas à lui seul l'absence de déconnexion ou de retry côté client.
 - `server/discover` reste non standard et retourne `-32601`, sans empêcher les
   requêtes standard suivantes ;
 - `ping` retourne immédiatement `{}` ;
+- `initialize` annonce dans `instructions` l'usage de `resolve-capabilities`
+  avant les tâches non triviales, sans précharger de capability particulière ;
 - les batches agrègent uniquement les réponses aux éléments possédant un ID ;
 - paramètres invalides, ressource absente et panne interne ont des codes
   distincts ;

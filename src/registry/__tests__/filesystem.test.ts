@@ -16,6 +16,13 @@ describe("FileSystemCapabilityRegistry", () => {
         description: "Build premium landing pages with a structured expert workflow.",
       },
     ]);
+    expect(registry.getCapability("landing-page")?.routing).toMatchObject({
+      schemaVersion: 1,
+      role: "orchestrator",
+      taskModes: ["create", "redesign"],
+    });
+    expect(registry.getCapability("landing-page")?.files.map((file) => file.path)).not.toContain("ROUTING.json");
+    expect(registry.listResources().map((resource) => resource.uri)).not.toContain("skill://landing-page/ROUTING.json");
   });
 
   it("does not expose folders without a supported component as capabilities", async () => {
