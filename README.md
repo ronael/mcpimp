@@ -222,16 +222,34 @@ Start the local server first:
 pnpm run dev
 ```
 
-Run the read-only operational diagnostic when setup or startup is unclear:
+Once the server is running, execute the read-only runtime diagnostic:
 
 ```bash
 pnpm run doctor
+pnpm --silent run doctor -- --json
 ```
 
-It checks the catalog, activity-log path, local port, and required upstream
-environment variables. It reports variable names only, never their values. If
-the default port is already occupied, MCPIMP identifies the listening PID and
-suggests either checking the running instance or selecting another port.
+Always include `run`: `pnpm doctor` invokes pnpm's own built-in doctor command,
+not MCPIMP's project script.
+
+The default mode checks four distinct states: the endpoint is configured, the
+health route is reachable, MCP initialization succeeds, and `tools/list`
+returns callable tools after `notifications/initialized`. It also reports the
+PID, capability and tool counts, and warns when the running catalog differs
+from the catalog on disk. `--json` emits the same report as structured data;
+`--silent` suppresses pnpm's script banner so stdout contains JSON only.
+Failures of health, initialization, or tool discovery return a non-zero exit
+code.
+
+Before starting the server, use preflight mode instead:
+
+```bash
+pnpm run doctor -- --preflight
+```
+
+Preflight checks the catalog, activity-log path, local port, and required
+upstream environment variables. Both modes report variable names only, never
+their values.
 `SIGINT` and `SIGTERM` stop the server cleanly and flush the activity log.
 
 Use `http://localhost:3901/message` for streamable HTTP clients and
@@ -242,6 +260,13 @@ clients can connect directly:
 codex mcp add mcpimp --url http://localhost:3901/message
 claude mcp add --transport http --scope user mcpimp http://localhost:3901/message
 ```
+
+MCP clients commonly load their tool catalog when a session starts. A client
+may therefore keep displaying an older "connected" state after the local
+process stops, or fail to discover tools when MCPIMP starts after the session.
+Run `pnpm doctor` to verify the server independently, then restart the client
+session. Also remove obsolete registrations that point another MCP name at the
+same `/sse` or `/message` endpoint.
 
 Verify the server without an MCP client:
 
@@ -294,7 +319,8 @@ pnpm run test
 pnpm run typecheck
 pnpm run build
 pnpm run sources:sync   # external-source status (read-only)
-pnpm run doctor         # local runtime diagnostic (read-only)
+pnpm run doctor         # live health + MCP handshake + tools/list (read-only)
+pnpm run doctor -- --preflight # checks before starting the server
 pnpm run dev
 ```
 

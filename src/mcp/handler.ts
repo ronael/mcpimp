@@ -3,7 +3,7 @@ import { JsonRpcError, jsonRpcFailure, jsonRpcSuccess, type JsonRpcRequest, type
 import { callMcpTool, MCP_TOOLS } from "./tools";
 import { UpstreamMcpGateway } from "./upstream";
 
-const SERVER_INFO = {
+export const SERVER_INFO = {
   name: "personal-capability-registry",
   version: "1.0.0",
 };

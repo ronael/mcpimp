@@ -15,7 +15,30 @@ describe("Hono server", () => {
     const app = await createApp();
     const response = await app.request("/health");
 
-    await expect(response.json()).resolves.toMatchObject({ ok: true, capabilities: 1 });
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      capabilities: 1,
+      version: "1.0.0",
+      runtime: "unknown",
+      endpoint: "/message",
+      localTools: expect.any(Number),
+      catalogRevision: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      startedAt: expect.any(String),
+      uptimeSeconds: expect.any(Number),
+    });
+  });
+
+  it("includes local process metadata when supplied", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+    const app = createServer(registry, {
+      runtime: { kind: "node", pid: 4242, endpoint: "http://localhost:3901/message" },
+    });
+
+    await expect((await app.request("/health")).json()).resolves.toMatchObject({
+      runtime: "node",
+      pid: 4242,
+      endpoint: "http://localhost:3901/message",
+    });
   });
 
   it("handles JSON-RPC messages", async () => {

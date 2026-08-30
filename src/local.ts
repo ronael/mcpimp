@@ -66,7 +66,16 @@ function logActivity(event: McpActivityEvent) {
   console.log(`[MCP] ${event.status} ${event.client} ${event.method}${target} ${event.durationMs}ms`);
 }
 
-const app = createServer(registry, { staticSite, dashboardHome: true, onActivity: logActivity });
+const app = createServer(registry, {
+  staticSite,
+  dashboardHome: true,
+  onActivity: logActivity,
+  runtime: {
+    kind: "node",
+    pid: process.pid,
+    endpoint: `http://localhost:${port}/message`,
+  },
+});
 
 const server = serve({ fetch: app.fetch, port }, () => {
   console.log(`Capability registry MCP listening on http://localhost:${port}`);

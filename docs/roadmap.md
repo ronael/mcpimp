@@ -162,6 +162,9 @@ inattendu peut être expliqué sans lire manuellement tout le catalogue.
   inventer une extension non standard.
 - Ajouter des tests de contrat pour les notifications sans réponse, les erreurs
   JSON-RPC, les annulations et les méthodes optionnelles supportées.
+- Exécuter une sonde de processus local réelle couvrant `/health`, `initialize`,
+  `notifications/initialized` et `tools/list`, indépendamment du catalogue mis
+  en cache par le client MCP.
 
 Critère de sortie : aucun client supporté ne se déconnecte ou ne boucle à cause
 d’une réponse MCPIMP invalide ; les écarts connus sont documentés.
@@ -446,7 +449,11 @@ perte de données.
   détail.
 - Cycle de vie local fiabilisé : `EADDRINUSE` indique le PID et les actions
   possibles sans stack brute, `SIGINT`/`SIGTERM` ferment le serveur et flushent
-  le journal, et `pnpm run doctor` contrôle en lecture seule le catalogue, le
-  port, les permissions du journal et les variables upstream sans révéler leurs
-  valeurs. Le rechargement à chaud reste hors périmètre jusqu’à ce qu’un usage
-  réel le justifie.
+  le journal. `pnpm run doctor` distingue endpoint configuré, santé joignable,
+  initialisation MCP et outils listés, retourne un code non nul sur panne et
+  expose un diagnostic JSON sans secret ; `--preflight` conserve les contrôles
+  avant démarrage. Un test lance le vrai processus local et vérifie toute la
+  séquence MCP sur socket.
+- Installation comme service persistant et redémarrage automatique reportés à
+  une évolution opérationnelle séparée ; aucun gestionnaire de processus n’est
+  ajouté à la phase 1.

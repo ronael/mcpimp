@@ -9,7 +9,10 @@ import {
   type McpTransport,
 } from "../mcp/activity";
 import { createMcpHandler } from "../mcp/handler";
+import { SERVER_INFO } from "../mcp/handler";
 import { formatSseEvent, jsonRpcFailure, type JsonRpcRequest, type JsonRpcResponse } from "../mcp/protocol";
+import { MCP_TOOLS } from "../mcp/tools";
+import { catalogFingerprint } from "../registry/fingerprint";
 import type { CapabilityRegistry } from "../registry/types";
 import { renderDashboard } from "./dashboard";
 
@@ -43,6 +46,11 @@ export interface ServerOptions {
   dashboardHome?: boolean;
   activityLog?: McpActivityLog;
   onActivity?: (event: McpActivityEvent) => void;
+  runtime?: {
+    kind: "node" | "worker" | "unknown";
+    pid?: number;
+    endpoint?: string;
+  };
 }
 
 function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) {
@@ -61,6 +69,8 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   const activityLog = options.activityLog || new McpActivityLog(200, options.onActivity);
   const sessions = new Map<string, SseSession>();
   const encoder = new TextEncoder();
+  const startedAt = new Date();
+  const catalogRevision = catalogFingerprint(registry);
 
   async function serveStatic(path: string) {
     return options.staticSite?.serve(path);
@@ -102,10 +112,19 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   app.get("/fr/docs/agents.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
   app.get("/assets/*", async (c) => (await serveStatic(c.req.path)) || c.notFound());
 
-  app.get("/health", (c) => {
+  app.get("/health", async (c) => {
+    const runtime = options.runtime || { kind: "unknown" as const };
     return c.json({
       ok: true,
       capabilities: registry.listCapabilities().length,
+      version: SERVER_INFO.version,
+      runtime: runtime.kind,
+      ...(runtime.pid ? { pid: runtime.pid } : {}),
+      endpoint: runtime.endpoint || "/message",
+      localTools: MCP_TOOLS.length,
+      catalogRevision: await catalogRevision,
+      startedAt: startedAt.toISOString(),
+      uptimeSeconds: Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1_000)),
     });
   });
 
