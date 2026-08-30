@@ -325,6 +325,8 @@ The first real-agent retrieval pilot is documented in
 [`docs/agent-outcome-evaluation.md`](docs/agent-outcome-evaluation.md).
 Minimal native bridges for Codex, Claude and Kimi are documented in
 [`docs/host-adapters.md`](docs/host-adapters.md).
+The release checks and rollback procedure are documented in
+[`docs/release.md`](docs/release.md).
 
 ## Public website
 

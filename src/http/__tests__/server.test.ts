@@ -49,6 +49,22 @@ describe("Hono server", () => {
     });
   });
 
+  it("initializes Worker uptime from the first request instead of module evaluation", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+    const now = vi.fn(() => new Date("2026-08-31T01:00:00.000Z"));
+    const app = createServer(registry, {
+      runtime: { kind: "worker", endpoint: "/message" },
+      now,
+    });
+
+    expect(now).not.toHaveBeenCalled();
+    const health: any = await (await app.request("/health")).json();
+
+    expect(health.startedAt).toBe("2026-08-31T01:00:00.000Z");
+    expect(health.uptimeSeconds).toBe(0);
+    expect(now).toHaveBeenCalled();
+  });
+
   it("handles JSON-RPC messages", async () => {
     const app = await createApp();
     const response = await app.request("/message", {
