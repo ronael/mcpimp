@@ -1,6 +1,6 @@
 # MCPIMP — roadmap produit
 
-Dernier cadrage produit : 27 août 2026
+Dernier cadrage produit : 30 août 2026
 
 ## Rôle de ce document
 
@@ -70,7 +70,7 @@ Le produit évolue selon six axes :
 |---|---|
 | Registry | Scan filesystem local et snapshot Cloudflare, IDs et URIs stables |
 | Capabilities | Skills, ressources associées et configurations MCP upstream |
-| Découverte | Liste, métadonnées, chargement progressif et recherche classée FR/EN |
+| Découverte | Liste, métadonnées, chargement progressif, recherche classée FR/EN et résolution capability-centric bornée |
 | Ingestion | GitHub et catalogues web, provenance, hashes, licences et overrides |
 | MCP | HTTP streamable, SSE legacy, tools, resources et proxy des tools upstream |
 | Sécurité d’ingestion | Validation des chemins et hôtes, plafonds, contenu inerte, secrets via environnement |
@@ -109,6 +109,12 @@ ressources. Le prochain travail doit mesurer la boucle complète de découverte 
 retrouver la bonne capability, recommander le bon point d'entrée, puis charger
 le minimum de contexte utile. Améliorer les poids de ranking n'est qu'un moyen.
 
+Le premier routeur déterministe est livré : `resolve-capabilities` sélectionne
+une principale et au plus deux supports, applique les cartes locales
+`ROUTING.json`, exclut les conflits et retourne des points d'entrée sous budget.
+Son corpus métier versionné est exécuté en CI ; il complète le benchmark de
+recherche sans le remplacer.
+
 - Constituer un corpus versionné de tâches et requêtes réelles : recherche
   exacte, formulation vague, intention de ressource, requête multilingue, faute
   courante et recherche limitée à une capability.
@@ -145,6 +151,9 @@ le minimum de contexte utile. Améliorer les poids de ranking n'est qu'un moyen.
   défaut.
 - Mesurer latence et consommation mémoire avec 10, 100 et 1 000 capabilities
   avant d’introduire un index persistant.
+- Étendre le corpus de routage à partir d'incidents réels et mesurer séparément
+  la qualité variable du résultat agentique, sans affaiblir les assertions
+  déterministes sur la sélection et le budget.
 
 Critère de sortie : le benchmark est reproductible en CI, les requêtes critiques
 respectent leur top 3, les fichiers recommandés et le budget de contexte sont
@@ -165,6 +174,9 @@ inattendu peut être expliqué sans lire manuellement tout le catalogue.
 - Exécuter une sonde de processus local réelle couvrant `/health`, `initialize`,
   `notifications/initialized` et `tools/list`, indépendamment du catalogue mis
   en cache par le client MCP.
+- Conserver le bootstrap agent dans les `instructions` standard de
+  `initialize` pour le protocole 2025 ; traiter toute négociation de bootstrap
+  MCP 2026 comme une évolution séparée après validation client réelle.
 
 Critère de sortie : aucun client supporté ne se déconnecte ou ne boucle à cause
 d’une réponse MCPIMP invalide ; les écarts connus sont documentés.

@@ -85,6 +85,7 @@ skill://ui-ux-pro-max/references/quick-reference.md
 | `capability-info` | Returns metadata/files, a full Markdown outline with `path`, or a ranked heading shortlist with `path` + `query` |
 | `load-capability` | Loads a capability, exact file, or complete Markdown heading subtree |
 | `search-capabilities` | Searches indexed files and ranks results |
+| `resolve-capabilities` | Selects one primary capability and up to two compatible supports with bounded entrypoints |
 | `list-upstreams` | Checks configured upstream MCP servers |
 
 `search-capabilities` supports multiple words and ranks results using field
@@ -98,6 +99,11 @@ The optional `limit` parameter adjusts the maximum shortlist size.
 Set `diagnostic: true` to include score components: coverage, terms and IDF,
 matched fields, file weight, resource intent, and phrase bonus. Diagnostics are
 omitted by default to keep normal responses compact.
+
+For non-trivial tasks, call `resolve-capabilities` with the complete task before
+loading guidance. Optional local `ROUTING.json` cards disambiguate specialists,
+generalists, resources, conflicts and complements without changing upstream
+content. See [capability routing](docs/capability-routing.md).
 
 For a long Markdown entrypoint, inspect its outline before loading context:
 

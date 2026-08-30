@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "role": "specialist",
+  "taskModes": ["redesign", "audit", "fix", "review"],
+  "useWhen": [
+    "polish an existing interface that looks generic",
+    "improve visual hierarchy spacing and interaction details",
+    "audit and fix generic AI-generated UI"
+  ],
+  "avoidWhen": [
+    "greenfield landing page requiring complete content strategy",
+    "backend or domain architecture"
+  ],
+  "conflictsWith": [],
+  "complements": ["ui-skills-fixing-accessibility", "ui-skills-fixing-motion-performance"]
+}

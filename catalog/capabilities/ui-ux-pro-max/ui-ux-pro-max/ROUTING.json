@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "role": "generalist",
+  "taskModes": ["create", "redesign", "audit"],
+  "useWhen": [
+    "broad product UI requiring industry-specific design guidance",
+    "complete interface design system and interaction direction",
+    "explicit UI UX Pro Max invocation"
+  ],
+  "avoidWhen": [
+    "pure accessibility correction",
+    "pure motion performance correction",
+    "backend or domain architecture"
+  ],
+  "conflictsWith": ["hallmark", "elaya-design-landing-page-design", "taste-skill"],
+  "complements": ["ui-skills-fixing-accessibility", "ui-skills-fixing-motion-performance"]
+}

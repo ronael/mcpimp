@@ -2,8 +2,14 @@ import type { Capability, CapabilityRegistry } from "../registry/types";
 import { extractMarkdownSections, isMarkdownEntrypoint } from "../registry/frontmatter";
 import { extractLinkedCapabilityPaths } from "../registry/markdown-links";
 import { rankMarkdownSections } from "../registry/section-search";
+import { resolveCapabilities } from "../registry/routing";
+import type { CapabilityTaskMode } from "../registry/types";
 import { JsonRpcError } from "./protocol";
 import type { UpstreamMcpGateway } from "./upstream";
+
+const CAPABILITY_TASK_MODES = new Set<CapabilityTaskMode>([
+  "create", "redesign", "audit", "fix", "review", "research", "integrate",
+]);
 
 export const MCP_TOOLS = [
   {
@@ -73,6 +79,29 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: "resolve-capabilities",
+    description: "Resolve one primary capability and at most two non-conflicting supporting capabilities from the complete task and project context. Returns compact reasons, bounded entrypoints, conflicts and context budget without loading guidance.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        task: { type: "string", description: "Complete user task, not only search keywords." },
+        taskMode: {
+          type: "string",
+          enum: ["create", "redesign", "audit", "fix", "review", "research", "integrate"],
+          description: "Optional dominant task mode.",
+        },
+        projectContext: {
+          type: "object",
+          description: "Optional compact project context such as stack, project type, design-system presence and constraints.",
+        },
+        profile: { type: "string", description: "Optional host or workflow profile." },
+        maxCapabilities: { type: "number", description: "Maximum selected capabilities, from 1 to 3 (default 3)." },
+        maxCharacters: { type: "number", description: "Maximum estimated entrypoint characters (default 8000)." },
+      },
+      required: ["task"],
+    },
+  },
+  {
     name: "list-upstreams",
     description: "List configured upstream MCP servers and their readiness status.",
     inputSchema: {
@@ -100,6 +129,14 @@ function requireString(args: Record<string, unknown>, key: string): string {
     throw new Error(`Missing required string argument: ${key}`);
   }
   return value;
+}
+
+function optionalTaskMode(value: unknown): CapabilityTaskMode | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !CAPABILITY_TASK_MODES.has(value as CapabilityTaskMode)) {
+    throw new JsonRpcError(-32602, "Invalid capability task mode");
+  }
+  return value as CapabilityTaskMode;
 }
 
 /** Compact provenance, so an agent can see at a glance what is local and what is imported. */
@@ -325,6 +362,15 @@ export function callMcpTool(
       return textContent(loadCapability(registry, args));
     case "search-capabilities":
       return textContent(searchCapabilities(registry, args));
+    case "resolve-capabilities":
+      return textContent(resolveCapabilities(registry, {
+        task: requireString(args, "task"),
+        taskMode: optionalTaskMode(args.taskMode),
+        projectContext: args.projectContext,
+        profile: typeof args.profile === "string" ? args.profile : undefined,
+        maxCapabilities: typeof args.maxCapabilities === "number" ? args.maxCapabilities : undefined,
+        maxCharacters: typeof args.maxCharacters === "number" ? args.maxCharacters : undefined,
+      }));
     case "list-upstreams":
       return textContent(upstreamGateway.listUpstreams());
     default:

@@ -4,6 +4,7 @@ import { join, relative, sep } from "node:path";
 import { capabilityIdFor, assertSafeSegment, slugify } from "../core/names";
 import { parseFrontmatter } from "./frontmatter";
 import { searchCapabilities } from "./search";
+import { parseRoutingCard, ROUTING_FILE, validateRoutingReferences } from "./routing-card";
 import { countLines, decodeTextContent, mimeTypeFor } from "./text";
 import { CapabilityResourceNotFoundError } from "./types";
 import type {
@@ -331,6 +332,8 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
       claimed.set(capability.id, capability.rootPath ?? capability.id);
     }
 
+    validateRoutingReferences(capabilities);
+
     return new FileSystemCapabilityRegistry(
       capabilities.sort((a, b) => a.id.localeCompare(b.id)),
     );
@@ -385,6 +388,7 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
     const byPath = new Map<string, DiscoveredFile>();
     for (const { dir, layer } of layers) {
       for (const discovered of await collectLayer(dir, layer)) {
+        if (discovered.path === ROUTING_FILE) continue;
         byPath.set(discovered.path, discovered);
       }
     }
@@ -402,6 +406,7 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
     // optional name/description/tags on mcp.json fill the metadata gap.
     const name = frontmatter.name || mcp?.name || id;
     const tags = frontmatter.tags.length > 0 ? frontmatter.tags : mcp?.tags;
+    const routingText = await readFile(join(location.capabilityRoot, ROUTING_FILE), "utf-8").catch(() => undefined);
 
     return {
       id,
@@ -411,6 +416,7 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
       description: frontmatter.description || mcp?.description || "",
       tags: tags && tags.length > 0 ? tags : undefined,
       components: detectComponents(files),
+      routing: routingText ? parseRoutingCard(routingText, id) : undefined,
       rootPath: location.capabilityRoot,
       files,
       mcp,

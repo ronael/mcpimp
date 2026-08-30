@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "role": "resource",
+  "taskModes": [
+    "research"
+  ],
+  "useWhen": [
+    "find component galleries and UI references",
+    "research shadcn components and interface examples",
+    "compare reusable component resources"
+  ],
+  "avoidWhen": [
+    "implement a complete product interface",
+    "audit application accessibility",
+    "backend or domain architecture"
+  ],
+  "conflictsWith": [],
+  "complements": []
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "role": "generalist",
+  "taskModes": ["create", "redesign", "audit"],
+  "useWhen": [
+    "choose an aesthetic direction for a new web experience",
+    "redesign a page with explicit visual taste constraints",
+    "explicit Taste Skill invocation"
+  ],
+  "avoidWhen": [
+    "existing design system must remain authoritative",
+    "pure accessibility correction",
+    "backend or domain architecture"
+  ],
+  "conflictsWith": ["hallmark", "elaya-design-landing-page-design", "ui-ux-pro-max"],
+  "complements": ["ui-skills-fixing-accessibility", "motion-design-resources"]
+}

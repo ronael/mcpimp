@@ -2,11 +2,13 @@
 
 [English version](AGENTS.md)
 
-Avant toute modification du projet, consulte les capabilities disponibles via le
-MCP MCPIMP (`list-capabilities` / `search-capabilities`). Si une capability
-pertinente existe (par exemple `elaya-design-landing-page-design` pour toute
-modification frontend : HTML, CSS, JS visuel, design), charge-la avec
-`load-capability` et applique ses règles avant d'écrire du code.
+Avant toute modification non triviale du projet, demande à MCPIMP de résoudre
+les capabilities pertinentes à partir de la tâche complète et du contexte
+projet disponible. Ne présume pas d'un identifiant avant le routage. Utilise
+`resolve-capabilities` quand il est disponible ; sinon utilise
+`search-capabilities`, sélectionne depuis sa shortlist et préfère les
+capabilities spécifiques à la tâche aux généralistes. Ne charge que les
+entrypoints retournés ou sélectionnés nécessaires avant d'écrire du code.
 
 Si la capability n'est pas disponible dans le MCP (serveur non lancé, snapshot
 obsolète, id inconnu), regarde directement les fichiers correspondants sur

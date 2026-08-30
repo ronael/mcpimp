@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "role": "specialist",
+  "taskModes": ["create", "redesign"],
+  "useWhen": [
+    "conversion-focused landing page from product and audience context",
+    "marketing page requiring content structure and implementation",
+    "landing page with a clear primary action"
+  ],
+  "avoidWhen": [
+    "single component only",
+    "read-only interface audit",
+    "backend or domain architecture"
+  ],
+  "conflictsWith": ["hallmark", "taste-skill", "ui-ux-pro-max"],
+  "complements": ["ui-skills-fixing-accessibility", "motion-design-resources"]
+}

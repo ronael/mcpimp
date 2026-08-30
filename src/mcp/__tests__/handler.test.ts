@@ -29,6 +29,7 @@ describe("MCP handler", () => {
       jsonrpc: "2.0",
       id: 1,
       result: {
+        instructions: expect.stringContaining("resolve-capabilities"),
         capabilities: {
           tools: {},
           resources: {},
@@ -46,8 +47,41 @@ describe("MCP handler", () => {
       "capability-info",
       "load-capability",
       "search-capabilities",
+      "resolve-capabilities",
       "list-upstreams",
     ]);
+  });
+
+  it("resolves capabilities without materializing their content", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 21,
+      method: "tools/call",
+      params: {
+        name: "resolve-capabilities",
+        arguments: { task: "Create a conversion landing page", taskMode: "create" },
+      },
+    });
+    const result = JSON.parse(response.result.content[0].text);
+
+    expect(result.primary).toMatchObject({ id: "landing-page", entrypoints: expect.any(Array) });
+    expect(result).not.toHaveProperty("loadedGuidance");
+  });
+
+  it("rejects an invalid capability task mode", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 22,
+      method: "tools/call",
+      params: {
+        name: "resolve-capabilities",
+        arguments: { task: "Do the work", taskMode: "invent" },
+      },
+    });
+
+    expect(response.error).toMatchObject({ code: -32602, message: "Invalid capability task mode" });
   });
 
   it("calls list-capabilities", async () => {
