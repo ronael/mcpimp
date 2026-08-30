@@ -155,6 +155,32 @@ const RESOURCE_INTENT_CAPABILITIES: Capability[] = [
   ),
 ];
 
+const ACTION_INTENT_CAPABILITIES: Capability[] = [
+  capability(
+    "accessibility-audit-skill",
+    "external",
+    "accessibility-audit",
+    "accessibility-audit",
+    "Audit and improve an interface for accessibility.",
+    [file("accessibility-audit-skill", "SKILL.md", "Audit interface accessibility and produce an implementation plan.", "skill")],
+  ),
+  capability(
+    "design-audit-resources",
+    "local",
+    "design-audit-resources",
+    "design-audit-resources",
+    "References and resource links for interface design audits and accessibility checklists.",
+    [
+      file(
+        "design-audit-resources",
+        "references/audit-links.md",
+        "Interface accessibility audit references, checklists and external resources.",
+        "reference",
+      ),
+    ],
+  ),
+];
+
 function ids(query: string): string[] {
   return searchCapabilities(CAPABILITIES, query).map((hit) => `${hit.capabilityId}/${hit.path}`);
 }
@@ -192,6 +218,12 @@ describe("searchCapabilities", () => {
     const results = ids("photographic luxury hospitality");
 
     expect(results).toContain("landing-page/shared/design-principles.md");
+  });
+
+  it("bridges a French audit verb to an English capability", () => {
+    const [result] = searchCapabilities(ACTION_INTENT_CAPABILITIES, "auditer");
+
+    expect(result.capabilityId).toBe("accessibility-audit-skill");
   });
 
   it("keeps generated licence notices out of the results", () => {
@@ -395,5 +427,17 @@ describe("searchCapabilities", () => {
     );
 
     expect(top.capabilityId).toBe("visual-resources");
+  });
+
+  it("prefers an executable skill over reference links for an action request", () => {
+    const results = searchCapabilities(
+      ACTION_INTENT_CAPABILITIES,
+      "auditer interface accessibilite",
+      { diagnostic: true },
+    );
+    const resource = results.find((result) => result.capabilityId === "design-audit-resources");
+
+    expect(results[0]?.capabilityId).toBe("accessibility-audit-skill");
+    expect(resource?.diagnostics?.resourceIntentWeight).toBeLessThan(1);
   });
 });

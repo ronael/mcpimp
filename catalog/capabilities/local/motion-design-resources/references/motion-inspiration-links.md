@@ -25,6 +25,22 @@ decisions de design et d'implementation.
   certaines animations CSS. Utile pour comprendre la traduction de principes CSS
   vers des timelines React Native/Reanimated.
 
+## Reusable Motion Libraries
+
+- Kinetics: https://kinetics.colorion.co/ — interactions basees sur des ressorts
+  avec variantes CSS, React et prompt. Le contenu est annonce sous licence MIT.
+  Conserver un mouvement interruptible, verifier les etats clavier et fournir
+  une variante reduced motion avant de reutiliser un exemple.
+- Animated Buttons: https://animatedbuttons.colorion.co/ — interactions de
+  boutons en CSS autonome, sous licence MIT, avec prompts correspondants. Utile
+  pour harmoniser hover, press et focus ; ne pas choisir un effet qui masque le
+  libelle, affaiblit le focus ou depend uniquement du pointeur.
+- Motion Primitives: https://motion-primitives.com/ — composants React bases sur
+  Motion et Tailwind CSS, distribuables par copie ou CLI et publies sous licence
+  MIT. Le projet se presente encore comme beta : verifier l'API actuelle, les
+  dependances et l'accessibilite du composant retenu avant integration.
+  Depot: https://github.com/ibelick/motion-primitives.
+
 ## Usage Pattern
 
 - Pour une landing page, commencer par definir le role du mouvement : orienter

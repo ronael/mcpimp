@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
 import { extractLinkedCapabilityPaths } from "../markdown-links";
@@ -54,6 +55,11 @@ describe("design capability catalog", () => {
       ["beautiful ui ai native approval card", "ui-component-resources"],
       ["beui rare ui shadcn animated components", "ui-component-resources"],
       ["transitions card resize modal number pop-in", "motion-design-resources"],
+      ["composants gantt kanban data grid", "ui-component-resources"],
+      ["animation ressort CSS React", "motion-design-resources"],
+      ["typographie fluide tokens espacement", "design-system-resources"],
+      ["generateur icone arriere-plan CSS", "visual-design-resources"],
+      ["auditer interface accessibilite", "ui-skills-fixing-accessibility"],
     ] as const;
 
     for (const [query, expectedId] of cases) {
@@ -62,6 +68,43 @@ describe("design capability catalog", () => {
       expect(results.every((result) => result.capabilityId !== "ui-ux-pro-max-skill-design-system"), query)
         .toBe(true);
     }
+  });
+
+  it("keeps curated design resources grouped by agent intent", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
+    const cases = [
+      ["composants gantt kanban data grid", "ui-component-resources"],
+      ["animation ressort CSS React", "motion-design-resources"],
+      ["typographie fluide tokens espacement", "design-system-resources"],
+      ["generateur icone arriere-plan CSS", "visual-design-resources"],
+    ] as const;
+
+    for (const [query, expectedId] of cases) {
+      expect(registry.search(query)[0]?.capabilityId, query).toBe(expectedId);
+    }
+
+    const auditResults = registry.search("auditer interface accessibilite", { limit: 3 });
+    expect(auditResults.some((result) => result.capabilityId === "ui-skills-fixing-accessibility")).toBe(true);
+    expect(auditResults[0]?.capabilityId).not.toBe("design-system-resources");
+  });
+
+  it("keeps every approved external design resource in its curated family", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
+    const expectedLinks = new Map([
+      ["ui-component-resources", ["https://coss.com/ui", "https://reui.io/components", "https://vibeprompts.dev/", "https://component.gallery/"]],
+      ["motion-design-resources", ["https://kinetics.colorion.co/", "https://animatedbuttons.colorion.co/", "https://motion-primitives.com/"]],
+      ["visual-design-resources", ["https://iconcreator.dev/", "https://bg.ibelick.com/"]],
+      ["design-system-resources", ["https://designsystemchecklist.com/", "https://www.designsystems.one/", "https://utopia.fyi/", "https://open-props.style/", "https://interfaces.rauno.me/"]],
+    ]);
+
+    for (const [capabilityId, links] of expectedLinks) {
+      const text = registry.getCapability(capabilityId)?.files.map((file) => file.text).join("\n") ?? "";
+      for (const link of links) expect(text, `${link} should remain in ${capabilityId}`).toContain(link);
+    }
+
+    const uiSkillsSource = await readFile(resolve("catalog/sources/ibelick-ui-skills.json"), "utf8");
+    expect(uiSkillsSource).toContain("https://www.ui-skills.com/");
+    expect(uiSkillsSource).toContain("https://www.ui-skills.com/mcp");
   });
 
   it("keeps the local landing orchestrator minimal", async () => {

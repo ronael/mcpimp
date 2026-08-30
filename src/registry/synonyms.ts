@@ -18,6 +18,7 @@
 
 const SYNONYM_GROUPS: string[][] = [
   ["accessibility", "accessibilite", "a11y", "wcag", "contrast", "contraste", "aria"],
+  ["audit", "auditer", "auditing", "review", "revoir"],
   ["animation", "motion", "transition", "interaction"],
   ["brand", "marque", "branding", "identity", "identite", "charte"],
   ["color", "couleur", "palette", "teinte"],

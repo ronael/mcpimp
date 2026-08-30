@@ -128,6 +128,10 @@ const RESOURCE_CAPABILITY_TERMS = normalizedTermSet([
   "reference", "references", "référence", "références", "resource",
   "resources", "ressource", "ressources",
 ]);
+const ACTION_QUERY_TERMS = normalizedTermSet([
+  "audit", "auditer", "build", "construire", "corriger", "create", "creer",
+  "fix", "implement", "implementer", "improve", "ameliorer", "review", "revoir",
+]);
 
 const RESOURCE_DOMAINS = [
   {
@@ -170,6 +174,7 @@ interface IndexedDocument {
 
 interface QueryIntent {
   terms: Set<string>;
+  wantsAction: boolean;
   wantsResource: boolean;
 }
 
@@ -314,17 +319,24 @@ function detectQueryIntent(queryTerms: QueryTerm[]): QueryIntent {
   const terms = new Set(queryTerms.filter((term) => term.weight === 1).map((term) => term.root));
   return {
     terms,
+    wantsAction: hasAny(terms, ACTION_QUERY_TERMS),
     wantsResource: hasAny(terms, RESOURCE_QUERY_TERMS),
   };
 }
 
 function resourceIntentWeight(document: IndexedDocument, intent: QueryIntent): number {
-  if (!intent.wantsResource) return 1;
-
   const metadataTerms = capabilityMetadataTerms(document.capability);
+  const isResource = hasAny(metadataTerms, RESOURCE_CAPABILITY_TERMS)
+    || (document.file.type === "reference" && !document.capability.components.skill);
+
+  // Action requests should prefer a capability that can perform the work. A
+  // curated link remains discoverable, but must not displace an executable
+  // skill unless the query explicitly asks for a resource or inspiration.
+  if (!intent.wantsResource) return intent.wantsAction && isResource ? 0.55 : 1;
+
   let weight = 1;
 
-  if (hasAny(metadataTerms, RESOURCE_CAPABILITY_TERMS)) weight *= 2;
+  if (isResource) weight *= 2;
   if (document.file.type === "reference") weight *= 1.3;
 
   for (const domain of RESOURCE_DOMAINS) {
