@@ -26,6 +26,7 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   const activityPersistence = document.querySelector("#activityPersistence");
   const activityExportJson = document.querySelector("#activityExportJson");
   const activityExportNdjson = document.querySelector("#activityExportNdjson");
+  const upstreamRows = document.querySelector("#upstreamRows");
   const activityFilters = [activityClientFilter, activityMethodFilter, activityToolFilter, activityStatusFilter, activityPeriodFilter].filter(Boolean);
   const reviewCopyButtons = [...document.querySelectorAll("[data-review-command]")];
   const activityCopy = ${JSON.stringify({
@@ -41,6 +42,7 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   })};
   const activityDate = new Intl.DateTimeFormat(${JSON.stringify(copy.htmlLang)}, { dateStyle: "short", timeStyle: "medium" });
   const reviewCopy = ${JSON.stringify({ idle: copy.reviewCopyCommand, copied: copy.reviewCopied })};
+  const noUpstreams = ${JSON.stringify(copy.noUpstreams)};
   let drawerTrigger = null;
   let query = "";
   let origin = "all";
@@ -129,6 +131,107 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     cell.textContent = message;
     row.append(cell);
     activityRows.append(row);
+  }
+
+  function upstreamChip(text, variant, plain = false) {
+    const chip = document.createElement("span");
+    chip.className = "chip " + variant + (plain ? " plain" : "");
+    chip.textContent = text;
+    return chip;
+  }
+
+  function upstreamCell() {
+    const cell = document.createElement("td");
+    const content = document.createElement("div");
+    content.className = "upstream-cell";
+    cell.append(content);
+    return { cell, content };
+  }
+
+  function upstreamNote(text, mono = false) {
+    const note = document.createElement("span");
+    note.className = "upstream-note" + (mono ? " mono" : "");
+    note.textContent = text;
+    return note;
+  }
+
+  function renderUpstreams(upstreams) {
+    if (!upstreamRows || !Array.isArray(upstreams)) return;
+    upstreamRows.replaceChildren();
+    if (upstreams.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 7;
+      cell.textContent = noUpstreams;
+      row.append(cell);
+      upstreamRows.append(row);
+      return;
+    }
+    upstreams.forEach((upstream) => {
+      const row = document.createElement("tr");
+      const capability = document.createElement("td");
+      capability.className = "mono";
+      const link = document.createElement("a");
+      link.href = "#capability-" + String(upstream.capabilityId).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      link.textContent = upstream.capabilityId;
+      capability.append(link);
+      row.append(capability);
+
+      const transport = document.createElement("td");
+      transport.append(upstreamChip(upstream.transport, "info", true));
+      row.append(transport);
+
+      const configuration = upstreamCell();
+      configuration.content.append(upstreamChip(
+        upstream.status,
+        upstream.status === "ready" ? "ok" : upstream.status === "missing-env" ? "warn" : "err",
+      ));
+      if (upstream.missingEnv?.length) configuration.content.append(upstreamNote(upstream.missingEnv.join(", "), true));
+      row.append(configuration.cell);
+
+      const availability = upstreamCell();
+      availability.content.append(upstreamChip(
+        upstream.reachable === true ? "reachable" : upstream.reachable === false ? "unavailable" : "unchecked",
+        upstream.reachable === true ? "ok" : upstream.reachable === false ? "err" : "info",
+      ));
+      if (upstream.lastError?.message) availability.content.append(upstreamNote(upstream.lastError.message));
+      row.append(availability.cell);
+
+      const latency = upstreamCell();
+      const duration = document.createElement("strong");
+      duration.textContent = Number.isFinite(upstream.latencyMs) ? upstream.latencyMs + " ms" : "—";
+      latency.content.append(duration);
+      latency.content.append(upstreamNote(
+        upstream.lastCheckedAt ? activityDate.format(new Date(upstream.lastCheckedAt)) : ${JSON.stringify(copy.never)},
+      ));
+      row.append(latency.cell);
+
+      const cache = upstreamCell();
+      cache.content.append(upstreamChip(
+        upstream.cacheStatus,
+        upstream.cacheStatus === "fresh" ? "ok" : upstream.cacheStatus === "stale" ? "warn" : "info",
+      ));
+      cache.content.append(upstreamNote((upstream.cachedToolCount || 0) + " tools"));
+      row.append(cache.cell);
+
+      const endpoint = document.createElement("td");
+      endpoint.className = "mono wrap";
+      endpoint.textContent = upstream.url;
+      row.append(endpoint);
+      upstreamRows.append(row);
+    });
+  }
+
+  async function refreshUpstreams() {
+    if (!upstreamRows) return;
+    try {
+      const response = await fetch("/upstreams", { cache: "no-store" });
+      if (!response.ok) return;
+      const payload = await response.json();
+      renderUpstreams(payload.upstreams);
+    } catch {
+      // Keep the last known state visible while the local endpoint is unavailable.
+    }
   }
 
   function activityCell(value, className) {
@@ -411,7 +514,9 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   if (location.hash.slice(1).startsWith("capability-")) openDrawer(location.hash.slice(1));
   filterRows();
   refreshActivity();
+  refreshUpstreams();
   window.setInterval(refreshActivity, 3000);
+  window.setInterval(refreshUpstreams, 5000);
 })();
 </script>`;
 }

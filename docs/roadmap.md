@@ -244,13 +244,15 @@ fichiers et logs.
 
 ### P2.1 — santé des sources et upstreams
 
+Socle upstream livré : `tools/list` isole chaque serveur externe, applique un
+timeout explicite de 5 secondes et conserve pendant 60 secondes la dernière
+liste de tools valide. Un échec de rafraîchissement sert ce cache en état
+`stale` sans masquer les tools locaux. L’endpoint `GET /upstreams` et le
+dashboard exposent disponibilité, latence, dernière vérification, catégorie
+d’erreur neutralisée, expiration et invalidation du cache.
+
 - Afficher dernière synchronisation, révision disponible, erreurs et mises à
   jour en attente par source.
-- Mesurer latence et disponibilité des upstreams avec timeouts explicites.
-- Isoler l’échec d’un upstream pendant `tools/list` afin qu’un serveur externe
-  indisponible ne masque pas les tools locaux.
-- Mettre en cache prudemment les listes de tools upstream avec invalidation
-  observable.
 
 ### P2.2 — workflow de mise à jour
 

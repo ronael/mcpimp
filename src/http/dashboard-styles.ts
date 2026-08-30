@@ -129,6 +129,8 @@ tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
 .chip.info{color:var(--cyan);border-color:rgba(99,230,255,.3);background:rgba(99,230,255,.06)}
 .chip.vio{color:var(--violet);border-color:rgba(189,167,255,.3);background:rgba(189,167,255,.06)}
 .chip.plain::before{display:none}
+.upstream-cell{display:flex;align-items:flex-start;gap:5px;flex-direction:column;min-width:108px}
+.upstream-note{display:block;max-width:220px;color:var(--muted);font-size:10px;line-height:1.35;overflow-wrap:anywhere}
 .method{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.04em}
 .method.get{color:var(--acid);background:rgba(201,255,61,.08);border:1px solid rgba(201,255,61,.3)}
 .method.post{color:var(--cyan);background:rgba(99,230,255,.08);border:1px solid rgba(99,230,255,.3)}

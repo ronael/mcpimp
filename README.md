@@ -157,6 +157,14 @@ transport. Put real values only in `.env`; it is loaded by `pnpm run dev` and is
 ignored by Git. Upstream tools receive a stable prefix, for example
 `nocodb.list-tables` and `nocodb.get-records`.
 
+Tool discovery uses a 5 second timeout and a 60 second in-process cache. A
+failing upstream is isolated during `tools/list`, so MCPIMP's local tools and
+healthy upstreams remain visible. When a refresh fails, the last valid tool
+list is served as stale until a later refresh succeeds; `tools/call` responses
+are never cached. `GET /upstreams` exposes the configured policy, current
+availability, latency, last check, neutralized error category, and cache state
+without resolving `env:` values into the response.
+
 ## External sources
 
 > For the detailed guide, use [`site/docs/sources.html`](site/docs/sources.html)

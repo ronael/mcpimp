@@ -157,9 +157,11 @@ export interface DashboardCopy {
   upstreamHeaders: {
     capability: string;
     transport: string;
-    status: string;
-    url: string;
-    missingEnv: string;
+    configuration: string;
+    availability: string;
+    latency: string;
+    cache: string;
+    endpoint: string;
   };
   noUpstreams: string;
   quickTestTitle: string;
@@ -205,6 +207,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       { method: "GET", path: "/sse", description: "SSE endpoint used by MCP clients compatible with HTTP." },
       { method: "POST", path: "/message", description: "JSON RPC MCP endpoint for tools and resources." },
       { method: "GET", path: "/activity", description: "Recent MCP activity without arguments, secrets, or response contents." },
+      { method: "GET", path: "/upstreams", description: "Current upstream availability, latency, and tool cache state." },
       { method: "GET", path: "/dashboard", description: "Human debug HTML view for inspecting the registry." },
       { method: "GET", path: "/fr/dashboard", description: "French version of the dashboard." },
     ],
@@ -348,9 +351,11 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     upstreamHeaders: {
       capability: "Capability",
       transport: "Transport",
-      status: "Status",
-      url: "URL",
-      missingEnv: "Missing env",
+      configuration: "Configuration",
+      availability: "Availability",
+      latency: "Latency / checked",
+      cache: "Tool cache",
+      endpoint: "Endpoint",
     },
     noUpstreams: "No upstream MCP configured.",
     quickTestTitle: "Quick test",
@@ -394,6 +399,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       { method: "GET", path: "/sse", description: "Endpoint SSE utilisé par les clients MCP compatibles HTTP." },
       { method: "POST", path: "/message", description: "Endpoint JSON RPC MCP pour tools et resources." },
       { method: "GET", path: "/activity", description: "Activité MCP récente sans arguments, secrets ni contenu des réponses." },
+      { method: "GET", path: "/upstreams", description: "Disponibilité, latence et état du cache des tools upstream." },
       { method: "GET", path: "/dashboard", description: "Vue HTML de debug humain pour inspecter le registry." },
       { method: "GET", path: "/fr/dashboard", description: "Version française du dashboard." },
     ],
@@ -537,9 +543,11 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     upstreamHeaders: {
       capability: "Capacité",
       transport: "Transport",
-      status: "Status",
-      url: "URL",
-      missingEnv: "Env manquantes",
+      configuration: "Configuration",
+      availability: "Disponibilité",
+      latency: "Latence / vérification",
+      cache: "Cache tools",
+      endpoint: "Endpoint",
     },
     noUpstreams: "Aucun MCP upstream configuré.",
     quickTestTitle: "Test rapide",
