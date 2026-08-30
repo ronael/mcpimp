@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
@@ -20,8 +20,13 @@ const requiredNames = [
 ];
 
 describe("design capability catalog", () => {
+  let registry: FileSystemCapabilityRegistry;
+
+  beforeAll(async () => {
+    registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
+  });
+
   it("keeps every required design skill present, loadable and provenance-aware", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const capabilities = registry.listCapabilities();
     const byName = new Map(capabilities.map((capability) => [capability.name, capability]));
 
@@ -41,7 +46,6 @@ describe("design capability catalog", () => {
   });
 
   it("finds the real UI/UX capabilities through representative queries", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const cases = [
       ["landing visual identity", "ui-ux-pro-max"],
       ["accessibility keyboard contrast", "ui-skills-fixing-accessibility"],
@@ -71,7 +75,6 @@ describe("design capability catalog", () => {
   });
 
   it("keeps curated design resources grouped by agent intent", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const cases = [
       ["composants gantt kanban data grid", "ui-component-resources"],
       ["animation ressort CSS React", "motion-design-resources"],
@@ -89,7 +92,6 @@ describe("design capability catalog", () => {
   });
 
   it("keeps every approved external design resource in its curated family", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const expectedLinks = new Map([
       ["ui-component-resources", ["https://coss.com/ui", "https://reui.io/components", "https://vibeprompts.dev/", "https://component.gallery/"]],
       ["motion-design-resources", ["https://kinetics.colorion.co/", "https://animatedbuttons.colorion.co/", "https://motion-primitives.com/"]],
@@ -108,14 +110,12 @@ describe("design capability catalog", () => {
   });
 
   it("keeps the local landing orchestrator minimal", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const landing = registry.listCapabilities().find((capability) => capability.id === "landing-page");
 
     expect(landing?.files.map((file) => file.path)).toEqual(["SKILL.md"]);
   });
 
   it("recognises NocoDB as a composite skill + mcp capability", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const nocodb = registry.getCapability("nocodb");
 
     expect(nocodb).toMatchObject({
@@ -127,7 +127,6 @@ describe("design capability catalog", () => {
   });
 
   it("exposes the selected capability through the MCP tool flow", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const handle = createMcpHandler(registry);
 
     const search: any = await handle({
@@ -164,7 +163,6 @@ describe("design capability catalog", () => {
   });
 
   it("loads bounded Markdown entrypoints for two real capabilities", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     const handle = createMcpHandler(registry);
     const cases = [
       {
@@ -220,7 +218,6 @@ describe("design capability catalog", () => {
   });
 
   it("ranks useful headings for real agent intentions", async () => {
-    const registry = await FileSystemCapabilityRegistry.scan(CATALOG_ROOT);
     for (const entry of HEADING_EVALUATION_CORPUS) {
       const markdown = registry.getCapability(entry.capabilityId)?.files
         .find((file) => file.path === entry.path)?.text;
