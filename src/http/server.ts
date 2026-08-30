@@ -81,6 +81,7 @@ export interface ServerOptions {
   activityLog?: McpActivityLog;
   activityPersistence?: "process-memory" | "process-memory+ndjson";
   onActivity?: (event: McpActivityEvent) => void;
+  now?: () => Date;
   runtime?: {
     kind: "node" | "worker" | "unknown";
     pid?: number;
@@ -137,8 +138,19 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   const handleMcpMessage = createMcpHandler(registry, upstreamGateway);
   const sessions = new Map<string, SseSession>();
   const encoder = new TextEncoder();
-  const startedAt = new Date();
+  const now = options.now || (() => new Date());
+  let startedAt = options.runtime?.kind === "worker" ? undefined : now();
   const catalogRevision = catalogFingerprint(registry);
+
+  function runtimeStartedAt(): Date {
+    startedAt ||= now();
+    return startedAt;
+  }
+
+  app.use("*", async (_context, next) => {
+    runtimeStartedAt();
+    await next();
+  });
 
   async function serveStatic(path: string) {
     return options.staticSite?.serve(path);
@@ -195,6 +207,7 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
 
   app.get("/health", async (c) => {
     const runtime = options.runtime || { kind: "unknown" as const };
+    const healthySince = runtimeStartedAt();
     return c.json({
       ok: true,
       capabilities: registry.listCapabilities().length,
@@ -204,8 +217,8 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
       endpoint: runtime.endpoint || "/message",
       localTools: MCP_TOOLS.length,
       catalogRevision: await catalogRevision,
-      startedAt: startedAt.toISOString(),
-      uptimeSeconds: Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1_000)),
+      startedAt: healthySince.toISOString(),
+      uptimeSeconds: Math.max(0, Math.floor((now().getTime() - healthySince.getTime()) / 1_000)),
     });
   });
 

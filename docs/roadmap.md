@@ -225,16 +225,17 @@ ou provenance ambiguë.
 
 ### P1.6 — qualité et déploiement
 
-- Ajouter une CI dédiée qui exécute tests, typecheck et build sur chaque pull
-  request et push vers `main`.
-- Terminer le contrôle visuel responsive desktop/mobile prévu par le plan
-  frontend.
-- Valider le Worker Cloudflare et GitHub Pages après déploiement, avec smoke
-  tests sur les routes publiques attendues.
-- Documenter une procédure de release et de rollback minimale.
+Livré : la CI exécute tests, évaluations de recherche/routage, typecheck et build
+sur chaque pull request et push vers `main`. Le dashboard est contrôlé dans un
+navigateur réel aux largeurs desktop et mobile, sans débordement global ni
+erreur console. GitHub Pages est activé, son workflow teste les routes anglaises,
+françaises et documentaires après chaque déploiement. Le Worker Cloudflare est
+validé par dry-run, profil de démarrage et smoke tests de santé, activité et
+handshake MCP. La procédure [`docs/release.md`](release.md) sépare clairement
+les deux surfaces et décrit leur rollback.
 
-Critère de sortie : un changement ne peut pas être publié si le protocole, le
-snapshot ou le site ne passent pas leurs contrôles automatisés.
+Critère de sortie atteint : un changement ne peut pas être publié si le
+protocole, le snapshot ou le site ne passent pas leurs contrôles automatisés.
 
 ## Phase 2 — opérer le catalogue sans friction
 
