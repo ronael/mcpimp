@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolve } from "node:path";
 import { createServer } from "../server";
 import { FileSystemCapabilityRegistry } from "../../registry/filesystem";
+import { McpActivityLog } from "../../mcp/activity";
 
 const fixturesRoot = resolve("test/fixtures/capabilities");
+const upstreamFixturesRoot = resolve("test/fixtures/upstream-capabilities");
 
 async function createApp() {
   const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
@@ -11,6 +13,12 @@ async function createApp() {
 }
 
 describe("Hono server", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete process.env.TEST_NOCO_MCP_URL;
+    delete process.env.TEST_NOCO_MCP_TOKEN;
+  });
+
   it("serves health status", async () => {
     const app = await createApp();
     const response = await app.request("/health");
@@ -184,7 +192,11 @@ describe("Hono server", () => {
 
     expect(response.status).toBe(202);
     await expect(response.text()).resolves.toBe("");
-    await expect((await app.request("/activity")).json()).resolves.toEqual({ events: [] });
+    await expect((await app.request("/activity")).json()).resolves.toEqual({
+      events: [],
+      facets: { clients: [], methods: [], statuses: [], tools: [], transports: [] },
+      persistence: "process-memory",
+    });
   });
 
   it("rejects empty JSON-RPC batches", async () => {
@@ -261,10 +273,146 @@ describe("Hono server", () => {
       status: "success",
       transport: "http",
       requestId: 2,
+      correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       parameters: { query: "landing" },
       result: { kind: "tool-result", blockCount: 1, contentTypes: ["text"] },
     });
     expect(JSON.stringify(payload)).not.toContain("must-not-leak");
+  });
+
+  it("correlates the client transport event with a sanitized upstream event", async () => {
+    process.env.TEST_NOCO_MCP_URL = "https://nocodb-mcp.test/message";
+    process.env.TEST_NOCO_MCP_TOKEN = "secret-token";
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const request = JSON.parse(String(init.body));
+      return Response.json({
+        jsonrpc: "2.0",
+        id: request.id,
+        result: { content: [{ type: "text", text: "private upstream response" }] },
+      });
+    }));
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+    const app = createServer(registry);
+
+    await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json", "user-agent": "Codex Test/2.0" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 44,
+        method: "tools/call",
+        params: { name: "nocodb.list-tables", arguments: { token: "must-not-leak" } },
+      }),
+    });
+
+    const payload: any = await (await app.request("/activity")).json();
+    expect(payload.events).toHaveLength(2);
+    expect(new Set(payload.events.map((event: { correlationId: string }) => event.correlationId)).size).toBe(1);
+    expect(payload.events).toEqual(expect.arrayContaining([
+      expect.objectContaining({ transport: "http", target: "nocodb.list-tables" }),
+      expect.objectContaining({
+        transport: "upstream",
+        client: "Codex Test/2.0",
+        target: "nocodb.list-tables",
+        upstream: { capabilityId: "nocodb", tool: "list-tables" },
+        result: { kind: "upstream-response" },
+      }),
+    ]));
+    expect(JSON.stringify(payload)).not.toContain("secret-token");
+    expect(JSON.stringify(payload)).not.toContain("must-not-leak");
+    expect(JSON.stringify(payload)).not.toContain("private upstream response");
+  });
+
+  it("does not retain raw upstream error messages", async () => {
+    process.env.TEST_NOCO_MCP_URL = "https://nocodb-mcp.test/message";
+    process.env.TEST_NOCO_MCP_TOKEN = "secret-token";
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const request = JSON.parse(String(init.body));
+      return Response.json({
+        jsonrpc: "2.0",
+        id: request.id,
+        error: { code: -32000, message: "Customer Jane Doe cannot access private workspace" },
+      });
+    }));
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+    const app = createServer(registry);
+
+    await app.request("/message", {
+      method: "POST",
+      headers: { "content-type": "application/json", "user-agent": "Codex Test/2.0" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 45,
+        method: "tools/call",
+        params: { name: "nocodb.list-tables", arguments: {} },
+      }),
+    });
+
+    const payload: any = await (await app.request("/activity")).json();
+    expect(payload.events).toHaveLength(2);
+    expect(payload.events.every((event: { error?: { message: string } }) => (
+      !event.error || event.error.message === "Upstream MCP request failed"
+    ))).toBe(true);
+    expect(JSON.stringify(payload)).not.toContain("Jane Doe");
+    expect(JSON.stringify(payload)).not.toContain("private workspace");
+  });
+
+  it("filters activity and exports the same selection as NDJSON", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+    const timestamps = ["2026-08-30T09:00:00.000Z", "2026-08-30T10:00:00.000Z"];
+    const activityLog = new McpActivityLog(20, undefined, () => new Date(timestamps.shift()!));
+    activityLog.record({
+      client: "Claude 1.0",
+      method: "tools/list",
+      transport: "sse",
+      status: "success",
+      durationMs: 1,
+    });
+    activityLog.record({
+      client: "Codex 2.0",
+      method: "tools/call",
+      target: "search-capabilities",
+      transport: "http",
+      status: "error",
+      durationMs: 2,
+      error: { code: -32000, message: "safe summary" },
+    });
+    const app = createServer(registry, {
+      activityLog,
+      activityPersistence: "process-memory+ndjson",
+    });
+    const query = "client=Codex%202.0&method=tools%2Fcall&tool=search-capabilities&status=error&transport=http&from=2026-08-30T09%3A30%3A00.000Z";
+
+    const response = await app.request(`/activity?${query}`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-mcpimp-activity-persistence")).toBe("process-memory+ndjson");
+    await expect(response.json()).resolves.toMatchObject({
+      persistence: "process-memory+ndjson",
+      events: [{ client: "Codex 2.0", target: "search-capabilities" }],
+    });
+
+    const exported = await app.request(`/activity?${query}&format=ndjson&download=1`);
+    expect(exported.status).toBe(200);
+    expect(exported.headers.get("content-type")).toContain("application/x-ndjson");
+    expect(exported.headers.get("content-disposition")).toContain("mcpimp-activity.ndjson");
+    const lines = (await exported.text()).trim().split("\n");
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0])).toMatchObject({ client: "Codex 2.0", target: "search-capabilities" });
+  });
+
+  it("rejects invalid activity filters and export formats", async () => {
+    const app = await createApp();
+
+    for (const path of [
+      "/activity?status=pending",
+      "/activity?transport=stdio",
+      "/activity?from=not-a-date",
+      "/activity?from=2026-08-31T12%3A00%3A00Z&to=2026-08-31T11%3A00%3A00Z",
+      "/activity?format=csv",
+    ]) {
+      const response = await app.request(path);
+      expect(response.status, path).toBe(400);
+    }
   });
 
   it("supports legacy MCP SSE transport", async () => {
@@ -323,6 +471,14 @@ describe("Hono server", () => {
     expect(html).toContain("/activity");
     expect(html).toContain('href="#activity"');
     expect(html).toContain('id="activityRows"');
+    expect(html).toContain('id="activityClientFilter"');
+    expect(html).toContain('id="activityMethodFilter"');
+    expect(html).toContain('id="activityToolFilter"');
+    expect(html).toContain('id="activityStatusFilter"');
+    expect(html).toContain('id="activityPeriodFilter"');
+    expect(html).toContain('id="activityExportJson"');
+    expect(html).toContain('id="activityExportNdjson"');
+    expect(html).toContain("buildActivityQuery");
     expect(html).toContain("openActivityDrawer");
     expect(html).toContain('role="dialog"');
     const inlineScript = html.match(/<script>\s*([\s\S]*?)<\/script>/)?.[1];

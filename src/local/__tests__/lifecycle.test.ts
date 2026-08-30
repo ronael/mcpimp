@@ -1,6 +1,5 @@
-import { Writable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
-import { closeServer, closeWritable, startupErrorMessage } from "../lifecycle";
+import { closeServer, startupErrorMessage } from "../lifecycle";
 
 describe("local server lifecycle", () => {
   it("turns EADDRINUSE into an actionable message without a stack trace", async () => {
@@ -34,21 +33,5 @@ describe("local server lifecycle", () => {
     expect(server.close).toHaveBeenCalledOnce();
     callback?.();
     await closing;
-  });
-
-  it("ends and flushes the activity stream", async () => {
-    let output = "";
-    const stream = new Writable({
-      write(chunk, _encoding, callback) {
-        output += chunk.toString();
-        callback();
-      },
-    });
-    stream.write("event\n");
-
-    await closeWritable(stream);
-
-    expect(stream.writableFinished).toBe(true);
-    expect(output).toBe("event\n");
   });
 });

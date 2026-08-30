@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolve } from "node:path";
 import { createMcpHandler } from "../handler";
+import { UpstreamMcpGateway, type UpstreamActivityEvent } from "../upstream";
 import { FileSystemCapabilityRegistry } from "../../registry/filesystem";
 
 const fixturesRoot = resolve("test/fixtures/capabilities");
@@ -460,22 +461,40 @@ describe("MCP handler", () => {
     );
 
     const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
-    const handle = createMcpHandler(registry);
-    const tools: any = await handle({ jsonrpc: "2.0", id: 8, method: "tools/list" });
+    const activity: UpstreamActivityEvent[] = [];
+    const handle = createMcpHandler(registry, new UpstreamMcpGateway(registry, (event) => activity.push(event)));
+    const tools: any = await handle(
+      { jsonrpc: "2.0", id: 8, method: "tools/list" },
+      { correlationId: "discovery-8", client: "Codex", requestId: 8 },
+    );
     expect(tools.result.tools.map((tool: { name: string }) => tool.name)).toContain("nocodb.list-tables");
 
-    const call: any = await handle({
-      jsonrpc: "2.0",
-      id: 9,
-      method: "tools/call",
-      params: { name: "nocodb.list-tables", arguments: {} },
-    });
+    const call: any = await handle(
+      {
+        jsonrpc: "2.0",
+        id: 9,
+        method: "tools/call",
+        params: { name: "nocodb.list-tables", arguments: {} },
+      },
+      { correlationId: "call-9", client: "Codex", requestId: 9, sessionId: "session-1" },
+    );
 
     expect(call.result.content[0].text).toBe("tables: contacts");
     const nocodbRequest = requests.find((request) => request.url === "https://nocodb-mcp.test/message");
     expect(nocodbRequest).toBeDefined();
     expect(nocodbRequest.init.headers["xc-mcp-token"]).toBe("secret-token");
     expect(nocodbRequest.init.headers.accept).toBe("application/json, text/event-stream");
+    expect(activity).toContainEqual(expect.objectContaining({
+      capabilityId: "nocodb",
+      method: "tools/call",
+      target: "nocodb.list-tables",
+      tool: "list-tables",
+      status: "success",
+      correlationId: "call-9",
+      client: "Codex",
+      requestId: 9,
+      sessionId: "session-1",
+    }));
   });
 
   it("parses event-stream responses from an upstream HTTP MCP server", async () => {

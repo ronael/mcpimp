@@ -4,13 +4,17 @@ import {
   activityOutcome,
   activityParameters,
   activityTarget,
+  activityUpstream,
   McpActivityLog,
   type McpActivityEvent,
+  type McpActivityQuery,
+  type McpActivityStatus,
   type McpTransport,
 } from "../mcp/activity";
 import { createMcpHandler, MODERN_PROTOCOL_VERSION, SERVER_INFO } from "../mcp/handler";
 import { formatSseEvent, jsonRpcFailure, type JsonRpcRequest, type JsonRpcResponse } from "../mcp/protocol";
 import { MCP_TOOLS } from "../mcp/tools";
+import { UpstreamMcpGateway } from "../mcp/upstream";
 import { catalogFingerprint } from "../registry/fingerprint";
 import type { CapabilityRegistry } from "../registry/types";
 import { renderDashboard } from "./dashboard";
@@ -75,12 +79,29 @@ export interface ServerOptions {
   staticSite?: StaticSiteProvider;
   dashboardHome?: boolean;
   activityLog?: McpActivityLog;
+  activityPersistence?: "process-memory" | "process-memory+ndjson";
   onActivity?: (event: McpActivityEvent) => void;
   runtime?: {
     kind: "node" | "worker" | "unknown";
     pid?: number;
     endpoint?: string;
   };
+}
+
+const ACTIVITY_STATUSES = new Set<McpActivityStatus>(["success", "error"]);
+const ACTIVITY_TRANSPORTS = new Set<McpTransport>(["http", "sse", "upstream"]);
+
+function parseActivityDate(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  if (!Number.isFinite(Date.parse(value))) throw new Error(`Invalid activity date: ${value}`);
+  return new Date(value).toISOString();
+}
+
+function parseActivityLimit(value: string | undefined): number {
+  if (value === undefined) return 100;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) throw new Error(`Invalid activity limit: ${value}`);
+  return parsed;
 }
 
 function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) {
@@ -95,8 +116,25 @@ function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) 
 
 export function createServer(registry: CapabilityRegistry, options: ServerOptions = {}) {
   const app = new Hono();
-  const handleMcpMessage = createMcpHandler(registry);
   const activityLog = options.activityLog || new McpActivityLog(200, options.onActivity);
+  const upstreamGateway = new UpstreamMcpGateway(registry, (event) => {
+    activityLog.record({
+      ...(event.correlationId ? { correlationId: event.correlationId } : {}),
+      transport: "upstream",
+      client: event.client || "MCPIMP",
+      method: event.method,
+      target: event.target,
+      status: event.status,
+      durationMs: event.durationMs,
+      ...(event.requestId !== undefined ? { requestId: event.requestId } : {}),
+      ...(event.sessionId ? { sessionId: event.sessionId } : {}),
+      upstream: { capabilityId: event.capabilityId, tool: event.tool || "tools/list" },
+      ...(event.status === "success"
+        ? { result: { kind: "upstream-response" } }
+        : { error: { code: -32000, message: "Upstream MCP request failed" } }),
+    });
+  });
+  const handleMcpMessage = createMcpHandler(registry, upstreamGateway);
   const sessions = new Map<string, SseSession>();
   const encoder = new TextEncoder();
   const startedAt = new Date();
@@ -113,18 +151,31 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
     sessionId?: string,
   ): Promise<JsonRpcResponse> {
     const startedAt = performance.now();
-    const response = await handleMcpMessage(message);
-    const outcome = activityOutcome(message, response);
+    const correlationId = crypto.randomUUID();
+    const resolvedClient = activityClient(message, client);
+    const response = await handleMcpMessage(message, {
+      correlationId,
+      client: resolvedClient,
+      ...(message.id !== undefined ? { requestId: message.id } : {}),
+      ...(sessionId ? { sessionId } : {}),
+    });
+    const upstream = activityUpstream(message);
+    const rawOutcome = activityOutcome(message, response);
+    const outcome = upstream && rawOutcome.error
+      ? { ...rawOutcome, error: { code: rawOutcome.error.code, message: "Upstream MCP request failed" } }
+      : rawOutcome;
     const parameters = activityParameters(message);
     activityLog.record({
+      correlationId,
       transport,
-      client: activityClient(message, client),
+      client: resolvedClient,
       method: message.method,
       target: activityTarget(message),
       status: outcome.status,
       durationMs: Math.max(0, Math.round(performance.now() - startedAt)),
       ...(message.id !== undefined ? { requestId: message.id } : {}),
       ...(sessionId ? { sessionId } : {}),
+      ...(upstream ? { upstream } : {}),
       ...(parameters ? { parameters } : {}),
       ...(outcome.result ? { result: outcome.result } : {}),
       ...(outcome.error ? { error: outcome.error } : {}),
@@ -159,10 +210,50 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   });
 
   app.get("/activity", (c) => {
-    const requestedLimit = Number(c.req.query("limit") || 100);
-    const limit = Number.isFinite(requestedLimit) ? requestedLimit : 100;
+    const status = c.req.query("status");
+    const transport = c.req.query("transport");
+    const format = c.req.query("format") || "json";
+    if (status && !ACTIVITY_STATUSES.has(status as McpActivityStatus)) {
+      return c.json({ error: `Invalid activity status: ${status}` }, 400);
+    }
+    if (transport && !ACTIVITY_TRANSPORTS.has(transport as McpTransport)) {
+      return c.json({ error: `Invalid activity transport: ${transport}` }, 400);
+    }
+    if (format !== "json" && format !== "ndjson") {
+      return c.json({ error: `Invalid activity format: ${format}` }, 400);
+    }
+
+    let query: McpActivityQuery;
+    try {
+      query = {
+        limit: parseActivityLimit(c.req.query("limit")),
+        client: c.req.query("client"),
+        method: c.req.query("method"),
+        tool: c.req.query("tool"),
+        status: status as McpActivityStatus | undefined,
+        transport: transport as McpTransport | undefined,
+        from: parseActivityDate(c.req.query("from")),
+        to: parseActivityDate(c.req.query("to")),
+      };
+      if (query.from && query.to && Date.parse(query.from) > Date.parse(query.to)) {
+        throw new Error("Activity from date must not be after to date");
+      }
+    } catch (error) {
+      return c.json({ error: error instanceof Error ? error.message : "Invalid activity query" }, 400);
+    }
+
+    const events = activityLog.query(query);
+    const persistence = options.activityPersistence || "process-memory";
     c.header("Cache-Control", "no-store");
-    return c.json({ events: activityLog.list(limit) });
+    c.header("X-MCPIMP-Activity-Persistence", persistence);
+    if (c.req.query("download") === "1") {
+      c.header("Content-Disposition", `attachment; filename="mcpimp-activity.${format}"`);
+    }
+    if (format === "ndjson") {
+      c.header("Content-Type", "application/x-ndjson; charset=utf-8");
+      return c.body(events.length > 0 ? `${events.map((event) => JSON.stringify(event)).join("\n")}\n` : "");
+    }
+    return c.json({ events, facets: activityLog.facets(), persistence });
   });
 
   app.get("/sse", (c) => {

@@ -13,6 +13,22 @@ interface ResolvedUpstream {
   missingEnv: string[];
 }
 
+export interface UpstreamRequestContext {
+  correlationId?: string;
+  client?: string;
+  requestId?: string | number | null;
+  sessionId?: string;
+}
+
+export interface UpstreamActivityEvent extends UpstreamRequestContext {
+  capabilityId: string;
+  method: "tools/list" | "tools/call";
+  target: string;
+  tool?: string;
+  status: "success" | "error";
+  durationMs: number;
+}
+
 function getEnv(name: string): string | undefined {
   const runtime = globalThis as typeof globalThis & {
     process?: { env?: Record<string, string | undefined> };
@@ -98,7 +114,46 @@ function parseJsonRpcResponse(text: string, contentType: string) {
 }
 
 export class UpstreamMcpGateway {
-  constructor(private readonly registry: CapabilityRegistry) {}
+  constructor(
+    private readonly registry: CapabilityRegistry,
+    private readonly onActivity?: (event: UpstreamActivityEvent) => void,
+  ) {}
+
+  async #request(
+    resolved: ResolvedUpstream,
+    url: string,
+    method: "tools/list" | "tools/call",
+    params: unknown,
+    context: UpstreamRequestContext,
+    tool?: string,
+  ) {
+    const startedAt = performance.now();
+    const target = tool ? `${resolved.upstream.capabilityId}.${tool}` : resolved.upstream.capabilityId;
+    try {
+      const result = await postJsonRpc(url, resolved.headers || {}, method, params);
+      this.onActivity?.({
+        ...context,
+        capabilityId: resolved.upstream.capabilityId,
+        method,
+        target,
+        ...(tool ? { tool } : {}),
+        status: "success",
+        durationMs: Math.max(0, Math.round(performance.now() - startedAt)),
+      });
+      return result;
+    } catch (error) {
+      this.onActivity?.({
+        ...context,
+        capabilityId: resolved.upstream.capabilityId,
+        method,
+        target,
+        ...(tool ? { tool } : {}),
+        status: "error",
+        durationMs: Math.max(0, Math.round(performance.now() - startedAt)),
+      });
+      throw error;
+    }
+  }
 
   listUpstreams() {
     return this.registry.listUpstreamMcpServers().map((upstream) => {
@@ -122,7 +177,7 @@ export class UpstreamMcpGateway {
     });
   }
 
-  async listTools() {
+  async listTools(context: UpstreamRequestContext = {}) {
     const tools = [];
 
     for (const upstream of this.registry.listUpstreamMcpServers()) {
@@ -131,7 +186,13 @@ export class UpstreamMcpGateway {
       const resolved = resolveUpstream(upstream);
       if (!resolved.url || resolved.missingEnv.length > 0) continue;
 
-      const result = await postJsonRpc(resolved.url, resolved.headers || {}, "tools/list");
+      const result = await this.#request(
+        resolved,
+        resolved.url,
+        "tools/list",
+        undefined,
+        context,
+      );
       for (const tool of (result.tools || []) as UpstreamTool[]) {
         tools.push({
           ...tool,
@@ -151,7 +212,7 @@ export class UpstreamMcpGateway {
     return Boolean(capabilityId && toolName && this.registry.getCapability(capabilityId)?.mcp);
   }
 
-  async callTool(name: string, args: Record<string, unknown>) {
+  async callTool(name: string, args: Record<string, unknown>, context: UpstreamRequestContext = {}) {
     const separator = name.indexOf(".");
     const capabilityId = separator === -1 ? "" : name.slice(0, separator);
     const toolName = separator === -1 ? "" : name.slice(separator + 1);
@@ -169,9 +230,13 @@ export class UpstreamMcpGateway {
       throw new Error(`Missing env for upstream ${capabilityId}: ${resolved.missingEnv.join(", ")}`);
     }
 
-    return postJsonRpc(resolved.url, resolved.headers || {}, "tools/call", {
-      name: toolName,
-      arguments: args,
-    });
+    return this.#request(
+      resolved,
+      resolved.url,
+      "tools/call",
+      { name: toolName, arguments: args },
+      context,
+      toolName,
+    );
   }
 }

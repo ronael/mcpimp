@@ -663,6 +663,27 @@ ${DASHBOARD_STYLES}
         <span class="activity-live"><i aria-hidden="true"></i>${escapeHtml(copy.activityLive)}</span>
       </div>
       <section class="panel activity-panel">
+        <div class="activity-toolbar" aria-label="${escapeAttribute(copy.activityTitle)}">
+          <select class="sel" id="activityClientFilter" aria-label="${escapeAttribute(copy.activityFilters.allClients)}"><option value="">${escapeHtml(copy.activityFilters.allClients)}</option></select>
+          <select class="sel" id="activityMethodFilter" aria-label="${escapeAttribute(copy.activityFilters.allMethods)}"><option value="">${escapeHtml(copy.activityFilters.allMethods)}</option></select>
+          <select class="sel" id="activityToolFilter" aria-label="${escapeAttribute(copy.activityFilters.allTools)}"><option value="">${escapeHtml(copy.activityFilters.allTools)}</option></select>
+          <select class="sel" id="activityStatusFilter" aria-label="${escapeAttribute(copy.activityFilters.allStatuses)}">
+            <option value="">${escapeHtml(copy.activityFilters.allStatuses)}</option>
+            <option value="success">success</option>
+            <option value="error">error</option>
+          </select>
+          <select class="sel" id="activityPeriodFilter" aria-label="${escapeAttribute(copy.activityFilters.allPeriods)}">
+            <option value="">${escapeHtml(copy.activityFilters.allPeriods)}</option>
+            <option value="15">${escapeHtml(copy.activityFilters.last15Minutes)}</option>
+            <option value="60">${escapeHtml(copy.activityFilters.lastHour)}</option>
+            <option value="1440">${escapeHtml(copy.activityFilters.last24Hours)}</option>
+          </select>
+          <span class="activity-persistence" id="activityPersistence"></span>
+          <div class="activity-exports">
+            <a id="activityExportJson" href="/activity?format=json&amp;download=1" download><i class="ph ph-download-simple" aria-hidden="true"></i>${escapeHtml(copy.activityFilters.exportJson)}</a>
+            <a id="activityExportNdjson" href="/activity?format=ndjson&amp;download=1" download><i class="ph ph-download-simple" aria-hidden="true"></i>${escapeHtml(copy.activityFilters.exportNdjson)}</a>
+          </div>
+        </div>
         <div class="tbl-wrap flush">
           <table class="tbl activity-table">
             <thead><tr><th>${escapeHtml(copy.activityHeaders.time)}</th><th>${escapeHtml(copy.activityHeaders.client)}</th><th>${escapeHtml(copy.activityHeaders.action)}</th><th>${escapeHtml(copy.activityHeaders.transport)}</th><th>${escapeHtml(copy.activityHeaders.status)}</th><th>${escapeHtml(copy.activityHeaders.duration)}</th><th>${escapeHtml(copy.activityHeaders.details)}</th></tr></thead>

@@ -1,7 +1,7 @@
 import { CapabilityResourceNotFoundError, type CapabilityRegistry } from "../registry/types";
 import { JsonRpcError, jsonRpcFailure, jsonRpcSuccess, type JsonRpcRequest, type JsonRpcResponse } from "./protocol";
 import { callMcpTool, MCP_TOOLS } from "./tools";
-import { UpstreamMcpGateway } from "./upstream";
+import { UpstreamMcpGateway, type UpstreamRequestContext } from "./upstream";
 
 export const SERVER_INFO = {
   name: "personal-capability-registry",
@@ -44,7 +44,10 @@ function resultFor(request: JsonRpcRequest, result: Record<string, unknown>, cac
 }
 
 export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway = new UpstreamMcpGateway(registry)) {
-  return async function handleMcpMessage(request: JsonRpcRequest): Promise<JsonRpcResponse> {
+  return async function handleMcpMessage(
+    request: JsonRpcRequest,
+    context: UpstreamRequestContext = {},
+  ): Promise<JsonRpcResponse> {
     const id = request.id ?? null;
 
     try {
@@ -76,7 +79,7 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
         case "tools/list":
           return jsonRpcSuccess(id, resultFor(
             request,
-            { tools: [...MCP_TOOLS, ...(await upstreamGateway.listTools())] },
+            { tools: [...MCP_TOOLS, ...(await upstreamGateway.listTools(context))] },
             true,
           ));
         case "tools/call": {
@@ -89,7 +92,7 @@ export function createMcpHandler(registry: CapabilityRegistry, upstreamGateway =
               id,
               resultFor(
                 request,
-                await upstreamGateway.callTool(toolName, (params.arguments as Record<string, unknown>) || {}),
+                await upstreamGateway.callTool(toolName, (params.arguments as Record<string, unknown>) || {}, context),
               ),
             );
           }
