@@ -1,5 +1,4 @@
 import { execFile } from "node:child_process";
-import type { Writable } from "node:stream";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -43,27 +42,6 @@ export async function startupErrorMessage(
   ].join("\n");
 }
 
-export async function closeWritable(stream: Writable): Promise<void> {
-  if (stream.destroyed || stream.writableFinished) return;
-
-  await new Promise<void>((resolve) => {
-    const finish = () => {
-      cleanup();
-      resolve();
-    };
-    const cleanup = () => {
-      stream.off("finish", finish);
-      stream.off("close", finish);
-      stream.off("error", finish);
-    };
-
-    stream.once("finish", finish);
-    stream.once("close", finish);
-    stream.once("error", finish);
-    stream.end();
-  });
-}
-
 export async function closeServer(server: ClosableServer, timeoutMs = 5_000): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     let settled = false;
@@ -87,9 +65,4 @@ export async function closeServer(server: ClosableServer, timeoutMs = 5_000): Pr
       finish(error as Error);
     }
   });
-}
-
-export async function shutdownLocalServer(server: ClosableServer, activityStream: Writable): Promise<void> {
-  await closeServer(server);
-  await closeWritable(activityStream);
 }

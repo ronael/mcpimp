@@ -135,6 +135,14 @@ tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
 .activity-live{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(201,255,61,.3);border-radius:6px;color:var(--acid);font-family:var(--mono);font-size:12px}
 .activity-live i{width:7px;height:7px;border-radius:50%;background:var(--acid);animation:pulse 2s ease-in-out infinite}
 .activity-panel{padding:0}
+.activity-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}
+.activity-toolbar select.sel{max-width:180px;min-width:120px;padding:7px 10px;font-size:11px}
+.activity-persistence{margin-left:auto;color:var(--muted);font-family:var(--mono);font-size:10.5px;white-space:nowrap}
+.activity-persistence:not(:empty)::before{content:"";display:inline-block;width:6px;height:6px;margin-right:7px;border-radius:50%;background:var(--cyan)}
+.activity-exports{display:flex;gap:6px}
+.activity-exports a{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;color:var(--cyan);font-family:var(--mono);font-size:10.5px;white-space:nowrap}
+.activity-exports a:hover{border-color:rgba(99,230,255,.45);color:var(--paper)}
+.activity-exports i{font-size:14px}
 .activity-table td:first-child,.activity-table td:last-child{font-family:var(--mono);white-space:nowrap}
 .activity-table .activity-action{display:flex;flex-direction:column;gap:2px}
 .activity-table .activity-action strong{color:var(--paper);font-family:var(--mono);font-size:12px;font-weight:600}
@@ -228,6 +236,11 @@ tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
   .dist-track{width:100%}
   .activity-detail-grid{grid-template-columns:1fr}
   .activity-detail-grid .detail-wide{grid-column:auto}
+  .activity-toolbar{align-items:stretch}
+  .activity-toolbar select.sel{flex:1 1 calc(50% - 8px);max-width:none;min-width:0}
+  .activity-persistence{width:100%;margin-left:0}
+  .activity-exports{width:100%}
+  .activity-exports a{flex:1;justify-content:center}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}

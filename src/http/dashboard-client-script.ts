@@ -18,12 +18,26 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   const backdrop = document.querySelector("#backdrop");
   const drawerContent = document.querySelector("#drawerContent");
   const activityRows = document.querySelector("#activityRows");
+  const activityClientFilter = document.querySelector("#activityClientFilter");
+  const activityMethodFilter = document.querySelector("#activityMethodFilter");
+  const activityToolFilter = document.querySelector("#activityToolFilter");
+  const activityStatusFilter = document.querySelector("#activityStatusFilter");
+  const activityPeriodFilter = document.querySelector("#activityPeriodFilter");
+  const activityPersistence = document.querySelector("#activityPersistence");
+  const activityExportJson = document.querySelector("#activityExportJson");
+  const activityExportNdjson = document.querySelector("#activityExportNdjson");
+  const activityFilters = [activityClientFilter, activityMethodFilter, activityToolFilter, activityStatusFilter, activityPeriodFilter].filter(Boolean);
   const reviewCopyButtons = [...document.querySelectorAll("[data-review-command]")];
   const activityCopy = ${JSON.stringify({
     empty: copy.activityEmpty,
+    filteredEmpty: copy.activityFilteredEmpty,
     error: copy.activityError,
     details: copy.activityHeaders.details,
     labels: copy.activityDetailLabels,
+    persistence: {
+      "process-memory": copy.activityFilters.processMemory,
+      "process-memory+ndjson": copy.activityFilters.persistentNdjson,
+    },
   })};
   const activityDate = new Intl.DateTimeFormat(${JSON.stringify(copy.htmlLang)}, { dateStyle: "short", timeStyle: "medium" });
   const reviewCopy = ${JSON.stringify({ idle: copy.reviewCopyCommand, copied: copy.reviewCopied })};
@@ -124,6 +138,44 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     return cell;
   }
 
+  function syncActivityFacet(select, values) {
+    if (!select) return;
+    const previous = select.value;
+    const first = select.options[0];
+    select.replaceChildren(first);
+    const options = previous && !values.includes(previous) ? [previous, ...values] : values;
+    options.forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.append(option);
+    });
+    select.value = previous;
+  }
+
+  function buildActivityQuery() {
+    const params = new URLSearchParams({ limit: "100" });
+    if (activityClientFilter?.value) params.set("client", activityClientFilter.value);
+    if (activityMethodFilter?.value) params.set("method", activityMethodFilter.value);
+    if (activityToolFilter?.value) params.set("tool", activityToolFilter.value);
+    if (activityStatusFilter?.value) params.set("status", activityStatusFilter.value);
+    if (activityPeriodFilter?.value) {
+      const minutes = Number(activityPeriodFilter.value);
+      params.set("from", new Date(Date.now() - minutes * 60 * 1000).toISOString());
+    }
+    return params;
+  }
+
+  function updateActivityExports(params) {
+    [[activityExportJson, "json"], [activityExportNdjson, "ndjson"]].forEach(([link, format]) => {
+      if (!link) return;
+      const exportParams = new URLSearchParams(params);
+      exportParams.set("format", format);
+      exportParams.set("download", "1");
+      link.href = "/activity?" + exportParams.toString();
+    });
+  }
+
   function activityDetailItem(label, value, wide = false) {
     const item = document.createElement("div");
     if (wide) item.className = "detail-wide";
@@ -185,10 +237,12 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
     list.className = "activity-detail-grid";
     list.append(activityDetailItem(${JSON.stringify(copy.activityHeaders.client)}, event.client));
     list.append(activityDetailItem(${JSON.stringify(copy.activityHeaders.duration)}, event.durationMs + " ms"));
+    if (event.correlationId) list.append(activityDetailItem(activityCopy.labels.correlationId, event.correlationId));
     if (Object.prototype.hasOwnProperty.call(event, "requestId")) {
       list.append(activityDetailItem(activityCopy.labels.requestId, event.requestId));
     }
     if (event.sessionId) list.append(activityDetailItem(activityCopy.labels.sessionId, event.sessionId));
+    if (event.upstream) list.append(activityDetailItem(activityCopy.labels.upstream, event.upstream));
     summarySection.append(summaryTitle, list);
 
     const payloadSection = document.createElement("div");
@@ -213,7 +267,7 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   function renderActivity(events) {
     if (!activityRows) return;
     if (!events.length) {
-      activityState(activityCopy.empty);
+      activityState(activityFilters.some((control) => control.value) ? activityCopy.filteredEmpty : activityCopy.empty);
       return;
     }
     activityRows.replaceChildren();
@@ -279,9 +333,18 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   async function refreshActivity() {
     if (drawer?.classList.contains("on") && drawerContent?.dataset.activityId) return;
     try {
-      const response = await fetch("/activity?limit=100", { cache: "no-store" });
+      const query = buildActivityQuery();
+      updateActivityExports(query);
+      const response = await fetch("/activity?" + query.toString(), { cache: "no-store" });
       if (!response.ok) throw new Error("activity request failed");
       const payload = await response.json();
+      const facets = payload.facets || {};
+      syncActivityFacet(activityClientFilter, Array.isArray(facets.clients) ? facets.clients : []);
+      syncActivityFacet(activityMethodFilter, Array.isArray(facets.methods) ? facets.methods : []);
+      syncActivityFacet(activityToolFilter, Array.isArray(facets.tools) ? facets.tools : []);
+      if (activityPersistence) {
+        activityPersistence.textContent = activityCopy.persistence[payload.persistence] || payload.persistence || "";
+      }
       renderActivity(Array.isArray(payload.events) ? payload.events : []);
     } catch {
       activityState(activityCopy.error, true);
@@ -333,6 +396,7 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
       }
     });
   });
+  activityFilters.forEach((control) => control.addEventListener("change", refreshActivity));
   kindSelect?.addEventListener("change", filterRows);
   sortSelect?.addEventListener("change", filterRows);
   document.addEventListener("keydown", (event) => {

@@ -1,6 +1,6 @@
 import type { JsonRpcRequest, JsonRpcResponse } from "./protocol";
 
-export type McpTransport = "http" | "sse";
+export type McpTransport = "http" | "sse" | "upstream";
 export type McpActivityStatus = "success" | "error";
 
 export interface McpActivityError {
@@ -18,6 +18,7 @@ export interface McpActivityResult {
 
 export interface McpActivityEvent {
   id: string;
+  correlationId?: string;
   timestamp: string;
   transport: McpTransport;
   client: string;
@@ -27,6 +28,10 @@ export interface McpActivityEvent {
   durationMs: number;
   requestId?: string | number | null;
   sessionId?: string;
+  upstream?: {
+    capabilityId: string;
+    tool: string;
+  };
   parameters?: Record<string, unknown>;
   result?: McpActivityResult;
   error?: McpActivityError;
@@ -34,19 +39,39 @@ export interface McpActivityEvent {
 
 export type NewMcpActivityEvent = Omit<McpActivityEvent, "id" | "timestamp">;
 
+export interface McpActivityQuery {
+  limit?: number;
+  client?: string;
+  method?: string;
+  tool?: string;
+  status?: McpActivityStatus;
+  transport?: McpTransport;
+  from?: string;
+  to?: string;
+}
+
+export interface McpActivityFacets {
+  clients: string[];
+  methods: string[];
+  tools: string[];
+  statuses: McpActivityStatus[];
+  transports: McpTransport[];
+}
+
 export class McpActivityLog {
   readonly #events: McpActivityEvent[] = [];
 
   constructor(
     private readonly maxEvents = 200,
     private readonly onEvent?: (event: McpActivityEvent) => void,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   record(input: NewMcpActivityEvent): McpActivityEvent {
     const event: McpActivityEvent = {
       ...input,
       id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
+      timestamp: this.now().toISOString(),
     };
 
     this.#events.push(event);
@@ -61,6 +86,34 @@ export class McpActivityLog {
     const safeLimit = Math.max(1, Math.min(limit, this.maxEvents));
     return this.#events.slice(-safeLimit).reverse();
   }
+
+  query(query: McpActivityQuery = {}): McpActivityEvent[] {
+    const from = query.from ? Date.parse(query.from) : undefined;
+    const to = query.to ? Date.parse(query.to) : undefined;
+    const safeLimit = Math.max(1, Math.min(query.limit ?? 100, this.maxEvents));
+
+    return this.#events
+      .filter((event) => !query.client || event.client === query.client)
+      .filter((event) => !query.method || event.method === query.method)
+      .filter((event) => !query.tool || event.target === query.tool)
+      .filter((event) => !query.status || event.status === query.status)
+      .filter((event) => !query.transport || event.transport === query.transport)
+      .filter((event) => from === undefined || Date.parse(event.timestamp) >= from)
+      .filter((event) => to === undefined || Date.parse(event.timestamp) <= to)
+      .slice(-safeLimit)
+      .reverse();
+  }
+
+  facets(): McpActivityFacets {
+    const unique = <T extends string>(values: T[]) => [...new Set(values)].sort() as T[];
+    return {
+      clients: unique(this.#events.map((event) => event.client)),
+      methods: unique(this.#events.map((event) => event.method)),
+      tools: unique(this.#events.flatMap((event) => event.target ? [event.target] : [])),
+      statuses: unique(this.#events.map((event) => event.status)),
+      transports: unique(this.#events.map((event) => event.transport)),
+    };
+  }
 }
 
 export function activityTarget(request: { method: string; params?: Record<string, unknown> }): string | undefined {
@@ -71,6 +124,18 @@ export function activityTarget(request: { method: string; params?: Record<string
     return typeof request.params?.uri === "string" ? request.params.uri : undefined;
   }
   return undefined;
+}
+
+export function activityUpstream(
+  request: { method: string; params?: Record<string, unknown> },
+): McpActivityEvent["upstream"] | undefined {
+  if (request.method !== "tools/call" || typeof request.params?.name !== "string") return undefined;
+  const separator = request.params.name.indexOf(".");
+  if (separator < 1 || separator === request.params.name.length - 1) return undefined;
+  return {
+    capabilityId: request.params.name.slice(0, separator),
+    tool: request.params.name.slice(separator + 1),
+  };
 }
 
 export function activityClient(request: { method: string; params?: Record<string, unknown> }, userAgent?: string): string {

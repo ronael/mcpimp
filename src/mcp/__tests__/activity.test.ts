@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityClient, activityOutcome, activityParameters, activityTarget, McpActivityLog } from "../activity";
+import { activityClient, activityOutcome, activityParameters, activityTarget, activityUpstream, McpActivityLog } from "../activity";
 
 describe("MCP activity log", () => {
   it("keeps the newest events within its bounded capacity", () => {
@@ -9,6 +9,46 @@ describe("MCP activity log", () => {
     }
 
     expect(log.list().map((event) => event.method)).toEqual(["resources/list", "tools/list"]);
+  });
+
+  it("filters events before applying the result limit", () => {
+    const timestamps = [
+      "2026-08-30T08:00:00.000Z",
+      "2026-08-30T09:00:00.000Z",
+      "2026-08-30T10:00:00.000Z",
+      "2026-08-30T11:00:00.000Z",
+    ];
+    const log = new McpActivityLog(10, undefined, () => new Date(timestamps.shift()!));
+    log.record({ client: "Claude 1.0", method: "tools/list", transport: "http", status: "success", durationMs: 1 });
+    log.record({ client: "Codex 2.0", method: "tools/call", target: "search-capabilities", transport: "http", status: "error", durationMs: 2 });
+    log.record({ client: "Codex 2.0", method: "tools/call", target: "load-capability", transport: "sse", status: "success", durationMs: 3 });
+    log.record({ client: "Codex 2.0", method: "tools/call", target: "search-capabilities", transport: "http", status: "error", durationMs: 4 });
+
+    expect(log.query({
+      client: "Codex 2.0",
+      method: "tools/call",
+      tool: "search-capabilities",
+      status: "error",
+      transport: "http",
+      from: "2026-08-30T08:30:00.000Z",
+      to: "2026-08-30T11:00:00.000Z",
+      limit: 1,
+    })).toMatchObject([{ durationMs: 4 }]);
+  });
+
+  it("lists stable filter facets from the retained window", () => {
+    const log = new McpActivityLog(10);
+    log.record({ client: "Codex", method: "tools/call", target: "load-capability", transport: "http", status: "success", durationMs: 1 });
+    log.record({ client: "Claude", method: "tools/list", transport: "sse", status: "error", durationMs: 1 });
+    log.record({ client: "Codex", method: "tools/call", target: "search-capabilities", transport: "http", status: "success", durationMs: 1 });
+
+    expect(log.facets()).toEqual({
+      clients: ["Claude", "Codex"],
+      methods: ["tools/call", "tools/list"],
+      tools: ["load-capability", "search-capabilities"],
+      statuses: ["error", "success"],
+      transports: ["http", "sse"],
+    });
   });
 
   it("describes clients and targets without retaining arguments", () => {
@@ -23,6 +63,14 @@ describe("MCP activity log", () => {
 
     expect(activityClient(initialize, "fallback")).toBe("Codex 1.2.3");
     expect(activityTarget(call)).toBe("load-capability");
+  });
+
+  it("identifies namespaced upstream tools without inspecting their arguments", () => {
+    expect(activityUpstream({
+      method: "tools/call",
+      params: { name: "nocodb.list-rows", arguments: { token: "private" } },
+    })).toEqual({ capabilityId: "nocodb", tool: "list-rows" });
+    expect(activityUpstream({ method: "tools/call", params: { name: "search-capabilities" } })).toBeUndefined();
   });
 
   it("keeps only the documented internal parameters", () => {

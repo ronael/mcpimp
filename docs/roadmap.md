@@ -187,16 +187,20 @@ d’une réponse MCPIMP invalide ; les écarts connus sont documentés.
 
 ### P1.4 — observabilité exploitable
 
-- Ajouter rotation et rétention configurables au fichier NDJSON.
-- Ajouter filtres par client, méthode, tool, statut et période dans le dashboard.
-- Permettre l’export explicite d’une sélection en JSON ou NDJSON.
-- Corréler les appels HTTP, SSE et upstream sans journaliser les payloads
-  sensibles.
-- Définir clairement le comportement de `/activity` sur Cloudflare ; ne pas
-  présenter un historique éphémère comme un audit persistant.
+Livré : le fichier NDJSON local est borné par taille et nombre d’archives via
+variables d’environnement. L’API et le dashboard partagent les filtres client,
+méthode, tool, statut, transport et période, puis exportent exactement la
+sélection en JSON ou NDJSON. Chaque événement possède un identifiant de
+corrélation ; les tools upstream namespacés exposent uniquement leur capability
+et leur nom de tool, en complément des paramètres déjà expurgés.
 
-Critère de sortie : le journal reste borné, filtrable et fidèle à son niveau de
-persistance sur chaque runtime.
+`/activity` annonce explicitement `process-memory+ndjson` sur le runtime local
+et `process-memory` sur Cloudflare. Dans les deux cas, l’API ne retourne que la
+fenêtre du processus courant ; le fichier local est une archive séparée et
+l’historique Worker ne doit pas être assimilé à un audit persistant.
+
+Critère de sortie atteint : le journal reste borné, filtrable et fidèle à son
+niveau de persistance sur chaque runtime.
 
 ### P1.5 — exactitude de la synchronisation
 

@@ -369,6 +369,22 @@ parameters, result metrics, and errors. Upstream calls retain argument names and
 types only. Sensitive keys are redacted, while authorization headers and
 response contents are never logged.
 
+The activity API filters by `client`, `method`, `tool`, `status`, `transport`,
+ISO `from`/`to` timestamps, and `limit`. Add `format=ndjson` for NDJSON or
+`download=1` for an attachment; the dashboard exposes the same filters and JSON
+or NDJSON exports. Every event receives a correlation ID, and namespaced
+upstream tools expose their capability and tool names without their arguments.
+
+The in-memory API window belongs to the current process. Its `persistence`
+field and `X-MCPIMP-Activity-Persistence` header report
+`process-memory+ndjson` locally and `process-memory` on Cloudflare. The Worker
+history is therefore ephemeral and must not be treated as an audit trail. The
+local archive rotates before the current file exceeds
+`MCPIMP_ACTIVITY_MAX_BYTES` (5 MiB by default) and retains
+`MCPIMP_ACTIVITY_MAX_ARCHIVES` rotated files (5 by default). Set the archive
+count to `0` to retain only the bounded current file. A single event larger than
+the configured byte limit remains intact.
+
 ```bash
 pnpm run build
 npx wrangler deploy

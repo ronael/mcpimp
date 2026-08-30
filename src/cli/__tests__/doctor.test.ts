@@ -6,12 +6,18 @@ import { formatDoctorReport, runDoctor } from "../doctor-core";
 
 const originalUrl = process.env.DOCTOR_TEST_MCP_URL;
 const originalToken = process.env.DOCTOR_TEST_MCP_TOKEN;
+const originalActivityMaxBytes = process.env.MCPIMP_ACTIVITY_MAX_BYTES;
+const originalActivityMaxArchives = process.env.MCPIMP_ACTIVITY_MAX_ARCHIVES;
 
 afterEach(() => {
   if (originalUrl === undefined) delete process.env.DOCTOR_TEST_MCP_URL;
   else process.env.DOCTOR_TEST_MCP_URL = originalUrl;
   if (originalToken === undefined) delete process.env.DOCTOR_TEST_MCP_TOKEN;
   else process.env.DOCTOR_TEST_MCP_TOKEN = originalToken;
+  if (originalActivityMaxBytes === undefined) delete process.env.MCPIMP_ACTIVITY_MAX_BYTES;
+  else process.env.MCPIMP_ACTIVITY_MAX_BYTES = originalActivityMaxBytes;
+  if (originalActivityMaxArchives === undefined) delete process.env.MCPIMP_ACTIVITY_MAX_ARCHIVES;
+  else process.env.MCPIMP_ACTIVITY_MAX_ARCHIVES = originalActivityMaxArchives;
 });
 
 async function createProjectFixture() {
@@ -259,6 +265,19 @@ describe("doctor", () => {
       name: "activity-log",
       status: "error",
       message: `${join(root, "logs")} exists but is not a directory`,
+    });
+  });
+
+  it("rejects invalid activity rotation settings during preflight", async () => {
+    const root = await createProjectFixture();
+    process.env.MCPIMP_ACTIVITY_MAX_BYTES = "unbounded";
+
+    const report = await runDoctor(root, 0, { mode: "preflight" });
+
+    expect(report.checks).toContainEqual({
+      name: "activity-log",
+      status: "error",
+      message: "MCPIMP_ACTIVITY_MAX_BYTES must be an integer greater than or equal to 1",
     });
   });
 });

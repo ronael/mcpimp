@@ -6,6 +6,7 @@ import { CAPABILITIES_DIR } from "../core/paths";
 import { findListeningPid } from "../local/lifecycle";
 import { MODERN_PROTOCOL_VERSION } from "../mcp/handler";
 import { UpstreamMcpGateway } from "../mcp/upstream";
+import { activityFileOptionsFromEnv } from "../local/activity-file";
 import { catalogFingerprint } from "../registry/fingerprint";
 import { FileSystemCapabilityRegistry } from "../registry/filesystem";
 
@@ -86,7 +87,14 @@ async function nearestExistingDirectory(path: string): Promise<string | undefine
   }
 }
 
-async function checkLogDirectory(logDirectory: string): Promise<DoctorCheck> {
+async function checkLogDirectory(root: string): Promise<DoctorCheck> {
+  let activityOptions;
+  try {
+    activityOptions = activityFileOptionsFromEnv(root);
+  } catch (error) {
+    return { name: "activity-log", status: "error", message: errorMessage(error) };
+  }
+  const logDirectory = dirname(activityOptions.path);
   const target = await stat(logDirectory).catch(() => undefined);
   if (target && !target.isDirectory()) {
     return { name: "activity-log", status: "error", message: `${logDirectory} exists but is not a directory` };
@@ -98,7 +106,8 @@ async function checkLogDirectory(logDirectory: string): Promise<DoctorCheck> {
   } catch {
     return { name: "activity-log", status: "error", message: `${existing} is not writable` };
   }
-  const detail = existing === logDirectory ? logDirectory : `${logDirectory} can be created from ${existing}`;
+  const location = existing === logDirectory ? logDirectory : `${logDirectory} can be created from ${existing}`;
+  const detail = `${location}; ${activityOptions.maxBytes} bytes, ${activityOptions.maxArchives} archive(s)`;
   return { name: "activity-log", status: "pass", message: detail };
 }
 
@@ -331,7 +340,7 @@ export async function runDoctor(root: string, port: number, options: DoctorOptio
       : { name: "upstream-environment", status: "pass", message: `${enabled.length} enabled upstream(s) ready` };
   }
 
-  const checks: DoctorCheck[] = [catalogCheck, await checkLogDirectory(join(root, "logs"))];
+  const checks: DoctorCheck[] = [catalogCheck, await checkLogDirectory(root)];
   let runtime: DoctorRuntimeDetails | undefined;
   if (mode === "preflight") {
     checks.push(await checkPort(port, options.fetch || fetch, options.timeoutMs || 2_000));

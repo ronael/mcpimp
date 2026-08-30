@@ -104,8 +104,23 @@ export interface DashboardCopy {
   activityLive: string;
   activityLoading: string;
   activityEmpty: string;
+  activityFilteredEmpty: string;
   activityError: string;
   activityPayloadTitle: string;
+  activityFilters: {
+    allClients: string;
+    allMethods: string;
+    allTools: string;
+    allStatuses: string;
+    allPeriods: string;
+    last15Minutes: string;
+    lastHour: string;
+    last24Hours: string;
+    exportJson: string;
+    exportNdjson: string;
+    processMemory: string;
+    persistentNdjson: string;
+  };
   activityHeaders: {
     time: string;
     client: string;
@@ -116,8 +131,10 @@ export interface DashboardCopy {
     details: string;
   };
   activityDetailLabels: {
+    correlationId: string;
     requestId: string;
     sessionId: string;
+    upstream: string;
     parameters: string;
     result: string;
     error: string;
@@ -273,8 +290,23 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     activityLive: "live · refreshes every 3 seconds",
     activityLoading: "Loading recent activity…",
     activityEmpty: "No agent has contacted this server since it started.",
+    activityFilteredEmpty: "No activity matches the current filters.",
     activityError: "Activity could not be loaded. The server may be restarting.",
     activityPayloadTitle: "Request and result",
+    activityFilters: {
+      allClients: "All clients",
+      allMethods: "All methods",
+      allTools: "All tools",
+      allStatuses: "All statuses",
+      allPeriods: "All periods",
+      last15Minutes: "Last 15 minutes",
+      lastHour: "Last hour",
+      last24Hours: "Last 24 hours",
+      exportJson: "Export JSON",
+      exportNdjson: "Export NDJSON",
+      processMemory: "Current process only",
+      persistentNdjson: "Current process + rotated NDJSON",
+    },
     activityHeaders: {
       time: "Time",
       client: "Client",
@@ -285,8 +317,10 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       details: "Details",
     },
     activityDetailLabels: {
+      correlationId: "Correlation id",
       requestId: "JSON RPC id",
       sessionId: "SSE session",
+      upstream: "Upstream MCP",
       parameters: "Sanitized parameters",
       result: "Result summary",
       error: "Error",
@@ -445,8 +479,23 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
     activityLive: "direct · actualisation toutes les 3 secondes",
     activityLoading: "Chargement de l’activité récente…",
     activityEmpty: "Aucun agent n’a contacté ce serveur depuis son démarrage.",
+    activityFilteredEmpty: "Aucune activité ne correspond aux filtres actuels.",
     activityError: "Impossible de charger l’activité. Le serveur redémarre peut être.",
     activityPayloadTitle: "Requête et résultat",
+    activityFilters: {
+      allClients: "Tous les clients",
+      allMethods: "Toutes les méthodes",
+      allTools: "Tous les tools",
+      allStatuses: "Tous les statuts",
+      allPeriods: "Toutes les périodes",
+      last15Minutes: "15 dernières minutes",
+      lastHour: "Dernière heure",
+      last24Hours: "Dernières 24 heures",
+      exportJson: "Exporter JSON",
+      exportNdjson: "Exporter NDJSON",
+      processMemory: "Processus actuel uniquement",
+      persistentNdjson: "Processus actuel + NDJSON avec rotation",
+    },
     activityHeaders: {
       time: "Heure",
       client: "Client",
@@ -457,8 +506,10 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       details: "Détails",
     },
     activityDetailLabels: {
+      correlationId: "ID de corrélation",
       requestId: "ID JSON RPC",
       sessionId: "Session SSE",
+      upstream: "MCP amont",
       parameters: "Paramètres expurgés",
       result: "Résumé du résultat",
       error: "Erreur",
