@@ -68,6 +68,12 @@ external source (`SOURCE.json` beside `upstream/` and `overrides/`). Both are
 exposed identically through MCP; provenance is metadata, not an organising
 principle.
 
+Imported capabilities also expose a review state that is independent from
+ranking. A root `REVIEW.json` can attest one exact `SOURCE.json` `contentHash`;
+if upstream content changes, the effective state automatically becomes
+`review-required`. Local capabilities are `local`, and imports without an
+attestation are `unreviewed`.
+
 The server discovers capabilities automatically and exposes their files through
 stable URIs, for example:
 
@@ -205,6 +211,7 @@ Imported content is stored as follows:
 ```txt
 catalog/capabilities/<namespace>/<slug>/
   SOURCE.json     # provenance written by MCPIMP
+  REVIEW.json     # optional local review bound to one upstream contentHash
   upstream/       # upstream content, replaced on each resync
   overrides/      # local additions, never touched by synchronisation
 ```
@@ -213,6 +220,11 @@ All retrieved content is treated as untrusted data: imported scripts are never
 executed, upstream instructions are not interpreted during ingestion, paths and
 hosts are validated, and no secret is forwarded except an optional
 `GITHUB_TOKEN` to `api.github.com`.
+
+`REVIEW.json` and `ROUTING.json` are MCPIMP-owned metadata: synchronization
+preserves them and they are never exposed as loadable capability resources.
+Reviewed imported guidance remains subordinate to user and project
+instructions; scripts stay inert in every review state.
 
 ## Connect through MCP
 
@@ -238,14 +250,14 @@ pnpm --silent run doctor -- --json
 Always include `run`: `pnpm doctor` invokes pnpm's own built-in doctor command,
 not MCPIMP's project script.
 
-The default mode checks four distinct states: the endpoint is configured, the
-health route is reachable, MCP initialization succeeds, and `tools/list`
-returns callable tools after `notifications/initialized`. It also reports the
-PID, capability and tool counts, and warns when the running catalog differs
+The default mode checks endpoint configuration, health reachability, catalog
+freshness, the MCP 2025 initialization sequence, callable tools, and MCP 2026
+discovery without `initialize`. It also reports the PID, capability and tool
+counts, and warns when the running catalog differs
 from the catalog on disk. `--json` emits the same report as structured data;
 `--silent` suppresses pnpm's script banner so stdout contains JSON only.
-Failures of health, initialization, or tool discovery return a non-zero exit
-code.
+Failures of health, initialization, modern discovery, or tool listing return a
+non-zero exit code.
 
 Before starting the server, use preflight mode instead:
 
@@ -285,20 +297,23 @@ curl -sS http://localhost:3901/message \
 
 MCPIMP advertises concrete resources and therefore answers the standard
 `resources/templates/list` client probe with an empty `resourceTemplates` list.
-Non-standard probes such as `server/discover` intentionally receive JSON-RPC
-`-32601 Method not found` rather than a proprietary compatibility response.
+For MCP 2026-07-28, `server/discover` advertises supported versions,
+capabilities and bootstrap instructions without a session. Mismatched routing
+headers use `-32020`; unsupported protocol versions use `-32022`.
 Invalid request parameters use `-32602`, missing resources use the MCP
 `-32002` code, and unexpected handler failures use `-32603`.
 The standard `ping` heartbeat receives an immediate empty result.
 Cancellation notifications are accepted even when the target request has
 already completed; their free-text reason is never retained in the activity log.
-Streamable HTTP accepts JSON-RPC batches. Responses are returned only for batch
+The MCP 2025 Streamable HTTP path accepts JSON-RPC batches. Responses are returned only for batch
 items carrying an ID; notification-only batches receive an empty `202`.
 
 Observed client sequences and their validation level are tracked in
 [`docs/mcp-compatibility.md`](docs/mcp-compatibility.md).
 The first real-agent retrieval pilot is documented in
 [`docs/agent-outcome-evaluation.md`](docs/agent-outcome-evaluation.md).
+Minimal native bridges for Codex, Claude and Kimi are documented in
+[`docs/host-adapters.md`](docs/host-adapters.md).
 
 ## Public website
 

@@ -8,8 +8,7 @@ import {
   type McpActivityEvent,
   type McpTransport,
 } from "../mcp/activity";
-import { createMcpHandler } from "../mcp/handler";
-import { SERVER_INFO } from "../mcp/handler";
+import { createMcpHandler, MODERN_PROTOCOL_VERSION, SERVER_INFO } from "../mcp/handler";
 import { formatSseEvent, jsonRpcFailure, type JsonRpcRequest, type JsonRpcResponse } from "../mcp/protocol";
 import { MCP_TOOLS } from "../mcp/tools";
 import { catalogFingerprint } from "../registry/fingerprint";
@@ -35,6 +34,37 @@ function isJsonRpcResponse(value: unknown): value is JsonRpcResponse {
     && Object.prototype.hasOwnProperty.call(value, "id")
     && (Object.prototype.hasOwnProperty.call(value, "result")
       || Object.prototype.hasOwnProperty.call(value, "error"));
+}
+
+function validateModernRequest(
+  message: JsonRpcRequest,
+  protocolVersion: string | undefined,
+  methodHeader: string | undefined,
+  nameHeader: string | undefined,
+): JsonRpcResponse | undefined {
+  if (protocolVersion === undefined || protocolVersion.startsWith("2025-") || protocolVersion === "2024-11-05") {
+    return undefined;
+  }
+  if (protocolVersion !== MODERN_PROTOCOL_VERSION) {
+    return jsonRpcFailure(message.id ?? null, -32022, `Unsupported MCP protocol version: ${protocolVersion}`);
+  }
+
+  const metadata = isRecord(message.params?._meta) ? message.params._meta : undefined;
+  const bodyVersion = metadata?.["io.modelcontextprotocol/protocolVersion"];
+  const clientCapabilities = metadata?.["io.modelcontextprotocol/clientCapabilities"];
+  if (bodyVersion !== MODERN_PROTOCOL_VERSION || !isRecord(clientCapabilities)) {
+    return jsonRpcFailure(message.id ?? null, -32020, "MCP protocol metadata does not match the request headers");
+  }
+  if (methodHeader !== message.method) {
+    return jsonRpcFailure(message.id ?? null, -32020, "Mcp-Method header does not match the JSON-RPC method");
+  }
+  if (message.method === "tools/call") {
+    const toolName = message.params?.name;
+    if (typeof toolName !== "string" || nameHeader !== toolName) {
+      return jsonRpcFailure(message.id ?? null, -32020, "Mcp-Name header does not match the requested tool");
+    }
+  }
+  return undefined;
 }
 
 export interface StaticSiteProvider {
@@ -184,6 +214,11 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
     }
     const messages: unknown[] = batch || [payload];
 
+    const protocolVersion = c.req.header("mcp-protocol-version");
+    if (protocolVersion === MODERN_PROTOCOL_VERSION && isBatch) {
+      return c.json(jsonRpcFailure(null, -32600, "MCP 2026 does not support JSON-RPC batches"), 400);
+    }
+
     const sessionId = c.req.query("sessionId");
     if (!sessionId) {
       const responses: JsonRpcResponse[] = [];
@@ -197,12 +232,21 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
           continue;
         }
 
+        const protocolError = validateModernRequest(
+          message,
+          protocolVersion,
+          c.req.header("mcp-method"),
+          c.req.header("mcp-name"),
+        );
+        if (protocolError) return c.json(protocolError, 400);
+
         const response = await handleAndRecord(message, "http", c.req.header("user-agent") || "unknown client");
         if (message.id !== undefined) responses.push(response);
       }
 
       if (responses.length === 0) return c.body(null, 202);
       if (!isBatch && !isJsonRpcRequest(payload)) return c.json(responses[0], 400);
+      if (protocolVersion === MODERN_PROTOCOL_VERSION) c.header("MCP-Protocol-Version", MODERN_PROTOCOL_VERSION);
       return c.json(isBatch ? responses : responses[0]);
     }
 

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "role": "specialist",
+  "taskModes": ["audit", "fix", "review"],
+  "useWhen": ["keyboard navigation", "focus visibility", "form labels", "contrast accessibility", "accessible names"],
+  "avoidWhen": ["visual inspiration", "component gallery", "motion performance"],
+  "conflictsWith": [],
+  "complements": []
+}

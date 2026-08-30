@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "role": "resource",
+  "taskModes": ["create", "redesign", "research"],
+  "useWhen": ["motion design references", "CSS transitions", "animated typography", "micro-interactions", "motion inspiration"],
+  "avoidWhen": ["animation performance bug", "layout thrashing"],
+  "conflictsWith": [],
+  "complements": []
+}

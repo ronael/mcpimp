@@ -1,0 +1,4 @@
+interface:
+  display_name: MCPIMP Router
+  short_description: Route complex work through MCPIMP
+  default_prompt: Use MCPIMP to resolve and load the relevant capabilities before handling this task.

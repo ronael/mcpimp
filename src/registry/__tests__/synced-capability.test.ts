@@ -28,6 +28,18 @@ describe("synced capability layout", () => {
     });
   });
 
+  it("binds a local content review to the exact upstream content hash", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(capabilitiesRoot);
+
+    expect(registry.getCapability("with-provenance")?.review).toEqual({
+      status: "reviewed",
+      reviewedContentHash: `sha256:${"a".repeat(64)}`,
+      reviewedAt: "2026-08-30T00:00:00.000Z",
+      reviewedBy: "test-reviewer",
+    });
+    expect(registry.getCapability("without-review")?.review).toEqual({ status: "unreviewed" });
+  });
+
   it("layers overrides on top of upstream files of the same path", async () => {
     const registry = await FileSystemCapabilityRegistry.scan(capabilitiesRoot);
     const file = registry.readResource("skill://with-provenance/references/notes.md");
@@ -42,13 +54,16 @@ describe("synced capability layout", () => {
     expect(registry.readResource("skill://with-provenance/SKILL.md").layer).toBe("upstream");
   });
 
-  it("does not leak SOURCE.json into the capability file list", async () => {
+  it("does not leak MCPIMP metadata into the capability file list", async () => {
     const registry = await FileSystemCapabilityRegistry.scan(capabilitiesRoot);
 
     expect(registry.getCapability("with-provenance")?.files.map((file) => file.path)).toEqual([
       "SKILL.md",
       "references/notes.md",
     ]);
+    expect(registry.listResources().map((resource) => resource.uri)).not.toContain(
+      "skill://with-provenance/REVIEW.json",
+    );
   });
 });
 

@@ -63,7 +63,7 @@ describe("doctor", () => {
     expect(output).not.toContain("Bearer");
   });
 
-  it("probes initialize, initialized and tools/list in order", async () => {
+  it("probes the legacy handshake and MCP 2026 discovery in order", async () => {
     const root = await createProjectFixture();
     process.env.DOCTOR_TEST_MCP_URL = "https://upstream.example/message";
     process.env.DOCTOR_TEST_MCP_TOKEN = "secret-token";
@@ -95,6 +95,16 @@ describe("doctor", () => {
             },
           });
         }
+        if (body.method === "server/discover") {
+          return Response.json({
+            jsonrpc: "2.0",
+            id: 3,
+            result: {
+              resultType: "complete",
+              supportedVersions: ["2026-07-28", "2025-11-25"],
+            },
+          });
+        }
         return Response.json({
           jsonrpc: "2.0",
           id: 2,
@@ -103,7 +113,7 @@ describe("doctor", () => {
       },
     });
 
-    expect(methods).toEqual(["initialize", "notifications/initialized", "tools/list"]);
+    expect(methods).toEqual(["initialize", "notifications/initialized", "tools/list", "server/discover"]);
     expect(report.exitCode).toBe(0);
     expect(report.runtime).toMatchObject({
       endpoint: "http://127.0.0.1:3901/message",
@@ -111,10 +121,12 @@ describe("doctor", () => {
       capabilities: 1,
       toolCount: 2,
       tools: ["list-capabilities", "search-capabilities"],
+      supportedProtocols: ["2026-07-28", "2025-11-25"],
     });
     expect(report.checks).toEqual(expect.arrayContaining([
       expect.objectContaining({ name: "initialized", status: "pass" }),
       expect.objectContaining({ name: "tools-loaded", status: "pass" }),
+      expect.objectContaining({ name: "modern-discovery", status: "pass" }),
     ]));
   });
 
@@ -162,6 +174,13 @@ describe("doctor", () => {
         if (body.method === "initialize") {
           return Response.json({ jsonrpc: "2.0", id: 1, result: { protocolVersion: "2025-03-26", serverInfo: {} } });
         }
+        if (body.method === "server/discover") {
+          return Response.json({
+            jsonrpc: "2.0",
+            id: 3,
+            result: { resultType: "complete", supportedVersions: ["2026-07-28"] },
+          });
+        }
         return Response.json({ jsonrpc: "2.0", id: 2, result: { tools: [] } });
       },
     });
@@ -188,6 +207,13 @@ describe("doctor", () => {
         if (body.method === "notifications/initialized") return new Response(null, { status: 202 });
         if (body.method === "initialize") {
           return Response.json({ jsonrpc: "2.0", id: 1, result: { protocolVersion: "2025-03-26", serverInfo: {} } });
+        }
+        if (body.method === "server/discover") {
+          return Response.json({
+            jsonrpc: "2.0",
+            id: 3,
+            result: { resultType: "complete", supportedVersions: ["2026-07-28"] },
+          });
         }
         return Response.json({ jsonrpc: "2.0", id: 2, result: { tools: [{ name: "list-capabilities" }] } });
       },

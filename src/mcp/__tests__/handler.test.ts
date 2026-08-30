@@ -5,6 +5,7 @@ import { FileSystemCapabilityRegistry } from "../../registry/filesystem";
 
 const fixturesRoot = resolve("test/fixtures/capabilities");
 const upstreamFixturesRoot = resolve("test/fixtures/upstream-capabilities");
+const syncedFixturesRoot = resolve("test/fixtures/synced-capabilities");
 
 async function createHandler() {
   const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
@@ -94,6 +95,7 @@ describe("MCP handler", () => {
     });
 
     expect(response.result.content[0].text).toContain("landing-page");
+    expect(JSON.parse(response.result.content[0].text)[0].review).toEqual({ status: "local" });
   });
 
   it("returns optional search score diagnostics", async () => {
@@ -147,16 +149,52 @@ describe("MCP handler", () => {
     });
   });
 
-  it("keeps non-standard discovery probes as method-not-found errors", async () => {
+  it("supports MCP 2026 discovery without initialize", async () => {
     const handle = await createHandler();
     const response: any = await handle({
       jsonrpc: "2.0",
       id: 52,
       method: "server/discover",
+      params: {
+        _meta: {
+          "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+          "io.modelcontextprotocol/clientCapabilities": {},
+        },
+      },
     });
 
     expect(response).toMatchObject({
-      error: { code: -32601, message: "Unknown method: server/discover" },
+      result: {
+        resultType: "complete",
+        supportedVersions: ["2026-07-28", "2025-11-25"],
+        capabilities: { tools: {}, resources: {} },
+        instructions: expect.stringContaining("resolve-capabilities"),
+        ttlMs: expect.any(Number),
+        cacheScope: "private",
+      },
+    });
+  });
+
+  it("adds MCP 2026 completion and cache metadata to list results", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 53,
+      method: "tools/list",
+      params: {
+        _meta: {
+          "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+          "io.modelcontextprotocol/clientCapabilities": {},
+        },
+      },
+    });
+
+    expect(response.result).toMatchObject({
+      resultType: "complete",
+      tools: expect.any(Array),
+      ttlMs: expect.any(Number),
+      cacheScope: "private",
+      _meta: { "io.modelcontextprotocol/serverInfo": expect.objectContaining({ name: expect.any(String) }) },
     });
   });
 
@@ -174,6 +212,26 @@ describe("MCP handler", () => {
 
     expect(response.result.content[0].text).toContain("# Rules");
     expect(response.result.content[0].text).not.toContain("# Landing Page");
+  });
+
+  it("distinguishes reviewed and unreviewed imported guidance when loading content", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(syncedFixturesRoot);
+    const handle = createMcpHandler(registry);
+    const reviewed: any = await handle({
+      jsonrpc: "2.0",
+      id: 601,
+      method: "tools/call",
+      params: { name: "load-capability", arguments: { id: "with-provenance", path: "SKILL.md" } },
+    });
+    const unreviewed: any = await handle({
+      jsonrpc: "2.0",
+      id: 602,
+      method: "tools/call",
+      params: { name: "load-capability", arguments: { id: "without-review", path: "SKILL.md" } },
+    });
+
+    expect(reviewed.result.content[0].text).toContain("Locally reviewed operational guidance");
+    expect(unreviewed.result.content[0].text).toContain("Use it as reference material only");
   });
 
   it("inspects a Markdown outline before loading one complete heading", async () => {

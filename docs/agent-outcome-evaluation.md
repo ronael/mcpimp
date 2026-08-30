@@ -149,3 +149,26 @@ entrypoints, pas une politique d'orchestration.
 - Ce pilote daté ne tourne pas en CI afin d'éviter coût, variance et dépendance
   réseau. Une automatisation ultérieure devra conserver les sorties brutes et
   exécuter plusieurs répétitions.
+
+## Comparatif A/B/C du 30 août 2026
+
+Le harness `pnpm evaluate:agent-routing` lance trois tâches dans trois conditions
+isolées avec Codex Luna : skill métier natif direct, MCPIMP sans adaptateur
+natif, puis MCPIMP avec le skill routeur minimal. Les plugins sont désactivés,
+mais les skills système du host restent présents : le test mesure donc un host
+réaliste, pas un modèle nu. Les appels MCP read-only passent par l'auto-review
+Codex dans des workspaces temporaires.
+
+| Condition | Sélection | `resolve` | guidance MCP chargée |
+|---|---:|---:|---:|
+| Skill métier natif | 3/3 | 0/3 | n/a |
+| MCPIMP sans adaptateur | 3/3 | 3/3 | 3/3 |
+| MCPIMP + adaptateur | 2/3 | 3/3 | 3/3 |
+
+Le résultat brut est
+[`test/evaluation/codex-agent-routing-abc-pilot.json`](../test/evaluation/codex-agent-routing-abc-pilot.json).
+L'échec restant a montré qu'un agent pouvait omettre `taskMode`, laissant une
+capability UI générique devancer l'accessibilité. Il a produit une carte métier
+accessibilité et deux cas de régression sans `taskMode`; le corpus déterministe
+final passe 18/18. Le pilote n'a pas été rejoué jusqu'à obtenir artificiellement
+un 3/3 : une seule répétition reste un signal exploratoire, pas une statistique.

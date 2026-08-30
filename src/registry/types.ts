@@ -123,6 +123,25 @@ export interface CapabilityRoutingCard {
   complements: string[];
 }
 
+export type CapabilityReviewStatus = "local" | "unreviewed" | "reviewed" | "review-required";
+
+/** Local review attestation bound to one exact imported content hash. */
+export interface CapabilityReviewRecord {
+  schemaVersion: 1;
+  status: "reviewed";
+  reviewedContentHash: string;
+  reviewedAt: string;
+  reviewedBy: string;
+}
+
+/** Effective trust state exposed by the registry. It never affects ranking. */
+export interface CapabilityReview {
+  status: CapabilityReviewStatus;
+  reviewedContentHash?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+}
+
 export interface Capability {
   /** Public stable id, e.g. ui-skills-improve-ui or landing-page. */
   id: string;
@@ -136,6 +155,7 @@ export interface Capability {
   /** Detected components (skill, mcp, future components). */
   components: CapabilityComponents;
   routing?: CapabilityRoutingCard;
+  review?: CapabilityReview;
   rootPath?: string;
   files: CapabilityFile[];
   mcp?: CapabilityMcpConfig;

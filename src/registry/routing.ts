@@ -5,6 +5,7 @@ import type {
   Capability,
   CapabilityRegistry,
   CapabilityRoutingCard,
+  CapabilityReviewStatus,
   CapabilityTaskMode,
 } from "./types";
 
@@ -25,6 +26,7 @@ export interface ResolvedEntrypoint {
 
 export interface ResolvedCapability {
   id: string;
+  reviewStatus: CapabilityReviewStatus;
   reasonCodes: string[];
   entrypoints: ResolvedEntrypoint[];
 }
@@ -82,7 +84,9 @@ function scoreRouting(card: CapabilityRoutingCard | undefined, queryTerms: Set<s
   const useCoverage = strongestCoverage(queryTerms, card.useWhen);
   const avoidCoverage = strongestCoverage(queryTerms, card.avoidWhen);
   if (useCoverage >= 0.5) {
-    adjustment += 8 * useCoverage;
+    // A full local business-intent match must outrank the normalized lexical
+    // ceiling (10), otherwise repeated generic prose can defeat routing cards.
+    adjustment += 12 * useCoverage;
     reasonCodes.push("routing-use-when");
   }
   if (avoidCoverage >= 0.5) {
@@ -202,6 +206,7 @@ export function resolveCapabilities(registry: CapabilityRegistry, input: Resolve
     estimated += entrypoints.reduce((sum, entrypoint) => sum + entrypoint.characters, 0);
     return {
       id: candidate.capability.id,
+      reviewStatus: candidate.capability.review?.status || (candidate.capability.origin ? "unreviewed" : "local"),
       reasonCodes: [...new Set([
         ...candidate.reasonCodes,
         ...(complements.has(candidate.capability.id) ? ["primary-complement"] : []),

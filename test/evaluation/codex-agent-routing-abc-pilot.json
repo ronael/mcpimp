@@ -1,0 +1,159 @@
+{
+  "date": "2026-08-30T21:49:44.744Z",
+  "runner": {
+    "client": "codex",
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "low",
+    "runsPerScenario": 1
+  },
+  "conditions": {
+    "native": "direct native skill",
+    "mcp": "MCPIMP configured without a project adapter; host baseline skills remain",
+    "mcp-adapter": "MCPIMP plus native router adapter"
+  },
+  "summary": {
+    "native": {
+      "runs": 3,
+      "selectionAccuracy": 1,
+      "resolveCallRuns": 0,
+      "loadCallRuns": 0,
+      "resourceReadRuns": 0,
+      "guidanceLoadRuns": 0
+    },
+    "mcp": {
+      "runs": 3,
+      "selectionAccuracy": 1,
+      "resolveCallRuns": 3,
+      "loadCallRuns": 3,
+      "resourceReadRuns": 0,
+      "guidanceLoadRuns": 3
+    },
+    "mcp-adapter": {
+      "runs": 3,
+      "selectionAccuracy": 0.6666666666666666,
+      "resolveCallRuns": 3,
+      "loadCallRuns": 3,
+      "resourceReadRuns": 0,
+      "guidanceLoadRuns": 3
+    }
+  },
+  "results": [
+    {
+      "scenario": "component-resources",
+      "condition": "native",
+      "selectedCapabilityId": "ui-component-resources",
+      "selectionReason": "Use shadcn/ui for accessible primitives and dashboard blocks ([sidebar](https://ui.shadcn.com/docs/components/base/sidebar), [data table](https://ui.shadcn.com/docs/components/base/data-table), [dashboard examples](https://ui.shadcn.com/blocks?category=dashboard)); use ReUI for complex product patterns such as [data grids](https://reui.io/components/data-grid), [Kanban](https://reui.io/components/kanban), and [timelines](https://reui.io/components/timeline); use Beautiful UI for AI-native patterns such as approval cards, tool chips, task rows, and streaming states ([gallery](https://www.beautifului.dev/)). First inventory the product’s existing design system, then shortlist references by workflow, density, interaction states, accessibility, and responsive behavior. Treat galleries as inspiration and verify licensing before reuse. No files were modified.",
+      "guidanceLoaded": true,
+      "passed": true,
+      "resolveCalls": 0,
+      "loadCalls": 0,
+      "resourceReadCalls": 0,
+      "durationMs": 33087,
+      "stderr": "Reading additional input from stdin..."
+    },
+    {
+      "scenario": "component-resources",
+      "condition": "mcp",
+      "selectedCapabilityId": "ui-component-resources",
+      "selectionReason": "Use the loaded component-gallery guidance to research concrete references: shadcn/ui for accessible primitives, ReUI for advanced product components, Beautiful UI/beUI/Rare UI for specialized React and shadcn patterns, and Component Gallery for cross-system comparison. Verify licensing and distinguish public content from Pro materials; do not implement or modify files.",
+      "guidanceLoaded": true,
+      "passed": true,
+      "resolveCalls": 1,
+      "loadCalls": 1,
+      "resourceReadCalls": 0,
+      "durationMs": 29768,
+      "stderr": "Reading additional input from stdin...\n2026-08-30T21:46:28.891286Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork.\n2026-08-30T21:46:35.094337Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork."
+    },
+    {
+      "scenario": "component-resources",
+      "condition": "mcp-adapter",
+      "selectedCapabilityId": "ui-component-resources",
+      "selectionReason": "Loaded MCPIMP guidance for concrete component galleries and shadcn-based product UI references. The approach should compare accessibility, states, extensibility, licensing, and product-interface fit across shadcn/ui, ReUI, beUI, Rare UI, Beautiful UI, Component Gallery, and coss ui—using paid or licensed content only as inspiration unless reuse rights are clear.",
+      "guidanceLoaded": true,
+      "passed": true,
+      "resolveCalls": 1,
+      "loadCalls": 2,
+      "resourceReadCalls": 0,
+      "durationMs": 34681,
+      "stderr": "Reading additional input from stdin...\n2026-08-30T21:46:59.114737Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork.\n2026-08-30T21:47:07.579314Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork.\n2026-08-30T21:47:11.588302Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork."
+    },
+    {
+      "scenario": "frontend-architecture",
+      "condition": "native",
+      "selectedCapabilityId": "frontend-architecture",
+      "selectionReason": "Use a feature-oriented Clean Architecture: pure domain entities/rules; application use cases depending on ports; infrastructure adapters implementing ports; Zustand stores orchestrating UI state; and a composition root assembling typed configuration, adapters, and use cases. Enforce boundaries with strict TypeScript, ESLint architecture rules, SonarJS, and architecture tests.",
+      "guidanceLoaded": true,
+      "passed": true,
+      "resolveCalls": 0,
+      "loadCalls": 0,
+      "resourceReadCalls": 0,
+      "durationMs": 17136,
+      "stderr": "Reading additional input from stdin..."
+    },
+    {
+      "scenario": "frontend-architecture",
+      "condition": "mcp",
+      "selectedCapabilityId": "frontend-architecture",
+      "selectionReason": "Use a dependency-inverted structure: pure domain entities/value objects and rules; application use cases depending only on ports; infrastructure/UI adapters implementing those ports; and a composition root that wires concrete adapters into use cases and React providers. Keep HTTP, storage, React, and framework concerns outside the domain. The loaded guidance specifically prohibits constructing adapters inside use cases.",
+      "guidanceLoaded": true,
+      "passed": true,
+      "resolveCalls": 1,
+      "loadCalls": 1,
+      "resourceReadCalls": 0,
+      "durationMs": 35043,
+      "stderr": "Reading additional input from stdin...\n2026-08-30T21:47:57.815168Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork.\n2026-08-30T21:48:03.958783Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork."
+    },
+    {
+      "scenario": "frontend-architecture",
+      "condition": "mcp-adapter",
+      "selectedCapabilityId": "frontend-architecture",
+      "selectionReason": "MCPIMP selected the frontend-architecture capability for the React/TypeScript architecture task. Its loaded guidance confirms that use cases must depend on ports rather than instantiate concrete adapters; the composition root should perform wiring.",
+      "guidanceLoaded": true,
+      "passed": true,
+      "resolveCalls": 1,
+      "loadCalls": 1,
+      "resourceReadCalls": 0,
+      "durationMs": 25865,
+      "stderr": "Reading additional input from stdin...\n2026-08-30T21:48:25.761161Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork.\n2026-08-30T21:48:30.341941Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork."
+    },
+    {
+      "scenario": "accessibility-fix",
+      "condition": "native",
+      "selectedCapabilityId": "fixing-accessibility",
+      "selectionReason": "The task explicitly covers keyboard navigation, focus visibility, form labels, and color contrast, which are directly addressed by the workspace's accessibility-fixing capability.",
+      "guidanceLoaded": true,
+      "passed": true,
+      "resolveCalls": 0,
+      "loadCalls": 0,
+      "resourceReadCalls": 0,
+      "durationMs": 6134,
+      "stderr": "Reading additional input from stdin..."
+    },
+    {
+      "scenario": "accessibility-fix",
+      "condition": "mcp",
+      "selectedCapabilityId": "ui-skills-fixing-accessibility",
+      "selectionReason": "This domain capability directly covers accessibility remediation, including keyboard-equivalent interactions, visible focus indicators, and sufficient contrast. The approach should also audit semantic form labeling and validate disabled/error states without relying on color alone. Guidance was loaded; no workspace files were present to inspect or modify.",
+      "guidanceLoaded": true,
+      "passed": true,
+      "resolveCalls": 1,
+      "loadCalls": 1,
+      "resourceReadCalls": 0,
+      "durationMs": 31154,
+      "stderr": "Reading additional input from stdin...\n2026-08-30T21:49:01.337239Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork.\n2026-08-30T21:49:08.001165Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork."
+    },
+    {
+      "scenario": "accessibility-fix",
+      "condition": "mcp-adapter",
+      "selectedCapabilityId": "taste-skill",
+      "selectionReason": "The workspace contains no interface files to inspect. The read-only approach is to audit semantic landmarks and heading order, ensure all interactive elements are keyboard reachable with logical Tab order and usable focus indicators, associate every form control with a visible label or accessible name, and verify text/UI contrast against WCAG AA (with AAA targeted for prominent copy). Preserve brand recognition and avoid pure black/white values.",
+      "guidanceLoaded": true,
+      "passed": false,
+      "resolveCalls": 1,
+      "loadCalls": 1,
+      "resourceReadCalls": 0,
+      "durationMs": 33348,
+      "stderr": "Reading additional input from stdin...\n2026-08-30T21:49:26.545059Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork.\n2026-08-30T21:49:34.680419Z  WARN codex_core::guardian::review_session: failed to refresh guardian trunk rollout snapshot: Session persistence is disabled; cannot guardian review fork."
+    }
+  ]
+}

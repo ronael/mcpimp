@@ -4,8 +4,8 @@ import type { CapabilityResolution } from "../routing";
 
 function resolution(primaryId: string, supportingIds: string[] = []): CapabilityResolution {
   return {
-    primary: { id: primaryId, reasonCodes: [], entrypoints: [{ path: "SKILL.md", characters: 20 }] },
-    supporting: supportingIds.map((id) => ({ id, reasonCodes: [], entrypoints: [] })),
+    primary: { id: primaryId, reviewStatus: "local", reasonCodes: [], entrypoints: [{ path: "SKILL.md", characters: 20 }] },
+    supporting: supportingIds.map((id) => ({ id, reviewStatus: "local", reasonCodes: [], entrypoints: [] })),
     conflicts: [],
     budget: { unit: "characters", maximum: 1000, estimated: 20 },
     confidence: "high",

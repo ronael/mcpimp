@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "role": "resource",
+  "taskModes": ["create", "redesign", "research"],
+  "useWhen": ["visual design references", "branding references", "product design inspiration", "illustration art direction", "visual inspiration"],
+  "avoidWhen": ["generate image asset", "implement existing mockup", "production design system", "design system tokens"],
+  "conflictsWith": [],
+  "complements": []
+}

@@ -21,6 +21,7 @@ describe("FileSystemCapabilityRegistry", () => {
       role: "orchestrator",
       taskModes: ["create", "redesign"],
     });
+    expect(registry.getCapability("landing-page")?.review).toEqual({ status: "local" });
     expect(registry.getCapability("landing-page")?.files.map((file) => file.path)).not.toContain("ROUTING.json");
     expect(registry.listResources().map((resource) => resource.uri)).not.toContain("skill://landing-page/ROUTING.json");
   });

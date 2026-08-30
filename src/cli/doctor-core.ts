@@ -4,6 +4,7 @@ import { createServer as createNetServer } from "node:net";
 import { dirname, join } from "node:path";
 import { CAPABILITIES_DIR } from "../core/paths";
 import { findListeningPid } from "../local/lifecycle";
+import { MODERN_PROTOCOL_VERSION } from "../mcp/handler";
 import { UpstreamMcpGateway } from "../mcp/upstream";
 import { catalogFingerprint } from "../registry/fingerprint";
 import { FileSystemCapabilityRegistry } from "../registry/filesystem";
@@ -18,6 +19,7 @@ export type DoctorCheckName =
   | "configured"
   | "reachable"
   | "initialized"
+  | "modern-discovery"
   | "tools-loaded"
   | "catalog-freshness";
 
@@ -35,6 +37,7 @@ export interface DoctorRuntimeDetails {
   capabilities?: number;
   toolCount?: number;
   tools?: string[];
+  supportedProtocols?: string[];
   serverCatalogRevision?: string;
   localCatalogRevision?: string;
 }
@@ -152,10 +155,16 @@ function parseHealthPayload(value: unknown): HealthPayload | undefined {
   };
 }
 
-async function postMcp(fetcher: DoctorFetch, endpoint: URL, body: unknown, timeoutMs: number): Promise<Response> {
+async function postMcp(
+  fetcher: DoctorFetch,
+  endpoint: URL,
+  body: unknown,
+  timeoutMs: number,
+  headers: Record<string, string> = {},
+): Promise<Response> {
   return fetcher(endpoint, {
     method: "POST",
-    headers: { accept: "application/json, text/event-stream", "content-type": "application/json" },
+    headers: { accept: "application/json, text/event-stream", "content-type": "application/json", ...headers },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(timeoutMs),
   });
@@ -253,6 +262,42 @@ async function checkRuntime(
     checks.push({ name: "tools-loaded", status: "pass", message: `${tools.length} tool(s) listed by the doctor session` });
   } catch (error) {
     checks.push({ name: "tools-loaded", status: "error", message: errorMessage(error) });
+  }
+
+  try {
+    const response = await postMcp(fetcher, endpoint, {
+      jsonrpc: "2.0",
+      id: 3,
+      method: "server/discover",
+      params: {
+        _meta: {
+          "io.modelcontextprotocol/protocolVersion": MODERN_PROTOCOL_VERSION,
+          "io.modelcontextprotocol/clientCapabilities": {},
+        },
+      },
+    }, timeoutMs, {
+      "MCP-Protocol-Version": MODERN_PROTOCOL_VERSION,
+      "Mcp-Method": "server/discover",
+    });
+    if (!response.ok) throw new Error(`server/discover returned HTTP ${response.status}`);
+    const payload: unknown = await response.json();
+    if (!isRecord(payload) || !isRecord(payload.result)
+      || payload.result.resultType !== "complete"
+      || !Array.isArray(payload.result.supportedVersions)) {
+      throw new Error("invalid server/discover response");
+    }
+    runtime.supportedProtocols = payload.result.supportedVersions
+      .filter((version): version is string => typeof version === "string");
+    if (!runtime.supportedProtocols.includes(MODERN_PROTOCOL_VERSION)) {
+      throw new Error(`${MODERN_PROTOCOL_VERSION} is not advertised`);
+    }
+    checks.push({
+      name: "modern-discovery",
+      status: "pass",
+      message: `MCP ${MODERN_PROTOCOL_VERSION} discovery succeeded without initialize`,
+    });
+  } catch (error) {
+    checks.push({ name: "modern-discovery", status: "error", message: errorMessage(error) });
   }
   return { checks, runtime };
 }

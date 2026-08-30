@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "role": "specialist",
+  "taskModes": ["research", "review"],
+  "useWhen": ["stress-test plan", "interview unresolved decisions", "challenge assumptions", "grill my idea"],
+  "avoidWhen": ["implement approved plan", "code review"],
+  "conflictsWith": [],
+  "complements": []
+}

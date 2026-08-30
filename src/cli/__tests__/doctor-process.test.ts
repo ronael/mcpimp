@@ -63,7 +63,7 @@ async function stop(process: ChildProcess): Promise<number | null> {
 }
 
 describe("doctor against the local process", () => {
-  it("runs health, initialize, initialized and tools/list over a real socket", { timeout: 20_000 }, async () => {
+  it("runs health, legacy initialization, tools/list and modern discovery over a real socket", { timeout: 20_000 }, async () => {
     const root = await fixtureRoot();
     const port = await availablePort();
     const stdout: string[] = [];
@@ -102,6 +102,7 @@ describe("doctor against the local process", () => {
         expect.objectContaining({ name: "reachable", status: "pass" }),
         expect.objectContaining({ name: "initialized", status: "pass" }),
         expect.objectContaining({ name: "tools-loaded", status: "pass" }),
+        expect.objectContaining({ name: "modern-discovery", status: "pass" }),
         expect.objectContaining({ name: "catalog-freshness", status: "pass" }),
       ]));
     } finally {

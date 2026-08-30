@@ -7,7 +7,7 @@
   "commit": "1111111111111111111111111111111111111111",
   "url": "https://github.com/acme/demo-skills/tree/1111111111111111111111111111111111111111/skills/demo",
   "revision": { "kind": "git-commit", "value": "1111111111111111111111111111111111111111" },
-  "contentHash": "sha256:demo",
+  "contentHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "license": { "spdxId": "MIT", "name": "MIT License" },
   "skillKind": "portable",
   "skillTraits": ["references"],
