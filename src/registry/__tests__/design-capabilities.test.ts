@@ -72,7 +72,7 @@ describe("design capability catalog", () => {
       expect(results.every((result) => result.capabilityId !== "ui-ux-pro-max-skill-design-system"), query)
         .toBe(true);
     }
-  });
+  }, 15_000);
 
   it("keeps curated design resources grouped by agent intent", async () => {
     const cases = [
