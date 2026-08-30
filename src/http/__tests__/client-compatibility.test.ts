@@ -33,7 +33,7 @@ describe("observed MCP client sequences", () => {
     }, userAgent));
     expect(initialize.status).toBe(200);
     await expect(initialize.json()).resolves.toMatchObject({
-      result: { protocolVersion: "2025-03-26" },
+      result: { protocolVersion: "2025-06-18" },
     });
 
     const initialized = await app.request("/message", message({
@@ -59,7 +59,7 @@ describe("observed MCP client sequences", () => {
     expect(activity.events.every((event: { status: string }) => event.status === "success")).toBe(true);
   });
 
-  it("keeps working after Claude probes the non-standard server/discover method", async () => {
+  it("keeps working after Claude probes server/discover", async () => {
     const app = await createApp();
     const userAgent = "claude-code/2.1.241 (claude-desktop, agent-sdk/0.3.246)";
 
@@ -68,7 +68,9 @@ describe("observed MCP client sequences", () => {
       id: 1,
       method: "server/discover",
     }, userAgent));
-    await expect(discovery.json()).resolves.toMatchObject({ error: { code: -32601 } });
+    await expect(discovery.json()).resolves.toMatchObject({
+      result: { resultType: "complete", supportedVersions: expect.arrayContaining(["2026-07-28"]) },
+    });
 
     const initialize = await app.request("/message", message({
       jsonrpc: "2.0",
@@ -97,7 +99,8 @@ describe("observed MCP client sequences", () => {
     }
 
     const activity: any = await (await app.request("/activity")).json();
-    expect(activity.events.filter((event: { status: string }) => event.status === "error")).toHaveLength(1);
+    expect(activity.events).toHaveLength(6);
+    expect(activity.events.every((event: { status: string }) => event.status === "success")).toBe(true);
     expect(activity.events[0]).toMatchObject({ method: "tools/list", status: "success" });
   });
 });

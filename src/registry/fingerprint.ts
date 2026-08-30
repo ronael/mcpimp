@@ -15,6 +15,8 @@ export async function catalogFingerprint(registry: CapabilityRegistry): Promise<
       description: capability.description,
       tags: [...(capability.tags || [])].sort(),
       components: capability.components,
+      routing: capability.routing,
+      review: capability.review,
       originContentHash: capability.origin?.contentHash,
       files: capability.files
         .map((file) => ({

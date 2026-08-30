@@ -4,11 +4,12 @@ Cette matrice distingue les tests de contrat du dépôt des connexions réelleme
 observées. Un scénario automatisé prouve la stabilité d'une séquence HTTP ; il
 ne remplace pas un test du binaire client contre un serveur redémarré.
 
-## État au 26 août 2026
+## État au 30 août 2026
 
 | Client | Transport | Trafic observé | Contrat automatisé | Validation live après correctifs |
 |---|---|---|---|---|
-| Codex `0.149.1` et `0.149.0-alpha.4.3` | Streamable HTTP direct | `initialize` en `2025-06-18`, `notifications/initialized`, `tools/list`, `resources/list`, `resources/templates/list`, `tools/call` | Oui | Validé avec `0.149.1` le 26 août |
+| Codex `0.150.1` | Streamable HTTP direct | `initialize` en `2025-06-18`, `notifications/initialized`, `tools/list`, `resources/list`, `resources/templates/list`, `resources/read`, `tools/call` | Oui | Validé avec `0.150.1` le 30 août |
+| MCP `2026-07-28` | Streamable HTTP sans session | `server/discover`, headers `Mcp-Method`/`Mcp-Name`, listes et appels complets | Oui | Sonde `doctor` réelle le 30 août ; client produit à valider |
 | Codex via `mcp-remote 0.2.5` | Adaptateur HTTP | `initialize`, `notifications/initialized`, `tools/list` | Couvert par la séquence Codex | À refaire |
 | Claude Code `2.1.241` / Desktop SDK `0.3.246` | Streamable HTTP | `server/discover`, `initialize`, `notifications/initialized`, `resources/list`, `tools/list` | Oui | À refaire |
 | Client Rust `rmcp 3.1.0` | Streamable HTTP | `initialize` | Partiel | À refaire |
@@ -22,11 +23,14 @@ sondées, pas à lui seul l'absence de déconnexion ou de retry côté client.
 
 - une notification valide reçoit un `202` vide ;
 - `resources/templates/list` retourne une liste vide plutôt qu'une erreur ;
-- `server/discover` reste non standard et retourne `-32601`, sans empêcher les
-  requêtes standard suivantes ;
+- `server/discover` implémente le bootstrap MCP `2026-07-28` sans session ni
+  `initialize`, tout en restant compatible avec les anciennes sondes Claude ;
 - `ping` retourne immédiatement `{}` ;
 - `initialize` annonce dans `instructions` l'usage de `resolve-capabilities`
   avant les tâches non triviales, sans précharger de capability particulière ;
+- les résultats MCP 2026 portent `resultType`, l'identité serveur et les
+  métadonnées de cache attendues ; les incohérences de headers et versions sont
+  rejetées par des codes distincts ;
 - les batches agrègent uniquement les réponses aux éléments possédant un ID ;
 - paramètres invalides, ressource absente et panne interne ont des codes
   distincts ;

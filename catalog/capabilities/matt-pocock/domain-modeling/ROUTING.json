@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "role": "specialist",
+  "taskModes": ["create", "research", "review"],
+  "useWhen": ["domain vocabulary", "bounded contexts", "domain modeling", "architectural decision", "context glossary"],
+  "avoidWhen": ["frontend folder architecture", "visual design"],
+  "conflictsWith": [],
+  "complements": []
+}

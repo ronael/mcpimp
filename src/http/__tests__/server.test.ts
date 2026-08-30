@@ -57,6 +57,85 @@ describe("Hono server", () => {
     });
   });
 
+  it("supports MCP 2026 discovery and tool calls without initialize", async () => {
+    const app = await createApp();
+    const metadata = {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientCapabilities": {},
+    };
+    const request = (method: string, params: Record<string, unknown> = {}, name?: string) => app.request("/message", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2026-07-28",
+        "mcp-method": method,
+        ...(name ? { "mcp-name": name } : {}),
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params: { ...params, _meta: metadata } }),
+    });
+
+    const discover = await request("server/discover");
+    expect(discover.status).toBe(200);
+    expect(discover.headers.get("mcp-protocol-version")).toBe("2026-07-28");
+    await expect(discover.json()).resolves.toMatchObject({
+      result: { resultType: "complete", supportedVersions: expect.arrayContaining(["2026-07-28"]) },
+    });
+
+    await expect((await request("tools/list")).json()).resolves.toMatchObject({
+      result: { resultType: "complete", tools: expect.any(Array), ttlMs: expect.any(Number) },
+    });
+    await expect((await request(
+      "tools/call",
+      { name: "list-capabilities", arguments: {} },
+      "list-capabilities",
+    )).json()).resolves.toMatchObject({
+      result: { resultType: "complete", content: expect.any(Array) },
+    });
+  });
+
+  it("rejects inconsistent MCP 2026 routing headers", async () => {
+    const app = await createApp();
+    const body = JSON.stringify({
+      jsonrpc: "2.0",
+      id: 4,
+      method: "tools/list",
+      params: {
+        _meta: {
+          "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+          "io.modelcontextprotocol/clientCapabilities": {},
+        },
+      },
+    });
+    const mismatch = await app.request("/message", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2026-07-28",
+        "mcp-method": "resources/list",
+      },
+      body,
+    });
+
+    expect(mismatch.status).toBe(400);
+    await expect(mismatch.json()).resolves.toMatchObject({ error: { code: -32020 } });
+  });
+
+  it("rejects unsupported MCP protocol versions", async () => {
+    const app = await createApp();
+    const response = await app.request("/message", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2027-01-01",
+        "mcp-method": "tools/list",
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 5, method: "tools/list" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ error: { code: -32022 } });
+  });
+
   it("handles mixed Streamable HTTP batches and omits notification responses", async () => {
     const app = await createApp();
     const response = await app.request("/message", {
@@ -271,6 +350,20 @@ describe("Hono server", () => {
     expect(html).toContain('<html lang="fr">');
     expect(html).toContain("Le serveur scanne");
     expect(html).toContain("Sources &amp; références");
+  });
+
+  it("renders a compact review queue for imported capabilities", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(resolve("test/fixtures/synced-capabilities"));
+    const app = createServer(registry);
+    const response = await app.request("/dashboard");
+    const html = await response.text();
+
+    expect(html).toContain('href="#review"');
+    expect(html).toContain('id="reviewRows"');
+    expect(html).toContain("without-review");
+    expect(html).toContain("unreviewed");
+    expect(html).toContain("pnpm capabilities:review -- without-review --reviewer");
+    expect(html).not.toContain("review-card");
   });
 
   it("serves static docs through the same server when configured", async () => {

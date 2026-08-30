@@ -3,6 +3,7 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { capabilityIdFor, assertSafeSegment, slugify } from "../core/names";
 import { parseFrontmatter } from "./frontmatter";
+import { effectiveCapabilityReview, parseReviewRecord, REVIEW_FILE } from "./review";
 import { searchCapabilities } from "./search";
 import { parseRoutingCard, ROUTING_FILE, validateRoutingReferences } from "./routing-card";
 import { countLines, decodeTextContent, mimeTypeFor } from "./text";
@@ -388,7 +389,7 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
     const byPath = new Map<string, DiscoveredFile>();
     for (const { dir, layer } of layers) {
       for (const discovered of await collectLayer(dir, layer)) {
-        if (discovered.path === ROUTING_FILE) continue;
+        if (discovered.path === ROUTING_FILE || discovered.path === REVIEW_FILE) continue;
         byPath.set(discovered.path, discovered);
       }
     }
@@ -407,6 +408,8 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
     const name = frontmatter.name || mcp?.name || id;
     const tags = frontmatter.tags.length > 0 ? frontmatter.tags : mcp?.tags;
     const routingText = await readFile(join(location.capabilityRoot, ROUTING_FILE), "utf-8").catch(() => undefined);
+    const reviewText = await readFile(join(location.capabilityRoot, REVIEW_FILE), "utf-8").catch(() => undefined);
+    const origin = await readOrigin(location.capabilityRoot);
 
     return {
       id,
@@ -417,10 +420,11 @@ export class FileSystemCapabilityRegistry implements CapabilityRegistry {
       tags: tags && tags.length > 0 ? tags : undefined,
       components: detectComponents(files),
       routing: routingText ? parseRoutingCard(routingText, id) : undefined,
+      review: effectiveCapabilityReview(origin, reviewText ? parseReviewRecord(reviewText, id) : undefined),
       rootPath: location.capabilityRoot,
       files,
       mcp,
-      origin: await readOrigin(location.capabilityRoot),
+      origin,
     };
   }
 

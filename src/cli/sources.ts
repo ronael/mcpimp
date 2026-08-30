@@ -14,6 +14,8 @@ import { syncSources, type SyncEntry, type SyncReport } from "../ingestion/sync"
 const STATUS_MARKS: Record<SyncEntry["status"], string> = {
   "up-to-date": "✓",
   "update-available": "↑",
+  "removed-upstream": "−",
+  "renamed-upstream": "→",
   new: "+",
   unavailable: "✗",
 };
@@ -46,6 +48,15 @@ function formatEntry(entry: SyncEntry): string {
       details.push(`      ${path}`);
     }
   }
+  if (entry.replacementCapabilityId) {
+    details.push(`    replacement ${entry.replacementCapabilityId}`);
+  }
+  if (entry.overrideConflicts?.length) {
+    details.push(`    override collisions ${entry.overrideConflicts.length}`);
+    for (const conflict of entry.overrideConflicts.slice(0, 12)) {
+      details.push(`      ${conflict.status === "identical" ? "=" : "!"} ${conflict.path} (${conflict.status})`);
+    }
+  }
   if (entry.reason) details.push(`    ${entry.reason}`);
 
   return [head, ...details].join("\n");
@@ -66,6 +77,13 @@ function printReport(report: SyncReport, apply: boolean): void {
       console.log(`  · ${candidate.repository}  (via ${candidate.sourceId})`);
     }
     console.log('  Add a repository to "allowedRepositories" in its catalogue source to import it.');
+  }
+
+  if (report.duplicateSources.length > 0) {
+    console.log(`\nCatalogue repositories already covered by declared sources (${report.duplicateSources.length}):`);
+    for (const duplicate of report.duplicateSources) {
+      console.log(`  = ${duplicate.repository}  (via ${duplicate.sourceId}, covered by ${duplicate.coveredBy})`);
+    }
   }
 
   if (report.errors.length > 0) {

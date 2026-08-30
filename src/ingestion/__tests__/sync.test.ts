@@ -48,6 +48,7 @@ interface MemorySourceDefinition {
 interface MemoryCapabilitySpec {
   namespace: string;
   slug: string;
+  originPath?: string;
   files: Record<string, string>;
 }
 
@@ -74,6 +75,21 @@ class MemoryCapabilityAdapter implements ContentSourceAdapter<any> {
     const spec = this.specs.find((item) => item.slug === slug);
     if (!spec) throw new Error(`Unknown memory capability: ${slug}`);
     spec.files[path] = text;
+    this.revision = revision;
+  }
+
+  removeCapability(slug: string, revision = NEXT_COMMIT): void {
+    const index = this.specs.findIndex((item) => item.slug === slug);
+    if (index === -1) throw new Error(`Unknown memory capability: ${slug}`);
+    this.specs.splice(index, 1);
+    this.revision = revision;
+  }
+
+  renameCapability(slug: string, nextSlug: string, revision = NEXT_COMMIT): void {
+    const spec = this.specs.find((item) => item.slug === slug);
+    if (!spec) throw new Error(`Unknown memory capability: ${slug}`);
+    spec.slug = nextSlug;
+    spec.originPath = nextSlug;
     this.revision = revision;
   }
 
@@ -106,7 +122,7 @@ class MemoryCapabilityAdapter implements ContentSourceAdapter<any> {
         origin: {
           type: "memory",
           sourceId: source.id,
-          path: spec.slug,
+          path: spec.originPath || spec.slug,
           revision: { kind: revision.kind, value: revision.value },
           contentHash,
         },
@@ -127,10 +143,51 @@ class MemoryCapabilityAdapter implements ContentSourceAdapter<any> {
         path,
         bytes: bytesOf(text).byteLength,
         binary: false,
-        sha: `${this.revision}:${path}:${text}`,
+        sha: `${path}:${text}`,
         url: `memory://${spec.slug}/${path}`,
       }))
       .sort((a, b) => a.path.localeCompare(b.path));
+  }
+}
+
+class CatalogGitHubAdapter implements ContentSourceAdapter<any> {
+  readonly type = "github";
+
+  async getRevision(): Promise<SourceRevision> {
+    return { kind: "git-commit", value: COMMIT, fetchedAt: new Date().toISOString() };
+  }
+
+  async discover(source: GitHubSourceDefinition): Promise<DiscoveredCapability[]> {
+    const namespace = source.namespace || "catalog";
+    const files: DiscoveredFileRef[] = [{
+      path: "SKILL.md",
+      bytes: 46,
+      binary: false,
+      sha: "catalog-tool-skill",
+      url: `https://example.com/${source.repository}/SKILL.md`,
+    }];
+
+    return [{
+      namespace,
+      slug: "tool",
+      capabilityId: capabilityIdFor(namespace, "tool"),
+      components: { skill: true, mcp: false },
+      files,
+      contentHash: hashFileSet(files),
+      skippedAssets: [],
+      origin: {
+        type: "github",
+        sourceId: source.id,
+        repository: source.repository,
+        path: "skills/tool",
+        commit: COMMIT,
+        contentHash: hashFileSet(files),
+      },
+    }];
+  }
+
+  async fetch(): Promise<FetchedFile[]> {
+    return [{ path: "SKILL.md", bytes: bytesOf("---\nname: Catalog tool\n---\n\n# Catalog tool") }];
   }
 }
 
@@ -304,6 +361,78 @@ describe("syncSources", () => {
     });
   });
 
+  it("reports a previously managed capability that disappeared upstream without deleting it", async () => {
+    const adapter = new MemoryCapabilityAdapter([
+      {
+        namespace: "mem",
+        slug: "temporary-tool",
+        files: { "mcp.json": JSON.stringify({ type: "mcp", transport: "streamable-http", url: "https://example.com/mcp" }) },
+      },
+    ]);
+
+    await run([memorySource()], { apply: true, contentAdapters: [adapter] });
+    adapter.removeCapability("temporary-tool");
+
+    const report = await run([memorySource()], { contentAdapters: [adapter] });
+
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      capabilityId: "mem-temporary-tool",
+      sourceId: "memory",
+      status: "removed-upstream",
+      applied: false,
+    }));
+    await expect(
+      readFile(join(root, "catalog/capabilities/mem/temporary-tool/upstream/mcp.json"), "utf-8"),
+    ).resolves.toContain("streamable-http");
+  });
+
+  it("reports an upstream rename and points to the replacement capability", async () => {
+    const adapter = new MemoryCapabilityAdapter([
+      {
+        namespace: "mem",
+        slug: "old-name",
+        files: { "SKILL.md": "---\nname: Old name\n---\n\n# Old name" },
+      },
+    ]);
+
+    await run([memorySource()], { apply: true, contentAdapters: [adapter] });
+    adapter.renameCapability("old-name", "new-name");
+
+    const report = await run([memorySource()], { contentAdapters: [adapter] });
+
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      capabilityId: "mem-old-name",
+      sourceId: "memory",
+      status: "renamed-upstream",
+      replacementCapabilityId: "mem-new-name",
+      applied: false,
+    }));
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      capabilityId: "mem-new-name",
+      status: "new",
+    }));
+  });
+
+  it("reports a namespace migration as a rename instead of a silent removal", async () => {
+    const adapter = new MemoryCapabilityAdapter([
+      {
+        namespace: "mem",
+        slug: "shared-tool",
+        originPath: "shared-tool",
+        files: { "SKILL.md": "---\nname: Shared tool\n---\n\n# Shared tool" },
+      },
+    ]);
+
+    await run([memorySource({ namespace: "old" })], { apply: true, contentAdapters: [adapter] });
+    const report = await run([memorySource({ namespace: "new" })], { contentAdapters: [adapter] });
+
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      capabilityId: "old-shared-tool",
+      status: "renamed-upstream",
+      replacementCapabilityId: "new-shared-tool",
+    }));
+  });
+
   it("reports a first import as new and writes nothing without --apply", async () => {
     installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
 
@@ -396,7 +525,7 @@ describe("syncSources", () => {
     expect(report.entries[0]).toMatchObject({ status: "update-available", applied: true });
   });
 
-  it("removes upstream files that disappeared, but keeps local overrides and routing metadata", async () => {
+  it("removes upstream files that disappeared, but keeps local overrides, routing and review metadata", async () => {
     const github = installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
     await run([githubSource()], { apply: true });
 
@@ -404,6 +533,14 @@ describe("syncSources", () => {
     await writeFile(overridePath, "# MCPIMP notes\n\nLocal guidance.\n", "utf-8");
     const routingPath = join(root, "catalog/capabilities/ui/improve-ui/ROUTING.json");
     await writeFile(routingPath, JSON.stringify({ schemaVersion: 1, role: "specialist" }), "utf-8");
+    const reviewPath = join(root, "catalog/capabilities/ui/improve-ui/REVIEW.json");
+    await writeFile(reviewPath, JSON.stringify({
+      schemaVersion: 1,
+      status: "reviewed",
+      reviewedContentHash: `sha256:${"a".repeat(64)}`,
+      reviewedAt: "2026-08-30T00:00:00.000Z",
+      reviewedBy: "test-reviewer",
+    }), "utf-8");
 
     github.remove("skills/improve-ui/references/plan.md", NEXT_COMMIT);
     await run([githubSource()], { apply: true, targets: ["ui-improve-ui"] });
@@ -413,6 +550,133 @@ describe("syncSources", () => {
     ).rejects.toThrow();
     expect(await readFile(overridePath, "utf-8")).toContain("Local guidance");
     expect(await readFile(routingPath, "utf-8")).toContain('"role":"specialist"');
+    expect(await readFile(reviewPath, "utf-8")).toContain('"reviewedBy":"test-reviewer"');
+  });
+
+  it("reports identical and divergent override collisions without changing either layer", async () => {
+    const github = installFakeGitHub([{ repository: "acme/ui-skills", commit: COMMIT, files: { ...FILES } }]);
+    await run([githubSource()], { apply: true });
+
+    const override = join(root, "catalog/capabilities/ui/improve-ui/overrides/references/plan.md");
+    await mkdir(join(root, "catalog/capabilities/ui/improve-ui/overrides/references"), { recursive: true });
+    await writeFile(override, "# Plan\n\nOriginal plan.", "utf-8");
+
+    const identical = await run([githubSource()]);
+    expect(identical.entries[0].overrideConflicts).toEqual([
+      { path: "references/plan.md", status: "identical" },
+    ]);
+
+    await writeFile(override, "# Plan\n\nLocal policy.", "utf-8");
+    const divergent = await run([githubSource()]);
+    expect(divergent.entries[0].overrideConflicts).toEqual([
+      { path: "references/plan.md", status: "diverged" },
+    ]);
+
+    expect(await readFile(override, "utf-8")).toContain("Local policy");
+    expect(
+      await readFile(join(root, "catalog/capabilities/ui/improve-ui/upstream/references/plan.md"), "utf-8"),
+    ).toContain("Original plan");
+    expect(github.requests.filter((url) => url.includes("raw.githubusercontent.com")).length).toBeGreaterThan(0);
+  });
+
+  it("excludes catalogue repositories already covered by a declared source", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: URL | string) => {
+        const url = String(input);
+        if (url === "https://catalog.example/resources") {
+          return new Response('<a href="https://github.com/acme/ui-skills">UI skills</a>');
+        }
+        return new Response("Not Found", { status: 404 });
+      }),
+    );
+
+    const emptyGitHubAdapter: ContentSourceAdapter<any> = {
+      type: "github",
+      async getRevision() {
+        return { kind: "git-commit", value: COMMIT, fetchedAt: new Date().toISOString() };
+      },
+      async discover() {
+        return [];
+      },
+      async fetch() {
+        return [];
+      },
+    };
+
+    const report = await run(
+      [
+        githubSource(),
+        {
+          id: "design-catalog",
+          type: "web-catalog",
+          url: "https://catalog.example/resources",
+          allowedRepositories: [],
+        } as SourceDefinitionBase,
+      ],
+      { contentAdapters: [emptyGitHubAdapter] },
+    );
+
+    expect(report.catalogCandidates).toEqual([]);
+    expect(report.duplicateSources).toEqual([
+      { sourceId: "design-catalog", repository: "acme/ui-skills", coveredBy: "acme" },
+    ]);
+  });
+
+  it("reports capabilities whose delegated repository disappeared from a web catalogue", async () => {
+    let catalogHtml = '<a href="https://github.com/acme/catalog-tool">Catalog tool</a>';
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(catalogHtml)));
+    const source: SourceDefinitionBase = {
+      id: "design-catalog",
+      type: "web-catalog",
+      url: "https://catalog.example/resources",
+      namespace: "catalog",
+      allowedRepositories: ["acme/catalog-tool"],
+    } as SourceDefinitionBase;
+    const adapter = new CatalogGitHubAdapter();
+
+    await run([source], { apply: true, contentAdapters: [adapter] });
+    catalogHtml = "<p>No repositories currently published.</p>";
+    const report = await run([source], { contentAdapters: [adapter] });
+
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      capabilityId: "catalog-tool",
+      sourceId: "design-catalog:acme/catalog-tool",
+      status: "removed-upstream",
+      reason: expect.stringContaining("no longer published by catalogue design-catalog"),
+    }));
+    await expect(
+      readFile(join(root, "catalog/capabilities/catalog/tool/upstream/SKILL.md"), "utf-8"),
+    ).resolves.toContain("Catalog tool");
+  });
+
+  it("reports an existing delegated source removed from allowedRepositories", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response('<a href="https://github.com/acme/catalog-tool">Catalog tool</a>')),
+    );
+    const allowed: SourceDefinitionBase = {
+      id: "design-catalog",
+      type: "web-catalog",
+      url: "https://catalog.example/resources",
+      namespace: "catalog",
+      allowedRepositories: ["acme/catalog-tool"],
+    } as SourceDefinitionBase;
+    const blocked = { ...allowed, allowedRepositories: [] } as SourceDefinitionBase;
+    const adapter = new CatalogGitHubAdapter();
+
+    await run([allowed], { apply: true, contentAdapters: [adapter] });
+    const report = await run([blocked], { contentAdapters: [adapter] });
+
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      capabilityId: "catalog-tool",
+      sourceId: "design-catalog:acme/catalog-tool",
+      status: "unavailable",
+      reason: expect.stringContaining("no longer allowed by catalogue design-catalog"),
+    }));
+    expect(report.errors).toContainEqual(expect.objectContaining({
+      sourceId: "design-catalog:acme/catalog-tool",
+    }));
   });
 
   it("reports an unavailable source without aborting the run", async () => {

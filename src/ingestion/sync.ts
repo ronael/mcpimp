@@ -21,7 +21,18 @@ import {
 } from "./types";
 import { WebCatalogSourceAdapter } from "./web-catalog";
 
-export type SyncStatus = "new" | "up-to-date" | "update-available" | "unavailable";
+export type SyncStatus =
+  | "new"
+  | "up-to-date"
+  | "update-available"
+  | "removed-upstream"
+  | "renamed-upstream"
+  | "unavailable";
+
+export interface OverrideConflict {
+  path: string;
+  status: "identical" | "diverged";
+}
 
 export interface SyncFileRecord {
   path: string;
@@ -49,7 +60,9 @@ export interface SyncEntry {
   policy: UpdatePolicy;
   revision?: string;
   previousRevision?: string;
+  replacementCapabilityId?: string;
   changes?: { added: string[]; removed: string[]; modified: string[] };
+  overrideConflicts?: OverrideConflict[];
   reason?: string;
 }
 
@@ -57,6 +70,8 @@ export interface SyncReport {
   entries: SyncEntry[];
   /** Repositories a catalogue exposed but that are not allowed for import. */
   catalogCandidates: { sourceId: string; repository: string; url: string }[];
+  /** Catalogue repositories already owned by another declared source. */
+  duplicateSources: { sourceId: string; repository: string; coveredBy: string }[];
   errors: { sourceId: string; message: string }[];
 }
 
@@ -103,6 +118,78 @@ async function readManifest(root: string, namespace: string, slug: string): Prom
   } catch {
     throw new Error(`Invalid ${SOURCE_MANIFEST} for ${namespace}/${slug}`);
   }
+}
+
+async function scanManagedCapabilities(root: string): Promise<SourceManifest[]> {
+  const base = capabilitiesRoot(root);
+  const manifests: SourceManifest[] = [];
+  const namespaces = await readdir(base, { withFileTypes: true }).catch(() => []);
+
+  for (const namespaceEntry of namespaces) {
+    if (!namespaceEntry.isDirectory() || IGNORED_NAMES.has(namespaceEntry.name) || namespaceEntry.name.startsWith(".")) {
+      continue;
+    }
+    const namespace = assertSafeSegment(namespaceEntry.name, "namespace");
+    const slugs = await readdir(join(base, namespace), { withFileTypes: true }).catch(() => []);
+
+    for (const slugEntry of slugs) {
+      if (!slugEntry.isDirectory() || IGNORED_NAMES.has(slugEntry.name) || slugEntry.name.startsWith(".")) continue;
+      const slug = assertSafeSegment(slugEntry.name, "slug");
+      const manifest = await readManifest(root, namespace, slug).catch(() => undefined);
+      if (!manifest) continue;
+      try {
+        assertManifestIdentity(manifest, namespace, slug);
+      } catch {
+        // Discovery for the same path will surface the precise ownership error.
+        // A malformed manifest must not abort reporting for every other capability.
+        continue;
+      }
+      manifests.push(manifest);
+    }
+  }
+
+  return manifests.sort((a, b) => a.capability.localeCompare(b.capability));
+}
+
+function originIdentity(origin: Pick<CapabilityOrigin, "type" | "repository" | "path" | "url">): string | undefined {
+  if (!origin.path) return undefined;
+  return [origin.type, origin.repository || origin.url || "", origin.path].join(":");
+}
+
+async function overrideConflicts(
+  root: string,
+  namespace: string,
+  slug: string,
+  manifest: SourceManifest | undefined,
+): Promise<OverrideConflict[] | undefined> {
+  if (!manifest) return undefined;
+  const overrideRoot = join(capabilityRootFor(root, namespace, slug), OVERRIDES_DIR);
+  const upstreamByPath = new Map((manifest.files || []).map((file) => [file.path, file]));
+  const conflicts: OverrideConflict[] = [];
+
+  async function visit(directory: string, prefix = ""): Promise<void> {
+    const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (IGNORED_NAMES.has(entry.name) || entry.name.startsWith(".")) continue;
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        await visit(join(directory, entry.name), relativePath);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+
+      const upstream = upstreamByPath.get(relativePath);
+      if (!upstream) continue;
+      const bytes = await readFile(join(directory, entry.name));
+      conflicts.push({
+        path: relativePath,
+        status: upstream.sha256 && upstream.sha256 === sha256(bytes) ? "identical" : "diverged",
+      });
+    }
+  }
+
+  await visit(overrideRoot);
+  return conflicts.length > 0 ? conflicts : undefined;
 }
 
 /** A directory is a capability candidate when it carries a supported component. */
@@ -369,8 +456,27 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
   const adaptersByType = new Map(contentAdapters.map((adapter) => [adapter.type, adapter]));
   const catalog = new WebCatalogSourceAdapter();
 
-  const report: SyncReport = { entries: [], catalogCandidates: [], errors: [] };
+  const report: SyncReport = { entries: [], catalogCandidates: [], duplicateSources: [], errors: [] };
   const runs: SourceRun[] = [];
+  const managed = await scanManagedCapabilities(root);
+  const managedBySource = new Map<string, SourceManifest[]>();
+  const managedByCatalog = new Map<string, SourceManifest[]>();
+  for (const manifest of managed) {
+    const manifests = managedBySource.get(manifest.sourceId) || [];
+    manifests.push(manifest);
+    managedBySource.set(manifest.sourceId, manifests);
+    const catalogId = manifest.discoverySource?.name;
+    if (catalogId) {
+      const catalogManifests = managedByCatalog.get(catalogId) || [];
+      catalogManifests.push(manifest);
+      managedByCatalog.set(catalogId, catalogManifests);
+    }
+  }
+  const claimedRepositories = new Map(
+    sources
+      .filter((source): source is Extract<SourceDefinition, { type: "github" }> => source.type === "github")
+      .map((source) => [source.repository.toLowerCase(), source.id]),
+  );
 
   // A target is either a source id or a capability id. Only a source id can narrow
   // the run up front; a capability id is resolved after discovery.
@@ -384,17 +490,52 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
     }
 
     try {
-      for (const delegated of await catalog.discoverSources(source as Extract<SourceDefinition, { type: "web-catalog" }>)) {
+      const delegatedSources = await catalog.discoverSources(source as Extract<SourceDefinition, { type: "web-catalog" }>);
+      const delegatedState = new Map<string, { allowed: boolean; coveredBy?: string }>();
+
+      for (const delegated of delegatedSources) {
+        const repository = (delegated.definition as { repository?: string }).repository || delegated.definition.id;
+        const coveredBy = claimedRepositories.get(repository.toLowerCase());
+        delegatedState.set(delegated.definition.id, { allowed: delegated.allowed, coveredBy });
+        if (coveredBy) {
+          report.duplicateSources.push({ sourceId: source.id, repository, coveredBy });
+          continue;
+        }
+
         if (!delegated.allowed) {
           report.catalogCandidates.push({
             sourceId: source.id,
-            repository: (delegated.definition as { repository?: string }).repository || delegated.definition.id,
+            repository,
             url: delegated.discoverySource.url,
           });
           continue;
         }
 
+        claimedRepositories.set(repository.toLowerCase(), delegated.definition.id);
         runs.push({ definition: delegated.definition, discoverySource: delegated.discoverySource });
+      }
+
+      for (const manifest of managedByCatalog.get(source.id) || []) {
+        const state = delegatedState.get(manifest.sourceId);
+        if (state?.allowed && !state.coveredBy) continue;
+
+        const reason = !state
+          ? `delegated repository is no longer published by catalogue ${source.id}; existing local content was kept`
+          : state.coveredBy
+            ? `delegated repository is now covered by declared source ${state.coveredBy}; existing local content was kept`
+            : `delegated repository is no longer allowed by catalogue ${source.id}; existing local content was kept`;
+        const status: SyncStatus = !state ? "removed-upstream" : "unavailable";
+        report.entries.push({
+          capabilityId: manifest.capability,
+          sourceId: manifest.sourceId,
+          status,
+          applied: false,
+          policy: manifest.update || updatePolicyOf(source),
+          previousRevision: manifest.commit || manifest.revision?.value,
+          reason,
+          overrideConflicts: await overrideConflicts(root, manifest.namespace, manifest.slug, manifest),
+        });
+        if (status === "unavailable") report.errors.push({ sourceId: manifest.sourceId, message: reason });
       }
     } catch (error) {
       report.errors.push({
@@ -429,6 +570,48 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
       continue;
     }
 
+    const existing = managedBySource.get(source.id) || [];
+    const discoveredIds = new Set(capabilities.map((capability) => capability.capabilityId));
+    const replacements = new Map(
+      capabilities
+        .map((capability) => {
+          const identity = originIdentity(capability.origin);
+          return identity ? [identity, capability.capabilityId] as const : undefined;
+        })
+        .filter((entry): entry is readonly [string, string] => entry !== undefined),
+    );
+    const contentHashCandidates = new Map<string, string[]>();
+    for (const capability of capabilities) {
+      const candidates = contentHashCandidates.get(capability.contentHash) || [];
+      candidates.push(capability.capabilityId);
+      contentHashCandidates.set(capability.contentHash, candidates);
+    }
+
+    for (const previous of existing) {
+      if (discoveredIds.has(previous.capability)) continue;
+      const replacementByOrigin = originIdentity(previous)
+        ? replacements.get(originIdentity(previous)!)
+        : undefined;
+      const replacementByHash = previous.contentHash
+        ? contentHashCandidates.get(previous.contentHash)
+        : undefined;
+      const replacementCapabilityId = replacementByOrigin
+        || (replacementByHash?.length === 1 ? replacementByHash[0] : undefined);
+      report.entries.push({
+        capabilityId: previous.capability,
+        sourceId: source.id,
+        status: replacementCapabilityId ? "renamed-upstream" : "removed-upstream",
+        applied: false,
+        policy,
+        previousRevision: previous.commit || previous.revision?.value,
+        replacementCapabilityId,
+        reason: replacementCapabilityId
+          ? `upstream identity moved to ${replacementCapabilityId}; existing local content was kept`
+          : "capability is no longer discovered upstream; existing local content was kept",
+        overrideConflicts: await overrideConflicts(root, previous.namespace, previous.slug, previous),
+      });
+    }
+
     for (const capability of capabilities) {
       try {
         assertSafeSegment(capability.namespace, "namespace");
@@ -453,6 +636,7 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
           revision: capability.origin.commit || capability.origin.revision?.value,
           previousRevision: previous?.commit || previous?.revision?.value,
           changes: status === "update-available" ? diffFiles(previous?.files, capability.files) : undefined,
+          overrideConflicts: await overrideConflicts(root, capability.namespace, capability.slug, previous),
         };
 
         if (status !== "up-to-date" && apply && mayWrite(status, policy, targeted)) {
@@ -473,6 +657,12 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
               const manifest = buildManifest(capability, policy, run.discoverySource, files);
               await writeCapability(root, capability, files, manifest);
               entry.applied = true;
+              entry.overrideConflicts = await overrideConflicts(
+                root,
+                capability.namespace,
+                capability.slug,
+                manifest,
+              );
             } catch (error) {
               entry.status = "unavailable";
               entry.reason = error instanceof Error ? error.message : "unknown fetch error";

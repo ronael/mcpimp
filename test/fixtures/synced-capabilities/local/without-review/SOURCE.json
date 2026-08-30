@@ -1,0 +1,13 @@
+{
+  "type": "github",
+  "sourceId": "demo-source",
+  "repository": "acme/demo-skills",
+  "path": "skills/without-review",
+  "revision": { "kind": "git-commit", "value": "2222222222222222222222222222222222222222" },
+  "contentHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "capability": "without-review",
+  "namespace": "local",
+  "slug": "without-review",
+  "update": "review",
+  "lastSyncedAt": "2026-08-01T00:00:00.000Z"
+}

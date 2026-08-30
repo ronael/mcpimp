@@ -93,6 +93,12 @@ select.sel:focus{outline:0;border-color:rgba(201,255,61,.5)}
 select.sel option{background:var(--panel);color:var(--paper)}
 .result-count{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
 .result-count b{color:var(--acid);font-weight:600}
+.review-summary{margin:-2px 0 14px;color:var(--muted);font-size:13px;text-wrap:pretty}
+.review-empty{padding:24px!important;text-align:center!important;color:var(--muted)!important}
+.review-table td{vertical-align:middle}
+.review-copy{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;color:var(--cyan);font-family:var(--mono);font-size:10.5px;white-space:nowrap;transition:border-color .3s var(--ease),color .3s var(--ease)}
+.review-copy:hover{border-color:rgba(99,230,255,.45);color:var(--paper)}
+.review-copy i{font-size:14px}
 .tbl-wrap{border:1px solid var(--line-soft);border-radius:8px;overflow-x:auto;background:var(--lift)}
 .tbl-wrap.flush{border:0;background:transparent}
 table.tbl{width:100%;border-collapse:collapse;font-size:13px}

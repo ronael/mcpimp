@@ -115,6 +115,11 @@ une principale et au plus deux supports, applique les cartes locales
 Son corpus métier versionné est exécuté en CI ; il complète le benchmark de
 recherche sans le remplacer.
 
+Le corpus couvre maintenant 18 tâches, y compris l'absence de `taskMode`, et
+un pilote réel A/B/C compare skill natif, MCP seul et MCP avec adaptateur. Les
+cartes métier exactes priment sur le plafond lexical sans mêler confiance et
+ranking.
+
 - Constituer un corpus versionné de tâches et requêtes réelles : recherche
   exacte, formulation vague, intention de ressource, requête multilingue, faute
   courante et recherche limitée à une capability.
@@ -166,17 +171,16 @@ inattendu peut être expliqué sans lire manuellement tout le catalogue.
   Desktop, Cursor et Kimi.
 - Vérifier les séquences `initialize`, notifications, tools et resources sur
   HTTP streamable et SSE.
-- Examiner les méthodes sondées par les clients, par exemple
-  `resources/templates/list` ou `server/discover`, et répondre proprement sans
-  inventer une extension non standard.
+- Maintenir les méthodes sondées par les clients et le bootstrap standard
+  `server/discover` de MCP 2026-07-28 sans casser les clients 2025.
 - Ajouter des tests de contrat pour les notifications sans réponse, les erreurs
   JSON-RPC, les annulations et les méthodes optionnelles supportées.
 - Exécuter une sonde de processus local réelle couvrant `/health`, `initialize`,
   `notifications/initialized` et `tools/list`, indépendamment du catalogue mis
   en cache par le client MCP.
-- Conserver le bootstrap agent dans les `instructions` standard de
-  `initialize` pour le protocole 2025 ; traiter toute négociation de bootstrap
-  MCP 2026 comme une évolution séparée après validation client réelle.
+- Conserver le bootstrap agent dans les `instructions` de `initialize` pour
+  2025 et de `server/discover` pour 2026 ; poursuivre la validation avec des
+  clients produit qui activent réellement le protocole 2026.
 
 Critère de sortie : aucun client supporté ne se déconnecte ou ne boucle à cause
 d’une réponse MCPIMP invalide ; les écarts connus sont documentés.
@@ -195,6 +199,13 @@ Critère de sortie : le journal reste borné, filtrable et fidèle à son niveau
 persistance sur chaque runtime.
 
 ### P1.5 — exactitude de la synchronisation
+
+Livré : le rapport compare désormais chaque découverte avec les manifests déjà
+gérés. Les suppressions et renommages restent visibles sans suppression locale,
+les dépôts déjà déclarés sont exclus des candidats de catalogue, et les
+collisions `upstream/overrides` indiquent si les contenus sont identiques ou
+divergents. Les régressions couvrent suppressions, renommages et changements de
+namespace.
 
 - Signaler une capability disparue de sa source au lieu de la faire disparaître
   silencieusement du rapport.
@@ -237,6 +248,12 @@ fichiers et logs.
   observable.
 
 ### P2.2 — workflow de mise à jour
+
+Premier socle livré : une file de revue compacte expose les imports
+`unreviewed` ou `review-required`, et `pnpm capabilities:review` écrit une
+attestation atomique liée au `contentHash` courant. Le dashboard reste en
+lecture seule ; l'application et l'attestation restent des actions CLI locales
+explicites.
 
 - Fournir un aperçu lisible des ajouts, mises à jour, suppressions et conflits.
 - Conserver l’application des changements comme action explicite et ciblée.
@@ -431,8 +448,9 @@ perte de données.
   gagnent plus par répétition seule ; le corpus atteint 91,7 % de `Success@1`,
   100 % de `Recall@3` et 100 % de précision du fichier recommandé.
 - Proxy MCP upstream et transports HTTP streamable/SSE.
-- Sonde MCP `resources/templates/list` prise en charge avec une liste vide ; les
-  sondes non standard comme `server/discover` restent explicitement refusées.
+- Sonde MCP `resources/templates/list` prise en charge avec une liste vide ;
+  `server/discover`, les headers de routage et les résultats complets de MCP
+  2026-07-28 sont couverts par contrat et par `doctor` sur processus réel.
 - Codes d'erreur JSON-RPC différenciés pour les méthodes inconnues, paramètres
   invalides, ressources absentes et erreurs internes.
 - Heartbeat MCP `ping` pris en charge avec une réponse vide immédiate.
@@ -456,13 +474,17 @@ perte de données.
   versionné ; deux headings routeurs exposent uniquement des fichiers internes
   validés par le registry. Un pilote Luna de routage adaptatif réduit ensuite le
   contenu chargé de 90,6 % face au chargement direct des fichiers liés.
+- Revue locale liée au `contentHash` avec états `local`, `unreviewed`,
+  `reviewed` et `review-required`, conservée par sync et exposée sans influencer
+  le ranking. Le pilote A/B/C charge le routeur dans 3/3 cas et a produit deux
+  régressions métier supplémentaires sans `taskMode`.
 - Dashboard bilingue, connexion des agents et documentation des sources.
 - Journal d’activité local expurgé avec API, persistance NDJSON et drawer de
   détail.
 - Cycle de vie local fiabilisé : `EADDRINUSE` indique le PID et les actions
   possibles sans stack brute, `SIGINT`/`SIGTERM` ferment le serveur et flushent
   le journal. `pnpm run doctor` distingue endpoint configuré, santé joignable,
-  initialisation MCP et outils listés, retourne un code non nul sur panne et
+  initialisation MCP 2025, découverte MCP 2026 et outils listés, retourne un code non nul sur panne et
   expose un diagnostic JSON sans secret ; `--preflight` conserve les contrôles
   avant démarrage. Un test lance le vrai processus local et vérifie toute la
   séquence MCP sur socket.

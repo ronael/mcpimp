@@ -401,6 +401,8 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
           <tbody>
             <tr><td class="f c-ok">✓</td><td class="f" style="color:var(--paper)">up-to-date</td><td>Rien n'a bougé. Aucun réseau de contenu, aucune écriture.</td></tr>
             <tr><td class="f c-warn">↑</td><td class="f" style="color:var(--paper)">update-available</td><td>Nouvelle révision. Les fichiers ajoutés / modifiés / supprimés sont listés.</td></tr>
+            <tr><td class="f c-warn">−</td><td class="f" style="color:var(--paper)">removed-upstream</td><td>La capability n'est plus découverte en amont. La copie locale est conservée pour une décision explicite.</td></tr>
+            <tr><td class="f c-warn">→</td><td class="f" style="color:var(--paper)">renamed-upstream</td><td>Le même chemin amont produit maintenant un autre id de capability. Les deux ids sont signalés.</td></tr>
             <tr><td class="f c-cyan">+</td><td class="f" style="color:var(--paper)">new</td><td>Jamais importée. S'applique dès <code>--apply</code>.</td></tr>
             <tr><td class="f c-bad">✗</td><td class="f" style="color:var(--paper)">unavailable</td><td>Injoignable, invalide, ou refusée par un garde-fou. N'interrompt pas les autres sources.</td></tr>
           </tbody>
@@ -414,6 +416,8 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
         <div class="row"><span class="mono">pnpm sources:sync --apply &lt;capacité&gt;</span><p>Accepte une mise à jour retenue par <code>review</code>.</p></div>
         <div class="row"><span class="mono">pnpm sources:sync --apply &lt;source&gt;</span><p>Idem pour toutes les capacités de cette source. <strong>Cibler la source limite aussi le parcours réseau</strong> ; cibler une capacité ne le peut pas.</p></div>
         <div class="row"><span class="mono">pnpm sources:sync --json</span><p>Sortie machine, pour scripter ou brancher sur une CI.</p></div>
+        <div class="row"><span class="mono">pnpm capabilities:review</span><p>Liste les capabilities importées dont le contenu exact demande encore une revue.</p></div>
+        <div class="row"><span class="mono">pnpm capabilities:review -- &lt;capability&gt; --reviewer &lt;nom&gt;</span><p>Atteste le <code>contentHash</code> actuellement installé. Cette action reste locale et explicite.</p></div>
       </div>
 
       <div class="callout c-violet">

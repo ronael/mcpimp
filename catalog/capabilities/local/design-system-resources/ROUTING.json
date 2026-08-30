@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "role": "resource",
+  "taskModes": ["create", "audit", "research"],
+  "useWhen": ["design system checklist", "design system tokens", "fluid spacing", "production design systems", "interaction detail references"],
+  "avoidWhen": ["component gallery", "motion inspiration", "implement one component"],
+  "conflictsWith": [],
+  "complements": []
+}

@@ -91,6 +91,7 @@ describe("capability routing", () => {
     expect(result.primary).not.toBeNull();
     if (!result.primary) throw new Error("Expected a primary capability");
     expect(result.primary.id).toBe("specialist");
+    expect(result.primary.reviewStatus).toBe("local");
     expect(result.primary.reasonCodes).toContain("routing-use-when");
     expect(result.supporting.map((candidate) => candidate.id)).toContain("accessibility");
     expect(result.supporting.map((candidate) => candidate.id)).not.toContain("generalist");
@@ -135,5 +136,30 @@ describe("capability routing", () => {
 
     expect(result.primary?.id).toBe("component-resources");
     expect(result.supporting).toEqual([]);
+  });
+
+  it("lets an exact business routing intent outrank a lexical frequency outlier without taskMode", () => {
+    const resources = capability("component-resources", "Curated references", {
+      schemaVersion: 1,
+      role: "resource",
+      taskModes: ["research"],
+      useWhen: ["component galleries", "shadcn examples"],
+      avoidWhen: [],
+      conflictsWith: [],
+      complements: [],
+    });
+    const repeatedText = "component galleries shadcn examples ".repeat(100);
+    const lexicalOutlier = capability("generic-ui", "Broad UI advice", undefined, repeatedText);
+    const registry = new RoutingRegistry(
+      [resources, lexicalOutlier],
+      [hit("generic-ui", 100), hit("component-resources", 1)],
+    );
+
+    const result = resolveCapabilities(registry, {
+      task: "Find concrete component galleries and shadcn examples",
+    });
+
+    expect(result.primary?.id).toBe("component-resources");
+    expect(result.primary?.reasonCodes).toContain("routing-use-when");
   });
 });

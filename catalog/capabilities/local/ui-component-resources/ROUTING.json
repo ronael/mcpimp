@@ -5,12 +5,15 @@
     "research"
   ],
   "useWhen": [
+    "component galleries",
+    "shadcn examples",
+    "UI references",
     "find component galleries and UI references",
     "research shadcn components and interface examples",
     "compare reusable component resources"
   ],
   "avoidWhen": [
-    "implement a complete product interface",
+    "build and implement a complete product interface",
     "audit application accessibility",
     "backend or domain architecture"
   ],
