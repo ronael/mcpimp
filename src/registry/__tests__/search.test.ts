@@ -155,6 +155,32 @@ const RESOURCE_INTENT_CAPABILITIES: Capability[] = [
   ),
 ];
 
+const ACTION_INTENT_CAPABILITIES: Capability[] = [
+  capability(
+    "accessibility-audit-skill",
+    "external",
+    "accessibility-audit",
+    "accessibility-audit",
+    "Audit and improve an interface for accessibility.",
+    [file("accessibility-audit-skill", "SKILL.md", "Audit interface accessibility and produce an implementation plan.", "skill")],
+  ),
+  capability(
+    "design-audit-resources",
+    "local",
+    "design-audit-resources",
+    "design-audit-resources",
+    "References and resource links for interface design audits and accessibility checklists.",
+    [
+      file(
+        "design-audit-resources",
+        "references/audit-links.md",
+        "Interface accessibility audit references, checklists and external resources.",
+        "reference",
+      ),
+    ],
+  ),
+];
+
 function ids(query: string): string[] {
   return searchCapabilities(CAPABILITIES, query).map((hit) => `${hit.capabilityId}/${hit.path}`);
 }
@@ -194,6 +220,12 @@ describe("searchCapabilities", () => {
     expect(results).toContain("landing-page/shared/design-principles.md");
   });
 
+  it("bridges a French audit verb to an English capability", () => {
+    const [result] = searchCapabilities(ACTION_INTENT_CAPABILITIES, "auditer");
+
+    expect(result.capabilityId).toBe("accessibility-audit-skill");
+  });
+
   it("keeps generated licence notices out of the results", () => {
     expect(ids("accessibility contrast")).not.toContain("ui-skills-fixing-accessibility/LICENSE.md");
   });
@@ -226,13 +258,96 @@ describe("searchCapabilities", () => {
       ]),
     ];
 
-    expect(searchCapabilities(noisy, "contrast")).toHaveLength(3);
+    expect(searchCapabilities(noisy, "contrast", { maxPerCapability: 3 })).toHaveLength(3);
+  });
+
+  it("returns one best file per capability for global discovery", () => {
+    const results = searchCapabilities(CAPABILITIES, "motion accessibility narration");
+    const capabilityIds = results.map((result) => result.capabilityId);
+
+    expect(new Set(capabilityIds).size).toBe(capabilityIds.length);
+  });
+
+  it("keeps several internal files available in a capability-scoped search", () => {
+    const scoped = capability("scoped", "local", "scoped", "scoped", "", [
+      ...Array.from({ length: 5 }, (_, index) =>
+        file("scoped", `references/note-${index}.md`, "contrast contrast", "reference"),
+      ),
+    ]);
+
+    expect(searchCapabilities([scoped], "contrast", { capabilityId: "scoped" })).toHaveLength(3);
+  });
+
+  it("keeps the default global shortlist compact", () => {
+    const many = Array.from({ length: 12 }, (_, index) =>
+      capability(
+        `capability-${index}`,
+        "local",
+        `capability-${index}`,
+        `capability-${index}`,
+        "contrast",
+        [file(`capability-${index}`, "SKILL.md", "contrast", "skill")],
+      ),
+    );
+
+    expect(searchCapabilities(many, "contrast")).toHaveLength(8);
   });
 
   it("returns a snippet containing the matched terms", () => {
     const [top] = searchCapabilities(CAPABILITIES, "keyboard focus");
 
     expect(top.snippet).toContain("keyboard focus");
+  });
+
+  it("keeps diagnostics absent by default", () => {
+    const [top] = searchCapabilities(CAPABILITIES, "accessibility contrast");
+
+    expect(top.diagnostics).toBeUndefined();
+  });
+
+  it("explains score components only in diagnostic mode", () => {
+    const [top] = searchCapabilities(CAPABILITIES, "accessibility contrast", { diagnostic: true });
+
+    expect(top.diagnostics).toMatchObject({
+      coverage: 1,
+      coverageMultiplier: 1,
+      fileWeight: 1.4,
+      resourceIntentWeight: 1,
+      phraseBonus: 1,
+      bodyTermFrequencySaturationK: 1.2,
+    });
+    expect(top.diagnostics?.lexicalScore).toBeGreaterThan(0);
+    expect(top.diagnostics?.terms).toEqual(expect.arrayContaining([
+      expect.objectContaining({ term: "accessibility", source: "literal", queryWeight: 1 }),
+      expect.objectContaining({ term: "contrast", source: "literal", queryWeight: 1 }),
+    ]));
+    expect(top.diagnostics?.fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: "capabilityDescription", weight: 4 }),
+      expect.objectContaining({ field: "body", weight: 1 }),
+    ]));
+  });
+
+  it("reports phrase and resource-intent multipliers", () => {
+    const [phrase] = searchCapabilities(CAPABILITIES, "keyboard focus", { diagnostic: true });
+    const [resource] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "resource transition modal easing",
+      { diagnostic: true },
+    );
+
+    expect(phrase.diagnostics?.phraseBonus).toBe(1.6);
+    expect(resource.diagnostics?.resourceIntentWeight).toBeGreaterThan(1);
+  });
+
+  it("bounds repeated terms in body text", () => {
+    const repeated = capability("repeated", "local", "repeated", "repeated", "", [
+      file("repeated", "notes.md", "contrast ".repeat(100), "reference"),
+    ]);
+    const [result] = searchCapabilities([repeated], "contrast", { diagnostic: true });
+    const term = result.diagnostics?.terms.find(({ term }) => term === "contrast");
+
+    expect(term?.documentWeight).toBeGreaterThan(1);
+    expect(term?.documentWeight).toBeLessThanOrEqual(2.2);
   });
 
   it("skips files that have no indexable text", () => {
@@ -280,6 +395,20 @@ describe("searchCapabilities", () => {
     expect(top.path).toBe("references/component-links.md");
   });
 
+  it("detects French and English plural resource intents after token normalization", () => {
+    const [french] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "je cherche des ressources pour composants UI animés shadcn",
+    );
+    const [english] = searchCapabilities(
+      RESOURCE_INTENT_CAPABILITIES,
+      "resources for animated UI components shadcn",
+    );
+
+    expect(french.capabilityId).toBe("component-resources");
+    expect(english.capabilityId).toBe("component-resources");
+  });
+
   it("ranks motion resources first when a transition query asks for references", () => {
     const [top] = searchCapabilities(
       RESOURCE_INTENT_CAPABILITIES,
@@ -298,5 +427,17 @@ describe("searchCapabilities", () => {
     );
 
     expect(top.capabilityId).toBe("visual-resources");
+  });
+
+  it("prefers an executable skill over reference links for an action request", () => {
+    const results = searchCapabilities(
+      ACTION_INTENT_CAPABILITIES,
+      "auditer interface accessibilite",
+      { diagnostic: true },
+    );
+    const resource = results.find((result) => result.capabilityId === "design-audit-resources");
+
+    expect(results[0]?.capabilityId).toBe("accessibility-audit-skill");
+    expect(resource?.diagnostics?.resourceIntentWeight).toBeLessThan(1);
   });
 });

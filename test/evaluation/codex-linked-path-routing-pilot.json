@@ -1,0 +1,117 @@
+{
+  "date": "2026-08-27",
+  "runner": {
+    "client": "codex-cli 0.149.1",
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "low",
+    "runsPerScenario": 1
+  },
+  "protocol": {
+    "workspace": "empty",
+    "sandbox": "read-only",
+    "allowedTools": ["MCPIMP"],
+    "maxLinkedPathsFollowed": 1,
+    "largeMarkdownThresholdCharacters": 12000
+  },
+  "preflight": {
+    "behavior": "Load the linked path directly after selecting and loading its routing heading.",
+    "summary": {
+      "scenarios": 2,
+      "correctCapabilitySelections": 2,
+      "correctRoutes": 2,
+      "totalMcpResponseCharacters": 74304,
+      "totalLoadedCharacters": 58053,
+      "totalCliTokens": 66276
+    },
+    "scenarios": [
+      {
+        "id": "frontend-architecture-routing",
+        "linkedPath": "references/src-architecture-blueprint.md",
+        "linkedFileCharacters": 53660,
+        "loadedLinkedResponseCharacters": 53711,
+        "totalMcpResponseCharacters": 63700,
+        "cliTokens": 34288
+      },
+      {
+        "id": "component-resources-routing",
+        "linkedPath": "references/component-inspiration-links.md",
+        "linkedFileCharacters": 2297,
+        "loadedLinkedResponseCharacters": 2349,
+        "totalMcpResponseCharacters": 10604,
+        "cliTokens": 31988
+      }
+    ]
+  },
+  "revalidation": {
+    "behavior": "Inspect linked Markdown above the threshold with capability-info, then load one ranked heading; load small linked files directly.",
+    "summary": {
+      "scenarios": 2,
+      "correctCapabilitySelections": 2,
+      "correctRoutes": 2,
+      "unnecessaryLoads": 0,
+      "totalMcpResponseCharacters": 24074,
+      "mcpResponseCharacterReduction": 0.676,
+      "totalLoadedCharacters": 5473,
+      "loadedCharacterReduction": 0.9057,
+      "totalCliTokens": 58186,
+      "cliTokenChange": -0.1221
+    },
+    "scenarios": [
+      {
+        "id": "frontend-architecture-routing-v2",
+        "query": "Je dois restructurer un gros frontend TypeScript avec domaine pur, ports adapters et Zustand. Quelle capability dois-je charger ?",
+        "searchTopCapabilityIds": [
+          "frontend-architecture",
+          "taste-skill",
+          "matt-pocock-codebase-design"
+        ],
+        "selectedCapabilityId": "frontend-architecture",
+        "selectedHeading": "Workflow",
+        "linkedFile": {
+          "path": "references/src-architecture-blueprint.md",
+          "mimeType": "text/markdown",
+          "characters": 53660
+        },
+        "linkedPathInspection": "ranked-outline",
+        "loadedLinkedHeading": "18. Ordre de reconstruction pour une IA",
+        "responses": {
+          "searchCharacters": 6931,
+          "entrypointInfoCharacters": 1785,
+          "entrypointLoadCharacters": 1514,
+          "linkedInfoCharacters": 1869,
+          "linkedLoadCharacters": 1131,
+          "totalCharacters": 13230
+        },
+        "cliTokens": 34516,
+        "passed": true
+      },
+      {
+        "id": "component-resources-routing-v2",
+        "query": "Je cherche des références de composants UI animés et des exemples de cards pour inspirer un agent frontend.",
+        "searchTopCapabilityIds": [
+          "ui-component-resources",
+          "taste-skill",
+          "frontend-architecture"
+        ],
+        "selectedCapabilityId": "ui-component-resources",
+        "selectedHeading": "Workflow",
+        "linkedFile": {
+          "path": "references/component-inspiration-links.md",
+          "mimeType": "text/markdown",
+          "characters": 2297
+        },
+        "linkedPathInspection": "direct-load-under-threshold",
+        "loadedLinkedHeading": null,
+        "responses": {
+          "searchCharacters": 6855,
+          "entrypointInfoCharacters": 1161,
+          "entrypointLoadCharacters": 479,
+          "linkedLoadCharacters": 2349,
+          "totalCharacters": 10844
+        },
+        "cliTokens": 23670,
+        "passed": true
+      }
+    ]
+  }
+}

@@ -22,15 +22,17 @@ import { expandTerm } from "./synonyms";
 import type {
   Capability,
   CapabilityFile,
+  CapabilitySearchField,
   CapabilitySearchOptions,
   CapabilitySearchResult,
 } from "./types";
 
 const EXPANSION_WEIGHT = 0.4;
 const PHRASE_BONUS = 1.6;
-const DEFAULT_LIMIT = 20;
+const DEFAULT_LIMIT = 8;
 const DEFAULT_MAX_PER_CAPABILITY = 3;
 const SNIPPET_MAX_LENGTH = 240;
+const BODY_TERM_FREQUENCY_SATURATION_K = 1.2;
 
 const FIELD_WEIGHTS = {
   capabilityName: 6,
@@ -41,24 +43,6 @@ const FIELD_WEIGHTS = {
   headings: 2.5,
   body: 1,
 } as const;
-
-const RESOURCE_QUERY_TERMS = new Set(["catalogue", "gallery", "gallerie", "inspiration", "lien", "link", "reference", "resource", "ressource"]);
-const RESOURCE_CAPABILITY_TERMS = new Set(["inspiration", "lien", "link", "reference", "resource", "ressource"]);
-
-const RESOURCE_DOMAINS = [
-  {
-    queryTerms: new Set(["ai", "agent", "anime", "animated", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
-    capabilityTerms: new Set(["ai", "agent", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
-  },
-  {
-    queryTerms: new Set(["animation", "badge", "card", "easing", "modal", "motion", "number", "resize", "timing", "transition"]),
-    capabilityTerms: new Set(["animation", "easing", "motion", "timing", "transition"]),
-  },
-  {
-    queryTerms: new Set(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
-    capabilityTerms: new Set(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
-  },
-] as const;
 
 /**
  * Not every file is equally worth surfacing. A `BUNDLE.md` concatenates the whole
@@ -126,6 +110,44 @@ function singularize(token: string): string {
   return token;
 }
 
+function normalizedTermSet(values: string[]): Set<string> {
+  return new Set(values.flatMap((value) => tokenize(value)));
+}
+
+// Normalize intent vocabularies with the same tokenizer as queries and indexed
+// content. Hand-written raw sets silently missed plurals such as `ressources`,
+// which the lightweight stemmer represents as `ressourc`.
+const RESOURCE_QUERY_TERMS = normalizedTermSet([
+  "catalogue", "catalogues", "gallery", "galleries", "galerie", "galeries",
+  "inspiration", "inspirations", "lien", "liens", "link", "links",
+  "reference", "references", "référence", "références", "resource",
+  "resources", "ressource", "ressources",
+]);
+const RESOURCE_CAPABILITY_TERMS = normalizedTermSet([
+  "inspiration", "inspirations", "lien", "liens", "link", "links",
+  "reference", "references", "référence", "références", "resource",
+  "resources", "ressource", "ressources",
+]);
+const ACTION_QUERY_TERMS = normalizedTermSet([
+  "audit", "auditer", "build", "construire", "corriger", "create", "creer",
+  "fix", "implement", "implementer", "improve", "ameliorer", "review", "revoir",
+]);
+
+const RESOURCE_DOMAINS = [
+  {
+    queryTerms: normalizedTermSet(["ai", "agent", "anime", "animated", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
+    capabilityTerms: normalizedTermSet(["ai", "agent", "component", "composant", "gallery", "interface", "shadcn", "ui"]),
+  },
+  {
+    queryTerms: normalizedTermSet(["animation", "badge", "card", "easing", "modal", "motion", "number", "resize", "timing", "transition"]),
+    capabilityTerms: normalizedTermSet(["animation", "easing", "motion", "timing", "transition"]),
+  },
+  {
+    queryTerms: normalizedTermSet(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
+    capabilityTerms: normalizedTermSet(["3d", "brand", "branding", "illustration", "print", "visual", "web"]),
+  },
+] as const;
+
 function normalizeText(value: string): string {
   return value
     .normalize("NFD")
@@ -138,6 +160,8 @@ interface IndexedDocument {
   file: CapabilityFile;
   /** Term -> accumulated field-weighted frequency. */
   weights: Map<string, number>;
+  /** Searchable terms kept by field for optional score explanations. */
+  fieldTerms: Map<CapabilitySearchField, Set<string>>;
   /** Terms found in file-level fields only (path, headings, body). */
   fileTerms: Set<string>;
   normalizedText: string;
@@ -150,34 +174,55 @@ interface IndexedDocument {
 
 interface QueryIntent {
   terms: Set<string>;
+  wantsAction: boolean;
   wantsResource: boolean;
 }
 
-function addField(target: Map<string, number>, value: string, weight: number, collect?: Set<string>): void {
-  for (const token of tokenize(value)) {
-    target.set(token, (target.get(token) || 0) + weight);
+function addField(
+  target: Map<string, number>,
+  fieldTerms: Map<CapabilitySearchField, Set<string>>,
+  field: CapabilitySearchField,
+  value: string,
+  weight: number,
+  collect?: Set<string>,
+): void {
+  const terms = tokenize(value);
+  if (terms.length > 0) fieldTerms.set(field, new Set(terms));
+
+  const frequencies = new Map<string, number>();
+  for (const token of terms) {
+    frequencies.set(token, (frequencies.get(token) || 0) + 1);
     collect?.add(token);
+  }
+
+  for (const [token, frequency] of frequencies) {
+    const weightedFrequency = field === "body"
+      ? ((frequency * (BODY_TERM_FREQUENCY_SATURATION_K + 1))
+        / (frequency + BODY_TERM_FREQUENCY_SATURATION_K)) * weight
+      : frequency * weight;
+    target.set(token, (target.get(token) || 0) + weightedFrequency);
   }
 }
 
 function indexFile(capability: Capability, file: CapabilityFile): IndexedDocument {
   const weights = new Map<string, number>();
+  const fieldTerms = new Map<CapabilitySearchField, Set<string>>();
   const fileTerms = new Set<string>();
 
-  addField(weights, `${capability.id} ${capability.name}`, FIELD_WEIGHTS.capabilityName);
-  addField(weights, `${capability.namespace} ${capability.slug}`, FIELD_WEIGHTS.namespaceSlug);
-  addField(weights, capability.description, FIELD_WEIGHTS.capabilityDescription);
-  addField(weights, (capability.tags || []).join(" "), FIELD_WEIGHTS.tags);
+  addField(weights, fieldTerms, "capabilityName", `${capability.id} ${capability.name}`, FIELD_WEIGHTS.capabilityName);
+  addField(weights, fieldTerms, "namespaceSlug", `${capability.namespace} ${capability.slug}`, FIELD_WEIGHTS.namespaceSlug);
+  addField(weights, fieldTerms, "capabilityDescription", capability.description, FIELD_WEIGHTS.capabilityDescription);
+  addField(weights, fieldTerms, "tags", (capability.tags || []).join(" "), FIELD_WEIGHTS.tags);
 
-  addField(weights, file.path, FIELD_WEIGHTS.path, fileTerms);
+  addField(weights, fieldTerms, "path", file.path, FIELD_WEIGHTS.path, fileTerms);
 
   const text = file.text || "";
   if (file.mimeType === "text/markdown") {
-    addField(weights, extractHeadings(text).join(" "), FIELD_WEIGHTS.headings, fileTerms);
+    addField(weights, fieldTerms, "headings", extractHeadings(text).join(" "), FIELD_WEIGHTS.headings, fileTerms);
   }
-  addField(weights, text, FIELD_WEIGHTS.body, fileTerms);
+  addField(weights, fieldTerms, "body", text, FIELD_WEIGHTS.body, fileTerms);
 
-  return { capability, file, weights, fileTerms, normalizedText: normalizeText(text) };
+  return { capability, file, weights, fieldTerms, fileTerms, normalizedText: normalizeText(text) };
 }
 
 /**
@@ -274,17 +319,24 @@ function detectQueryIntent(queryTerms: QueryTerm[]): QueryIntent {
   const terms = new Set(queryTerms.filter((term) => term.weight === 1).map((term) => term.root));
   return {
     terms,
+    wantsAction: hasAny(terms, ACTION_QUERY_TERMS),
     wantsResource: hasAny(terms, RESOURCE_QUERY_TERMS),
   };
 }
 
 function resourceIntentWeight(document: IndexedDocument, intent: QueryIntent): number {
-  if (!intent.wantsResource) return 1;
-
   const metadataTerms = capabilityMetadataTerms(document.capability);
+  const isResource = hasAny(metadataTerms, RESOURCE_CAPABILITY_TERMS)
+    || (document.file.type === "reference" && !document.capability.components.skill);
+
+  // Action requests should prefer a capability that can perform the work. A
+  // curated link remains discoverable, but must not displace an executable
+  // skill unless the query explicitly asks for a resource or inspiration.
+  if (!intent.wantsResource) return intent.wantsAction && isResource ? 0.55 : 1;
+
   let weight = 1;
 
-  if (hasAny(metadataTerms, RESOURCE_CAPABILITY_TERMS)) weight *= 2;
+  if (isResource) weight *= 2;
   if (document.file.type === "reference") weight *= 1.3;
 
   for (const domain of RESOURCE_DOMAINS) {
@@ -336,7 +388,7 @@ export function searchCapabilities(
   const intent = detectQueryIntent(queryTerms);
 
   const scored = documents
-    .map((document) => {
+    .map((document): CapabilitySearchResult | undefined => {
       let score = 0;
       const matched = new Set<string>();
       const matchedRoots = new Set<string>();
@@ -361,11 +413,16 @@ export function searchCapabilities(
       if (!matchedInFile && document.file !== document.representative) return undefined;
 
       const coverage = roots.size === 0 ? 1 : matchedRoots.size / roots.size;
-      score *= coverage * coverage;
-      score *= fileRelevanceWeight(document.file);
-      score *= resourceIntentWeight(document, intent);
+      const lexicalScore = score;
+      const coverageMultiplier = coverage * coverage;
+      const fileWeight = fileRelevanceWeight(document.file);
+      const intentWeight = resourceIntentWeight(document, intent);
+      const phraseBonus = document.normalizedText.includes(phrase) ? PHRASE_BONUS : 1;
 
-      if (document.normalizedText.includes(phrase)) score *= PHRASE_BONUS;
+      score *= coverageMultiplier;
+      score *= fileWeight;
+      score *= intentWeight;
+      score *= phraseBonus;
 
       return {
         capabilityId: document.capability.id,
@@ -377,12 +434,48 @@ export function searchCapabilities(
         snippet: buildSnippet(document, matched),
         score: Number(score.toFixed(4)),
         matchedTerms: [...matchedRoots].sort(),
+        ...(options.diagnostic
+          ? {
+              diagnostics: {
+                lexicalScore: Number(lexicalScore.toFixed(4)),
+                coverage: Number(coverage.toFixed(4)),
+                coverageMultiplier: Number(coverageMultiplier.toFixed(4)),
+                fileWeight: Number(fileWeight.toFixed(4)),
+                resourceIntentWeight: Number(intentWeight.toFixed(4)),
+                phraseBonus,
+                bodyTermFrequencySaturationK: BODY_TERM_FREQUENCY_SATURATION_K,
+                terms: queryTerms
+                  .filter(({ term }) => document.weights.has(term))
+                  .map(({ term, root, weight }) => ({
+                    term,
+                    root,
+                    source: weight === 1 ? "literal" as const : "synonym" as const,
+                    queryWeight: weight,
+                    documentWeight: Number((document.weights.get(term) || 0).toFixed(4)),
+                    idf: Number((idf.get(term) || 0).toFixed(4)),
+                  })),
+                fields: [...document.fieldTerms.entries()]
+                  .map(([field, terms]) => ({
+                    field,
+                    weight: Number(FIELD_WEIGHTS[field]),
+                    matchedTerms: queryTerms
+                      .filter(({ term }) => terms.has(term))
+                      .map(({ term }) => term),
+                  }))
+                  .filter((field) => field.matchedTerms.length > 0),
+              },
+            }
+          : {}),
       } satisfies CapabilitySearchResult;
     })
     .filter((result): result is CapabilitySearchResult => result !== undefined)
     .sort((a, b) => b.score - a.score || a.capabilityId.localeCompare(b.capabilityId) || a.path.localeCompare(b.path));
 
-  const maxPerCapability = options.maxPerCapability ?? DEFAULT_MAX_PER_CAPABILITY;
+  // Global discovery is capability-first: return the best matching file for a
+  // compact shortlist. Once a capability is selected, a scoped search may
+  // expose several internal files for progressive disclosure.
+  const maxPerCapability = options.maxPerCapability
+    ?? (options.capabilityId ? DEFAULT_MAX_PER_CAPABILITY : 1);
   const perCapability = new Map<string, number>();
   const capped: CapabilitySearchResult[] = [];
 

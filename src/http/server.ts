@@ -9,13 +9,32 @@ import {
   type McpTransport,
 } from "../mcp/activity";
 import { createMcpHandler } from "../mcp/handler";
+import { SERVER_INFO } from "../mcp/handler";
 import { formatSseEvent, jsonRpcFailure, type JsonRpcRequest, type JsonRpcResponse } from "../mcp/protocol";
+import { MCP_TOOLS } from "../mcp/tools";
+import { catalogFingerprint } from "../registry/fingerprint";
 import type { CapabilityRegistry } from "../registry/types";
 import { renderDashboard } from "./dashboard";
 
 interface SseSession {
   client: string;
   send(payload: unknown): void;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isJsonRpcRequest(value: unknown): value is JsonRpcRequest {
+  return isRecord(value) && value.jsonrpc === "2.0" && typeof value.method === "string";
+}
+
+function isJsonRpcResponse(value: unknown): value is JsonRpcResponse {
+  return isRecord(value)
+    && value.jsonrpc === "2.0"
+    && Object.prototype.hasOwnProperty.call(value, "id")
+    && (Object.prototype.hasOwnProperty.call(value, "result")
+      || Object.prototype.hasOwnProperty.call(value, "error"));
 }
 
 export interface StaticSiteProvider {
@@ -27,6 +46,11 @@ export interface ServerOptions {
   dashboardHome?: boolean;
   activityLog?: McpActivityLog;
   onActivity?: (event: McpActivityEvent) => void;
+  runtime?: {
+    kind: "node" | "worker" | "unknown";
+    pid?: number;
+    endpoint?: string;
+  };
 }
 
 function dashboardLinks(language: "en" | "fr", staticSite?: StaticSiteProvider) {
@@ -45,6 +69,8 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   const activityLog = options.activityLog || new McpActivityLog(200, options.onActivity);
   const sessions = new Map<string, SseSession>();
   const encoder = new TextEncoder();
+  const startedAt = new Date();
+  const catalogRevision = catalogFingerprint(registry);
 
   async function serveStatic(path: string) {
     return options.staticSite?.serve(path);
@@ -86,10 +112,19 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   app.get("/fr/docs/agents.html", async (c) => (await serveStatic(c.req.path)) || c.notFound());
   app.get("/assets/*", async (c) => (await serveStatic(c.req.path)) || c.notFound());
 
-  app.get("/health", (c) => {
+  app.get("/health", async (c) => {
+    const runtime = options.runtime || { kind: "unknown" as const };
     return c.json({
       ok: true,
       capabilities: registry.listCapabilities().length,
+      version: SERVER_INFO.version,
+      runtime: runtime.kind,
+      ...(runtime.pid ? { pid: runtime.pid } : {}),
+      endpoint: runtime.endpoint || "/message",
+      localTools: MCP_TOOLS.length,
+      catalogRevision: await catalogRevision,
+      startedAt: startedAt.toISOString(),
+      uptimeSeconds: Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1_000)),
     });
   });
 
@@ -135,27 +170,59 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   });
 
   app.post("/message", async (c) => {
-    const message = await c.req.json().catch(() => null) as JsonRpcRequest | null;
-    if (!message || message.jsonrpc !== "2.0") {
-      return c.json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Invalid JSON-RPC message" } }, 400);
+    let payload: unknown;
+    try {
+      payload = await c.req.json();
+    } catch {
+      return c.json(jsonRpcFailure(null, -32700, "Invalid JSON"), 400);
     }
+
+    const batch = Array.isArray(payload) ? payload : undefined;
+    const isBatch = batch !== undefined;
+    if (batch?.length === 0) {
+      return c.json(jsonRpcFailure(null, -32600, "Invalid JSON-RPC batch"), 400);
+    }
+    const messages: unknown[] = batch || [payload];
 
     const sessionId = c.req.query("sessionId");
     if (!sessionId) {
-      const response = await handleAndRecord(message, "http", c.req.header("user-agent") || "unknown client");
-      if (message.id === undefined) return c.body(null, 202);
-      return c.json(response);
+      const responses: JsonRpcResponse[] = [];
+      for (const message of messages) {
+        // MCPIMP does not initiate client requests yet, but Streamable HTTP
+        // permits clients to POST responses. Accept them without inventing an
+        // activity event or a response to the response.
+        if (isJsonRpcResponse(message)) continue;
+        if (!isJsonRpcRequest(message)) {
+          responses.push(jsonRpcFailure(null, -32600, "Invalid JSON-RPC message"));
+          continue;
+        }
+
+        const response = await handleAndRecord(message, "http", c.req.header("user-agent") || "unknown client");
+        if (message.id !== undefined) responses.push(response);
+      }
+
+      if (responses.length === 0) return c.body(null, 202);
+      if (!isBatch && !isJsonRpcRequest(payload)) return c.json(responses[0], 400);
+      return c.json(isBatch ? responses : responses[0]);
     }
 
     const session = sessions.get(sessionId);
     if (!session) {
-      return c.json(jsonRpcFailure(message.id ?? null, -32000, `Unknown SSE session: ${sessionId}`), 404);
+      return c.json(jsonRpcFailure(null, -32000, `Unknown SSE session: ${sessionId}`), 404);
     }
 
-    if (message.id !== undefined) {
-      session.send(await handleAndRecord(message, "sse", session.client, sessionId));
-    } else {
-      await handleAndRecord(message, "sse", session.client, sessionId);
+    for (const message of messages) {
+      if (isJsonRpcResponse(message)) continue;
+      if (!isJsonRpcRequest(message)) {
+        session.send(jsonRpcFailure(null, -32600, "Invalid JSON-RPC message"));
+        continue;
+      }
+
+      if (message.id !== undefined) {
+        session.send(await handleAndRecord(message, "sse", session.client, sessionId));
+      } else {
+        await handleAndRecord(message, "sse", session.client, sessionId);
+      }
     }
 
     return c.body(null, 202);

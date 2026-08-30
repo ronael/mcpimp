@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.6.5",
   "scripts": {
     "dev": "tsx src/local.ts",
+    "doctor": "tsx src/cli/doctor.ts",
     "sources:sync": "tsx src/cli/sources.ts",
     "generate:snapshot": "tsx scripts/build/generate-snapshot.ts",
     "build": "tsx scripts/build/generate-snapshot.ts && tsc --noEmit",
     "cf:dev": "tsx scripts/build/generate-snapshot.ts && wrangler dev",
+    "evaluate:search": "tsx scripts/evaluate-search.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsx scripts/build/generate-snapshot.ts && tsc --noEmit"

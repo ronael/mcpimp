@@ -8,6 +8,7 @@ import type { StaticSiteProvider } from "./http/server";
 import { createServer } from "./http/server";
 import type { McpActivityEvent } from "./mcp/activity";
 import { FileSystemCapabilityRegistry } from "./registry/filesystem";
+import { closeWritable, shutdownLocalServer, startupErrorMessage } from "./local/lifecycle";
 
 await loadDotenv();
 
@@ -65,10 +66,45 @@ function logActivity(event: McpActivityEvent) {
   console.log(`[MCP] ${event.status} ${event.client} ${event.method}${target} ${event.durationMs}ms`);
 }
 
-const app = createServer(registry, { staticSite, dashboardHome: true, onActivity: logActivity });
+const app = createServer(registry, {
+  staticSite,
+  dashboardHome: true,
+  onActivity: logActivity,
+  runtime: {
+    kind: "node",
+    pid: process.pid,
+    endpoint: `http://localhost:${port}/message`,
+  },
+});
 
-serve({ fetch: app.fetch, port });
+const server = serve({ fetch: app.fetch, port }, () => {
+  console.log(`Capability registry MCP listening on http://localhost:${port}`);
+  console.log(`Scanned ${registry.listCapabilities().length} capabilities from ${join(root, CAPABILITIES_DIR)}`);
+  console.log(`Activity log: ${join(logDirectory, "mcpimp.ndjson")}`);
+});
 
-console.log(`Capability registry MCP listening on http://localhost:${port}`);
-console.log(`Scanned ${registry.listCapabilities().length} capabilities from ${join(root, CAPABILITIES_DIR)}`);
-console.log(`Activity log: ${join(logDirectory, "mcpimp.ndjson")}`);
+let stopping = false;
+
+server.once("error", (error) => {
+  void (async () => {
+    console.error(await startupErrorMessage(error, port));
+    await closeWritable(activityStream);
+    process.exitCode = 1;
+  })();
+});
+
+async function stop(signal: "SIGINT" | "SIGTERM") {
+  if (stopping) return;
+  stopping = true;
+  console.log(`Stopping MCPIMP (${signal})…`);
+  try {
+    await shutdownLocalServer(server, activityStream);
+    console.log("MCPIMP stopped; activity log flushed.");
+  } catch (error) {
+    console.error(`MCPIMP shutdown failed: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  }
+}
+
+process.once("SIGINT", () => void stop("SIGINT"));
+process.once("SIGTERM", () => void stop("SIGTERM"));

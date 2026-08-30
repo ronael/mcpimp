@@ -1,4 +1,8 @@
 import type { Capability, CapabilityRegistry } from "../registry/types";
+import { extractMarkdownSections, isMarkdownEntrypoint } from "../registry/frontmatter";
+import { extractLinkedCapabilityPaths } from "../registry/markdown-links";
+import { rankMarkdownSections } from "../registry/section-search";
+import { JsonRpcError } from "./protocol";
 import type { UpstreamMcpGateway } from "./upstream";
 
 export const MCP_TOOLS = [
@@ -13,11 +17,15 @@ export const MCP_TOOLS = [
   },
   {
     name: "capability-info",
-    description: "Get metadata, provenance and indexed files for one capability.",
+    description: "Get metadata, provenance and indexed files for one capability. Pass path and query to receive a compact ranked Markdown entrypoint shortlist, including linkedPaths and linkedFiles metadata for mentioned internal files; inspect large linked Markdown with capability-info before loading it. Path alone returns the full outline.",
     inputSchema: {
       type: "object",
       properties: {
         id: { type: "string", description: "Capability id." },
+        path: { type: "string", description: "Optional exact file path whose Markdown outline should be returned." },
+        query: { type: "string", description: "Optional intention used to rank and shortlist Markdown headings. Requires path." },
+        headingLimit: { type: "number", description: "Maximum ranked headings when query is present (default 5, maximum 8)." },
+        diagnostic: { type: "boolean", description: "Include heading scores and matched query terms (default false)." },
       },
       required: ["id"],
     },
@@ -38,6 +46,10 @@ export const MCP_TOOLS = [
           type: "string",
           description: "Optional exact file path inside the capability, for example shared/content-rules.md.",
         },
+        heading: {
+          type: "string",
+          description: "Optional exact Markdown heading to load from path, including its nested subsections.",
+        },
       },
       required: ["id"],
     },
@@ -45,13 +57,17 @@ export const MCP_TOOLS = [
   {
     name: "search-capabilities",
     description:
-      "Ranked search across indexed capability files. Accepts several words; results include the capability id, description, matching file and snippet. Group results by capabilityId, inspect shortlisted capabilities with capability-info, then load only the selected capabilities.",
+      "Capability-first ranked search across indexed files. Global results return the best matching file for each shortlisted capability; inspect one with capability-info, then use capabilityId to search its internal files or load an exact path.",
     inputSchema: {
       type: "object",
       properties: {
         query: { type: "string", description: "Search query, one or more words." },
-        limit: { type: "number", description: "Maximum number of results (default 20)." },
+        limit: { type: "number", description: "Maximum number of results (default 8)." },
         capabilityId: { type: "string", description: "Restrict the search to one capability." },
+        diagnostic: {
+          type: "boolean",
+          description: "Include score components, matched fields and per-term IDF (default false).",
+        },
       },
       required: ["query"],
     },
@@ -104,9 +120,22 @@ function originSummary(capability: Capability) {
   };
 }
 
-function summarizeCapability(registry: CapabilityRegistry, id: string) {
+function summarizeCapability(
+  registry: CapabilityRegistry,
+  id: string,
+  requestedPath = "",
+  query = "",
+  headingLimit = 5,
+  diagnostic = false,
+) {
   const capability = registry.getCapability(id);
   if (!capability) throw new Error(`Capability not found: ${id}`);
+  const selectedFiles = requestedPath
+    ? capability.files.filter((file) => file.path === requestedPath)
+    : capability.files;
+  if (requestedPath && selectedFiles.length === 0) {
+    throw new Error(`Capability file not found: ${id}/${requestedPath}`);
+  }
 
   return {
     id: capability.id,
@@ -117,7 +146,7 @@ function summarizeCapability(registry: CapabilityRegistry, id: string) {
     description: capability.description,
     tags: capability.tags,
     origin: capability.origin,
-    files: capability.files.map((file) => ({
+    files: selectedFiles.map((file) => ({
       path: file.path,
       uri: file.uri,
       type: file.type,
@@ -127,6 +156,54 @@ function summarizeCapability(registry: CapabilityRegistry, id: string) {
       binary: file.binary,
       sha256: file.sha256,
       layer: file.layer,
+      ...(requestedPath && file.mimeType === "text/markdown" && typeof file.text === "string"
+        ? {
+            outline: (() => {
+              const sections = extractMarkdownSections(file.text);
+              const selected = query
+                ? rankMarkdownSections(file.text, query, headingLimit)
+                : sections;
+
+              return selected.map((section, index) => {
+                const linkedPaths = query
+                  ? extractLinkedCapabilityPaths(
+                      section.text,
+                      file.path,
+                      capability.files.map((candidate) => candidate.path),
+                    )
+                  : [];
+                const linkedFiles = linkedPaths.flatMap((path) => {
+                  const linked = capability.files.find((candidate) => candidate.path === path);
+                  if (!linked) return [];
+                  return [{
+                    path: linked.path,
+                    mimeType: linked.mimeType,
+                    bytes: linked.bytes,
+                    ...(typeof linked.text === "string" ? { characters: linked.text.length } : {}),
+                  }];
+                });
+
+                return {
+                  heading: section.heading,
+                  level: section.level,
+                  characters: section.text.length,
+                  entrypoint: query ? true : isMarkdownEntrypoint(sections, index),
+                  ...(linkedPaths.length > 0 ? { linkedPaths, linkedFiles } : {}),
+                  ...(query && diagnostic && "score" in section && "matchedTerms" in section
+                    ? { score: section.score, matchedTerms: section.matchedTerms }
+                    : {}),
+                };
+              });
+            })(),
+            ...(query
+              ? {
+                  outlineRanked: true,
+                  outlineTotal: extractMarkdownSections(file.text)
+                    .filter((_section, index, all) => isMarkdownEntrypoint(all, index)).length,
+                }
+              : {}),
+          }
+        : {}),
     })),
   };
 }
@@ -156,8 +233,10 @@ function loadCapability(registry: CapabilityRegistry, args: Record<string, unkno
   const id = requireString(args, "id");
   const section = typeof args.section === "string" ? args.section : "full";
   const path = typeof args.path === "string" ? args.path.trim() : "";
+  const heading = typeof args.heading === "string" ? args.heading.trim() : "";
   const capability = registry.getCapability(id);
   if (!capability) throw new Error(`Capability not found: ${id}`);
+  if (heading && !path) throw new Error("Markdown heading requires an exact capability path");
 
   const sections: Record<string, (type: string) => boolean> = {
     full: () => true,
@@ -172,7 +251,15 @@ function loadCapability(registry: CapabilityRegistry, args: Record<string, unkno
     const file = capability.files.find((candidate) => candidate.path === path);
     if (!file) throw new Error(`Capability file not found: ${id}/${path}`);
     if (typeof file.text !== "string") throw new Error(`Capability file is not readable as text: ${id}/${path}`);
-    body = `<!-- ${file.path} -->\n\n${file.text}`;
+    if (heading) {
+      if (file.mimeType !== "text/markdown") throw new Error(`Capability file is not Markdown: ${id}/${path}`);
+      const section = extractMarkdownSections(file.text)
+        .find((candidate) => candidate.heading.localeCompare(heading, undefined, { sensitivity: "accent" }) === 0);
+      if (!section) throw new Error(`Markdown heading not found: ${id}/${path}#${heading}`);
+      body = `<!-- ${file.path} · ${section.heading} -->\n\n${section.text}`;
+    } else {
+      body = `<!-- ${file.path} -->\n\n${file.text}`;
+    }
   } else {
     const matches = sections[section];
     if (!matches) throw new Error(`Unknown section: ${section}`);
@@ -191,8 +278,9 @@ function searchCapabilities(registry: CapabilityRegistry, args: Record<string, u
   const query = requireString(args, "query");
   const limit = typeof args.limit === "number" && args.limit > 0 ? Math.floor(args.limit) : undefined;
   const capabilityId = typeof args.capabilityId === "string" && args.capabilityId ? args.capabilityId : undefined;
+  const diagnostic = args.diagnostic === true;
 
-  return registry.search(query, { limit, capabilityId });
+  return registry.search(query, { limit, capabilityId, diagnostic });
 }
 
 export function callMcpTool(
@@ -216,8 +304,23 @@ export function callMcpTool(
           origin: originSummary(capability),
         })),
       );
-    case "capability-info":
-      return textContent(summarizeCapability(registry, requireString(args, "id")));
+    case "capability-info": {
+      const path = typeof args.path === "string" ? args.path.trim() : "";
+      const query = typeof args.query === "string" ? args.query.trim() : "";
+      if (query && !path) throw new JsonRpcError(-32602, "Heading query requires an exact capability path");
+      const headingLimit = typeof args.headingLimit === "number"
+        ? Math.min(8, Math.max(1, Math.floor(args.headingLimit)))
+        : 5;
+      const diagnostic = args.diagnostic === true;
+      return textContent(summarizeCapability(
+        registry,
+        requireString(args, "id"),
+        path,
+        query,
+        headingLimit,
+        diagnostic,
+      ));
+    }
     case "load-capability":
       return textContent(loadCapability(registry, args));
     case "search-capabilities":

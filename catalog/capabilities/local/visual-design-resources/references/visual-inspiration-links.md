@@ -12,6 +12,17 @@ decisions de design et d'implementation.
   de finition, comparer des compositions et sortir des reflexes generiques de
   landing page.
 
+## Visual Production Tools
+
+- Forma Icon Creator: https://iconcreator.dev/ — outil navigateur pour composer
+  et exporter des icones personnalisees. Utile pour produire un asset adapte au
+  projet plutot que choisir une icone generique par defaut. Verifier les termes
+  applicables a l'export et ne pas indexer les creations d'autres utilisateurs.
+- bg.ibelick: https://bg.ibelick.com/ — motifs et arriere-plans Tailwind/CSS a
+  adapter aux tokens et au contraste du projet. Traiter le site comme reference
+  externe tant que la licence du snippet choisi n'a pas ete verifiee ; eviter
+  les fonds decoratifs qui nuisent a la lisibilite ou aux performances.
+
 ## Usage Pattern
 
 - Commencer par nommer le besoin : inspiration de hero, systeme de marque,

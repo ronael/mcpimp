@@ -87,3 +87,39 @@ export function parseFrontmatter(markdown: string): SkillFrontmatter {
 export function extractHeadings(markdown: string): string[] {
   return [...markdown.matchAll(/^#{1,6}\s+(.+)$/gm)].map((match) => match[1].trim());
 }
+
+export interface MarkdownSection {
+  heading: string;
+  level: number;
+  text: string;
+}
+
+/** False only for a leading title that structurally wraps every later heading. */
+export function isMarkdownEntrypoint(sections: MarkdownSection[], index: number): boolean {
+  return !(index === 0
+    && sections.length > 1
+    && sections.slice(1).every((section) => section.level > sections[0].level));
+}
+
+/** Complete ATX-heading sections, including nested subsections until a peer or parent starts. */
+export function extractMarkdownSections(markdown: string): MarkdownSection[] {
+  const lines = markdown.split(/\r?\n/);
+  const headings = lines.flatMap((line, index) => {
+    const match = /^(#{1,6})\s+(.+?)\s*$/.exec(line);
+    if (!match) return [];
+    return [{
+      index,
+      level: match[1].length,
+      heading: match[2].replace(/\s+#+\s*$/, "").trim(),
+    }];
+  });
+
+  return headings.map((heading, index) => {
+    const next = headings.slice(index + 1).find((candidate) => candidate.level <= heading.level);
+    return {
+      heading: heading.heading,
+      level: heading.level,
+      text: lines.slice(heading.index, next?.index ?? lines.length).join("\n").trim(),
+    };
+  });
+}

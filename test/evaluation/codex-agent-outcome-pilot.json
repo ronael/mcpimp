@@ -1,0 +1,77 @@
+{
+  "date": "2026-08-26",
+  "runner": {
+    "client": "codex-cli 0.149.1",
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "low",
+    "runsPerScenario": 1
+  },
+  "summary": {
+    "scenarios": 3,
+    "retrievalRecallAt3": 1,
+    "agentSelectionAccuracy": 1,
+    "loadedFileAccuracy": 1,
+    "totalCliTokens": 66115,
+    "totalSearchResultCharacters": 22109,
+    "totalLoadedCharacters": 23118
+  },
+  "scenarios": [
+    {
+      "id": "component-resources",
+      "query": "Je cherche des références de composants UI animés et des exemples de cards pour inspirer un agent frontend.",
+      "acceptedCapabilityIds": ["ui-component-resources"],
+      "acceptedFiles": ["references/component-inspiration-links.md"],
+      "searchTopCapabilityIds": [
+        "ui-component-resources",
+        "taste-skill",
+        "frontend-architecture"
+      ],
+      "firstAcceptedRank": 1,
+      "selectedCapabilityId": "ui-component-resources",
+      "selectedRank": 1,
+      "loadedPath": "references/component-inspiration-links.md",
+      "searchResultCharacters": 6855,
+      "loadedCharacters": 2349,
+      "cliTokens": 20311,
+      "passed": true
+    },
+    {
+      "id": "frontend-architecture",
+      "query": "Je dois restructurer un gros frontend TypeScript avec domaine pur, ports adapters et Zustand. Quelle capability dois-je charger ?",
+      "acceptedCapabilityIds": ["frontend-architecture"],
+      "acceptedFiles": ["SKILL.md", "references/src-architecture-blueprint.md"],
+      "searchTopCapabilityIds": [
+        "frontend-architecture",
+        "taste-skill",
+        "matt-pocock-codebase-design"
+      ],
+      "firstAcceptedRank": 1,
+      "selectedCapabilityId": "frontend-architecture",
+      "selectedRank": 1,
+      "loadedPath": "SKILL.md",
+      "searchResultCharacters": 6931,
+      "loadedCharacters": 3870,
+      "cliTokens": 20612,
+      "passed": true
+    },
+    {
+      "id": "landing-page",
+      "query": "Je prépare une landing page premium pour convertir un public cible, avec une vraie direction visuelle et un contenu convaincant.",
+      "acceptedCapabilityIds": ["landing-page", "elaya-design-landing-page-design"],
+      "acceptedFiles": ["SKILL.md"],
+      "searchTopCapabilityIds": [
+        "taste-skill",
+        "landing-page",
+        "taste-skill-imagegen-frontend-web"
+      ],
+      "firstAcceptedRank": 2,
+      "selectedCapabilityId": "elaya-design-landing-page-design",
+      "selectedRank": 6,
+      "loadedPath": "SKILL.md",
+      "searchResultCharacters": 8323,
+      "loadedCharacters": 16899,
+      "cliTokens": 25192,
+      "passed": true
+    }
+  ]
+}

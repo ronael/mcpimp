@@ -12,6 +12,16 @@ async function createHandler() {
 }
 
 describe("MCP handler", () => {
+  it("answers the standard connection heartbeat", async () => {
+    const handle = await createHandler();
+
+    await expect(handle({ jsonrpc: "2.0", id: "heartbeat", method: "ping" })).resolves.toEqual({
+      jsonrpc: "2.0",
+      id: "heartbeat",
+      result: {},
+    });
+  });
+
   it("initializes with tools and resources capabilities", async () => {
     const handle = await createHandler();
 
@@ -52,6 +62,27 @@ describe("MCP handler", () => {
     expect(response.result.content[0].text).toContain("landing-page");
   });
 
+  it("returns optional search score diagnostics", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 31,
+      method: "tools/call",
+      params: {
+        name: "search-capabilities",
+        arguments: { query: "landing page", diagnostic: true },
+      },
+    });
+    const [result] = JSON.parse(response.result.content[0].text);
+
+    expect(result.diagnostics).toMatchObject({
+      coverage: 1,
+      fileWeight: 1.4,
+    });
+    expect(result.diagnostics.terms.length).toBeGreaterThan(0);
+    expect(result.diagnostics.fields.length).toBeGreaterThan(0);
+  });
+
   it("lists and reads resources", async () => {
     const handle = await createHandler();
 
@@ -65,6 +96,34 @@ describe("MCP handler", () => {
       params: { uri: "skill://landing-page/SKILL.md" },
     });
     expect(read.result.contents[0].text).toContain("# Landing Page");
+  });
+
+  it("returns an empty list for the standard resource-template probe", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 51,
+      method: "resources/templates/list",
+    });
+
+    expect(response).toEqual({
+      jsonrpc: "2.0",
+      id: 51,
+      result: { resourceTemplates: [] },
+    });
+  });
+
+  it("keeps non-standard discovery probes as method-not-found errors", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 52,
+      method: "server/discover",
+    });
+
+    expect(response).toMatchObject({
+      error: { code: -32601, message: "Unknown method: server/discover" },
+    });
   });
 
   it("loads one exact capability file for progressive disclosure", async () => {
@@ -83,6 +142,134 @@ describe("MCP handler", () => {
     expect(response.result.content[0].text).not.toContain("# Landing Page");
   });
 
+  it("inspects a Markdown outline before loading one complete heading", async () => {
+    const handle = await createHandler();
+    const info: any = await handle({
+      jsonrpc: "2.0",
+      id: 61,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: { id: "landing-page", path: "references/source.md" },
+      },
+    });
+    const summary = JSON.parse(info.result.content[0].text);
+
+    expect(summary.files).toHaveLength(1);
+    expect(summary.files[0].outline).toEqual([
+      expect.objectContaining({ heading: "Source", level: 1, entrypoint: false }),
+      expect.objectContaining({ heading: "Example Source", level: 2, entrypoint: true }),
+    ]);
+
+    const rankedInfo: any = await handle({
+      jsonrpc: "2.0",
+      id: 611,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: {
+          id: "landing-page",
+          path: "references/source.md",
+          query: "example source",
+          headingLimit: 1,
+          diagnostic: true,
+        },
+      },
+    });
+    const rankedSummary = JSON.parse(rankedInfo.result.content[0].text);
+
+    expect(rankedSummary.files[0]).toMatchObject({
+      outlineRanked: true,
+      outlineTotal: 1,
+      outline: [expect.objectContaining({
+        heading: "Example Source",
+        entrypoint: true,
+        matchedTerms: ["example", "source"],
+      })],
+    });
+
+    const compactInfo: any = await handle({
+      jsonrpc: "2.0",
+      id: 612,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: {
+          id: "landing-page",
+          path: "references/source.md",
+          query: "example source",
+          headingLimit: 1,
+        },
+      },
+    });
+    const compactSummary = JSON.parse(compactInfo.result.content[0].text);
+
+    expect(compactSummary.files[0].outline[0]).not.toHaveProperty("score");
+    expect(compactInfo.result.content[0].text.length)
+      .toBeLessThan(rankedInfo.result.content[0].text.length);
+
+    const loaded: any = await handle({
+      jsonrpc: "2.0",
+      id: 62,
+      method: "tools/call",
+      params: {
+        name: "load-capability",
+        arguments: { id: "landing-page", path: "references/source.md", heading: "Example Source" },
+      },
+    });
+
+    expect(loaded.result.content[0].text).toContain("## Example Source");
+    expect(loaded.result.content[0].text).toContain("https://example.com/source");
+    expect(loaded.result.content[0].text).not.toContain("Reference material for the capability");
+  });
+
+  it("requires an exact path when ranking Markdown headings", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 63,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: { id: "landing-page", query: "conversion" },
+      },
+    });
+
+    expect(response.error).toMatchObject({
+      code: -32602,
+      message: "Heading query requires an exact capability path",
+    });
+  });
+
+  it("exposes validated internal paths linked by a ranked heading", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 64,
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: {
+          id: "landing-page",
+          path: "SKILL.md",
+          query: "workflow drafting",
+        },
+      },
+    });
+    const summary = JSON.parse(response.result.content[0].text);
+
+    expect(summary.files[0].outline[0]).toMatchObject({
+      heading: "Workflow",
+      linkedPaths: ["references/source.md"],
+      linkedFiles: [{
+        path: "references/source.md",
+        mimeType: "text/markdown",
+        bytes: expect.any(Number),
+        characters: expect.any(Number),
+      }],
+    });
+  });
+
   it("returns a JSON-RPC error for missing resources", async () => {
     const handle = await createHandler();
     const response: any = await handle({
@@ -92,7 +279,45 @@ describe("MCP handler", () => {
       params: { uri: "skill://landing-page/missing.md" },
     });
 
-    expect(response.error.message).toContain("Resource not found");
+    expect(response.error).toEqual({
+      code: -32002,
+      message: "Resource not found",
+      data: { uri: "skill://landing-page/missing.md" },
+    });
+  });
+
+  it("distinguishes invalid parameters from unknown methods", async () => {
+    const handle = await createHandler();
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 71,
+      method: "resources/read",
+      params: {},
+    });
+
+    expect(response.error).toEqual({
+      code: -32602,
+      message: "Missing resource uri",
+    });
+  });
+
+  it("reports unexpected handler failures as internal errors", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+    vi.spyOn(registry, "readResource").mockImplementation(() => {
+      throw new Error("Registry unavailable");
+    });
+    const handle = createMcpHandler(registry);
+    const response: any = await handle({
+      jsonrpc: "2.0",
+      id: 72,
+      method: "resources/read",
+      params: { uri: "skill://landing-page/SKILL.md" },
+    });
+
+    expect(response.error).toEqual({
+      code: -32603,
+      message: "Registry unavailable",
+    });
   });
 
   afterEach(() => {

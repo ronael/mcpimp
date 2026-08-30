@@ -19,6 +19,7 @@ export interface JsonRpcFailure {
   error: {
     code: number;
     message: string;
+    data?: unknown;
   };
 }
 
@@ -28,8 +29,19 @@ export function jsonRpcSuccess(id: JsonRpcId, result: unknown): JsonRpcSuccess {
   return { jsonrpc: "2.0", id, result };
 }
 
-export function jsonRpcFailure(id: JsonRpcId, code: number, message: string): JsonRpcFailure {
-  return { jsonrpc: "2.0", id, error: { code, message } };
+export class JsonRpcError extends Error {
+  constructor(
+    readonly code: number,
+    message: string,
+    readonly data?: unknown,
+  ) {
+    super(message);
+    this.name = "JsonRpcError";
+  }
+}
+
+export function jsonRpcFailure(id: JsonRpcId, code: number, message: string, data?: unknown): JsonRpcFailure {
+  return { jsonrpc: "2.0", id, error: { code, message, ...(data === undefined ? {} : { data }) } };
 }
 
 export function formatSseEvent(event: string, data: unknown): string {

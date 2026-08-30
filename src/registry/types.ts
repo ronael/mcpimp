@@ -161,12 +161,55 @@ export interface CapabilitySearchResult {
   /** Relative lexical relevance; only comparable within one result set. */
   score: number;
   matchedTerms: string[];
+  diagnostics?: CapabilitySearchDiagnostics;
+}
+
+export type CapabilitySearchField =
+  | "capabilityName"
+  | "capabilityDescription"
+  | "tags"
+  | "namespaceSlug"
+  | "path"
+  | "headings"
+  | "body";
+
+export interface CapabilitySearchDiagnostics {
+  /** Score after term frequency, field weights, IDF and synonym weights. */
+  lexicalScore: number;
+  coverage: number;
+  coverageMultiplier: number;
+  fileWeight: number;
+  resourceIntentWeight: number;
+  phraseBonus: number;
+  /** BM25-style saturation constant applied to repeated terms in body text. */
+  bodyTermFrequencySaturationK: number;
+  terms: Array<{
+    term: string;
+    root: string;
+    source: "literal" | "synonym";
+    queryWeight: number;
+    documentWeight: number;
+    idf: number;
+  }>;
+  fields: Array<{
+    field: CapabilitySearchField;
+    weight: number;
+    matchedTerms: string[];
+  }>;
 }
 
 export interface CapabilitySearchOptions {
   limit?: number;
   capabilityId?: string;
   maxPerCapability?: number;
+  diagnostic?: boolean;
+}
+
+export class CapabilityResourceNotFoundError extends Error {
+  constructor(readonly uri: string) {
+    super(`Resource not found: ${uri}`);
+    this.name = "CapabilityResourceNotFoundError";
+  }
 }
 
 export interface CapabilityRegistry {

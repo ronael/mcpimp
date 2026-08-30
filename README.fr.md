@@ -8,6 +8,12 @@ Registry personnel de capacités pour agents IA. Le serveur MCP vit dans ce
 dépôt et expose les capacités du catalogue, comme `landing-page/`, via des
 outils et ressources MCP.
 
+MCPIMP est une couche d'intelligence et de distribution de capabilities, pas
+un framework d'agent ni un moteur de workflow. Il aide un agent ou son harness
+à trouver une capability et à charger progressivement le contexte utile ; le
+harness appelant reste responsable de la planification, de l'exécution, des
+reprises et de la gestion de session.
+
 ## Modèle
 
 Une **capability** est l'unité métier de MCPIMP. Ce n'est pas forcément un
@@ -124,8 +130,13 @@ recherche sémantique : c'est le minimum utile en attendant. Le point de
 remplacement est la fonction `expandTerm()` — y brancher des embeddings ne
 touche aucun autre fichier.
 
-Paramètres optionnels : `limit` (20 par défaut) et `capabilityId` pour
-restreindre la recherche à une capacité.
+La recherche globale renvoie par défaut une shortlist de huit capabilities, avec
+le meilleur fichier correspondant pour chacune. Utilise ensuite `capabilityId`
+pour rechercher plusieurs fichiers internes à la capability retenue. Le
+paramètre optionnel `limit` ajuste la taille maximale de la shortlist.
+Active `diagnostic: true` pour obtenir les composantes du score : couverture,
+termes et IDF, champs correspondants, poids du fichier, intention ressource et
+bonus de phrase. Ce détail est absent par défaut afin de garder la réponse courte.
 
 ```bash
 curl -sS http://localhost:3901/message \
@@ -450,6 +461,20 @@ Lance d'abord le serveur local :
 pnpm run dev
 ```
 
+En cas de doute sur la configuration ou le démarrage, lance le diagnostic
+opérationnel en lecture seule :
+
+```bash
+pnpm run doctor
+```
+
+Il vérifie le catalogue, l’emplacement du journal d’activité, le port local et
+les variables d’environnement requises par les upstreams. Seuls les noms des
+variables sont affichés, jamais leurs valeurs. Si le port par défaut est déjà
+occupé, MCPIMP indique le PID à l’écoute et propose de contrôler l’instance
+existante ou de choisir un autre port. `SIGINT` et `SIGTERM` arrêtent proprement
+le serveur et vident le buffer du journal.
+
 ### Kimi Code CLI
 
 Ajoute un serveur au niveau **projet** (ce dépôt) dans `.kimi-code/mcp.json` :
@@ -571,6 +596,7 @@ pnpm run test
 pnpm run typecheck
 pnpm run build
 pnpm run sources:sync   # état des sources externes (lecture seule)
+pnpm run doctor         # diagnostic local en lecture seule
 pnpm run dev
 ```
 
@@ -618,3 +644,6 @@ conservées, et la resynchronisation reste possible.
 Les plugins Codex restent un format possible plus tard. Dans cette v1, l'unité
 métier est la capacité : elle peut contenir un skill, des ressources, des
 scripts, un MCP upstream, puis éventuellement un plugin dédié.
+
+Les priorités et l’évolution à plus long terme du projet sont suivies dans la
+[roadmap produit](docs/roadmap.md).

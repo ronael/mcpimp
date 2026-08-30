@@ -41,6 +41,42 @@ describe("MCP activity log", () => {
     expect(JSON.stringify(parameters)).not.toContain("hidden");
   });
 
+  it("records progressive loading coordinates", () => {
+    expect(activityParameters({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: {
+        name: "load-capability",
+        arguments: { id: "landing-page", path: "SKILL.md", heading: "Workflow" },
+      },
+    })).toEqual({ id: "landing-page", path: "SKILL.md", heading: "Workflow" });
+  });
+
+  it("keeps the bounded heading-ranking parameters", () => {
+    expect(activityParameters({
+      jsonrpc: "2.0",
+      method: "tools/call",
+      params: {
+        name: "capability-info",
+        arguments: {
+          id: "landing-page",
+          path: "SKILL.md",
+          query: "premium conversion",
+          headingLimit: 3,
+          diagnostic: true,
+          ignored: "hidden",
+        },
+      },
+    })).toEqual({
+      id: "landing-page",
+      path: "SKILL.md",
+      query: "premium conversion",
+      headingLimit: 3,
+      diagnostic: true,
+    });
+  });
+
   it("records only field names and types for upstream tool arguments", () => {
     const parameters = activityParameters({
       jsonrpc: "2.0",
@@ -54,6 +90,17 @@ describe("MCP activity log", () => {
 
     expect(parameters).toEqual({ fields: [{ name: "table", type: "string" }, { name: "filter", type: "string" }] });
     expect(JSON.stringify(parameters)).not.toContain("private@example.com");
+  });
+
+  it("describes cancellation without retaining its free-text reason", () => {
+    const parameters = activityParameters({
+      jsonrpc: "2.0",
+      method: "notifications/cancelled",
+      params: { requestId: "request-42", reason: "Customer name and private context" },
+    });
+
+    expect(parameters).toEqual({ requestId: "request-42", hasReason: true });
+    expect(JSON.stringify(parameters)).not.toContain("Customer");
   });
 
   it("summarizes returned items without retaining response text", () => {

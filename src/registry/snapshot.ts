@@ -1,4 +1,5 @@
 import { searchCapabilities } from "./search";
+import { CapabilityResourceNotFoundError } from "./types";
 import type {
   Capability,
   CapabilityFile,
@@ -55,7 +56,7 @@ export class SnapshotCapabilityRegistry implements CapabilityRegistry {
 
   readResource(uri: string): CapabilityFile {
     const file = this.capabilities.flatMap((capability) => capability.files).find((item) => item.uri === uri);
-    if (!file) throw new Error(`Resource not found: ${uri}`);
+    if (!file) throw new CapabilityResourceNotFoundError(uri);
     if (file.binary) {
       throw new Error(
         `Binary resource is not readable as text: ${uri} (${file.bytes} bytes, ${file.mimeType}, sha256 ${file.sha256})`,

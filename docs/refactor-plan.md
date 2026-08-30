@@ -1,5 +1,9 @@
 # MCPIMP — plan de refactorisation front-end
 
+> Ce document est le sous-plan historique du chantier frontend. La priorité et
+> l’évolution globale du produit sont suivies dans la
+> [roadmap produit](roadmap.md).
+
 ## Objectif
 
 Refactoriser les pages HTML existantes sans modifier leur rendu visuel, en :

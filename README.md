@@ -8,6 +8,11 @@ MCPIMP is a personal capability registry for AI agents. This repository hosts
 the MCP server and exposes the catalog's capabilities—such as
 `landing-page/`—through MCP tools and resources.
 
+MCPIMP is a capability intelligence and distribution layer, not an agent
+framework or workflow engine. It helps an agent or its harness find a
+capability and progressively load useful context; the calling harness remains
+responsible for planning, execution, retries, and session management.
+
 ## Model
 
 A **capability** is MCPIMP's domain unit. It is not necessarily a skill: it is
@@ -77,8 +82,8 @@ skill://ui-ux-pro-max/references/quick-reference.md
 | Tool | Purpose |
 |---|---|
 | `list-capabilities` | Lists available capabilities and their origin |
-| `capability-info` | Returns metadata, provenance, and files |
-| `load-capability` | Loads a capability, section, or exact file |
+| `capability-info` | Returns metadata/files, a full Markdown outline with `path`, or a ranked heading shortlist with `path` + `query` |
+| `load-capability` | Loads a capability, exact file, or complete Markdown heading subtree |
 | `search-capabilities` | Searches indexed files and ranks results |
 | `list-upstreams` | Checks configured upstream MCP servers |
 
@@ -86,8 +91,36 @@ skill://ui-ux-pro-max/references/quick-reference.md
 weights, IDF, query coverage, exact-query bonuses, file-type weights, and a
 resource-intent boost for queries asking for references or inspiration. It also
 includes a light French/English synonym table in
-`src/registry/synonyms.ts`. Optional parameters are `limit` (20 by default) and
-`capabilityId` to restrict a search to one capability.
+`src/registry/synonyms.ts`. Global search returns a shortlist of eight
+capabilities by default, with the best matching file for each one. Then use
+`capabilityId` to search several internal files within the selected capability.
+The optional `limit` parameter adjusts the maximum shortlist size.
+Set `diagnostic: true` to include score components: coverage, terms and IDF,
+matched fields, file weight, resource intent, and phrase bonus. Diagnostics are
+omitted by default to keep normal responses compact.
+
+For a long Markdown entrypoint, inspect its outline before loading context:
+
+```txt
+search-capabilities(query)
+→ capability-info(id, path: "SKILL.md", query)
+→ load-capability(id, path: "SKILL.md", heading: "Workflow")
+```
+
+With `query`, the outline is ranked and limited to five headings by default
+(`headingLimit`, maximum 8). Without it, the complete document-order outline is
+returned for compatibility. Each entry reports its heading level and character
+count. Set `diagnostic: true` to include heading scores and matched terms.
+Loading a heading returns that complete section and its nested subsections, so
+context is reduced without cutting instructions at an arbitrary boundary.
+
+Ranked entries also expose `linkedPaths` and `linkedFiles` metadata when their
+section mentions another file that exists inside the same capability. The
+metadata includes MIME type, bytes and text characters so a harness can load a
+small file directly or inspect a large Markdown file with another
+`capability-info(id, linkedPath, query)` call before choosing a heading. These
+links are navigation hints, not required dependencies or permission to execute
+content. External and missing paths are never surfaced as internal links.
 
 ```bash
 curl -sS http://localhost:3901/message \
@@ -189,6 +222,36 @@ Start the local server first:
 pnpm run dev
 ```
 
+Once the server is running, execute the read-only runtime diagnostic:
+
+```bash
+pnpm run doctor
+pnpm --silent run doctor -- --json
+```
+
+Always include `run`: `pnpm doctor` invokes pnpm's own built-in doctor command,
+not MCPIMP's project script.
+
+The default mode checks four distinct states: the endpoint is configured, the
+health route is reachable, MCP initialization succeeds, and `tools/list`
+returns callable tools after `notifications/initialized`. It also reports the
+PID, capability and tool counts, and warns when the running catalog differs
+from the catalog on disk. `--json` emits the same report as structured data;
+`--silent` suppresses pnpm's script banner so stdout contains JSON only.
+Failures of health, initialization, or tool discovery return a non-zero exit
+code.
+
+Before starting the server, use preflight mode instead:
+
+```bash
+pnpm run doctor -- --preflight
+```
+
+Preflight checks the catalog, activity-log path, local port, and required
+upstream environment variables. Both modes report variable names only, never
+their values.
+`SIGINT` and `SIGTERM` stop the server cleanly and flush the activity log.
+
 Use `http://localhost:3901/message` for streamable HTTP clients and
 `http://localhost:3901/sse` for SSE-only clients. Current Codex and Claude Code
 clients can connect directly:
@@ -198,6 +261,13 @@ codex mcp add mcpimp --url http://localhost:3901/message
 claude mcp add --transport http --scope user mcpimp http://localhost:3901/message
 ```
 
+MCP clients commonly load their tool catalog when a session starts. A client
+may therefore keep displaying an older "connected" state after the local
+process stops, or fail to discover tools when MCPIMP starts after the session.
+Run `pnpm doctor` to verify the server independently, then restart the client
+session. Also remove obsolete registrations that point another MCP name at the
+same `/sse` or `/message` endpoint.
+
 Verify the server without an MCP client:
 
 ```bash
@@ -206,6 +276,23 @@ curl -sS http://localhost:3901/message \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
+
+MCPIMP advertises concrete resources and therefore answers the standard
+`resources/templates/list` client probe with an empty `resourceTemplates` list.
+Non-standard probes such as `server/discover` intentionally receive JSON-RPC
+`-32601 Method not found` rather than a proprietary compatibility response.
+Invalid request parameters use `-32602`, missing resources use the MCP
+`-32002` code, and unexpected handler failures use `-32603`.
+The standard `ping` heartbeat receives an immediate empty result.
+Cancellation notifications are accepted even when the target request has
+already completed; their free-text reason is never retained in the activity log.
+Streamable HTTP accepts JSON-RPC batches. Responses are returned only for batch
+items carrying an ID; notification-only batches receive an empty `202`.
+
+Observed client sequences and their validation level are tracked in
+[`docs/mcp-compatibility.md`](docs/mcp-compatibility.md).
+The first real-agent retrieval pilot is documented in
+[`docs/agent-outcome-evaluation.md`](docs/agent-outcome-evaluation.md).
 
 ## Public website
 
@@ -232,6 +319,8 @@ pnpm run test
 pnpm run typecheck
 pnpm run build
 pnpm run sources:sync   # external-source status (read-only)
+pnpm run doctor         # live health + MCP handshake + tools/list (read-only)
+pnpm run doctor -- --preflight # checks before starting the server
 pnpm run dev
 ```
 
@@ -270,3 +359,6 @@ provenance and makes future synchronisation possible.
 For the complete French reference, including detailed update policies, binary
 handling, source examples, and client-specific setup, see
 [README.fr.md](README.fr.md).
+
+The project’s priorities and longer-term evolution are tracked in the
+[product roadmap](docs/roadmap.md).

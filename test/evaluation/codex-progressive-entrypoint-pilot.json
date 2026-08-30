@@ -1,0 +1,105 @@
+{
+  "date": "2026-08-27",
+  "runner": {
+    "client": "codex-cli 0.149.1",
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "low",
+    "runsPerScenario": 1
+  },
+  "protocol": {
+    "steps": [
+      "search-capabilities",
+      "capability-info with selected path",
+      "load-capability with an entrypoint heading"
+    ],
+    "agentRestrictions": [
+      "empty working directory",
+      "read-only sandbox",
+      "no web, shell or repository access",
+      "hidden expected capability and heading"
+    ]
+  },
+  "preflightFinding": {
+    "scenarioId": "frontend-architecture",
+    "selectedHeading": "Frontend Architecture",
+    "finding": "The document title wrapped the full file and was mistaken for a progressive entrypoint.",
+    "change": "Document-wrapper headings remain loadable but capability-info now marks them entrypoint: false."
+  },
+  "summary": {
+    "scenarios": 2,
+    "capabilitySelectionAccuracy": 1,
+    "nonWrapperEntrypointSelectionAccuracy": 1,
+    "baselineLoadedCharacters": 20769,
+    "progressiveLoadedCharacters": 1703,
+    "loadedCharacterReduction": 0.918,
+    "baselineMcpResponseCharacters": 36023,
+    "progressiveMcpResponseCharacters": 25659,
+    "mcpResponseCharacterReduction": 0.2877,
+    "baselineCliTokens": 45804,
+    "progressiveCliTokens": 62758,
+    "cliTokenChange": 0.3701,
+    "conclusion": "partial"
+  },
+  "scenarios": [
+    {
+      "id": "frontend-architecture",
+      "query": "Je dois restructurer un gros frontend TypeScript avec domaine pur, ports adapters et Zustand. Quelle capability dois-je charger ?",
+      "searchTopCapabilityIds": [
+        "frontend-architecture",
+        "taste-skill",
+        "matt-pocock-codebase-design"
+      ],
+      "selectedCapabilityId": "frontend-architecture",
+      "selectedPath": "SKILL.md",
+      "selectedHeading": "Référence principale",
+      "entrypointAssessment": "routing-only",
+      "baseline": {
+        "searchResultCharacters": 6931,
+        "loadedCharacters": 3870,
+        "totalMcpResponseCharacters": 10801,
+        "cliTokens": 20612
+      },
+      "progressive": {
+        "searchResultCharacters": 6931,
+        "capabilityInfoCharacters": 1690,
+        "loadedCharacters": 271,
+        "totalMcpResponseCharacters": 8892,
+        "cliTokens": 30607
+      },
+      "loadedCharacterReduction": 0.93,
+      "mcpResponseCharacterReduction": 0.1767,
+      "cliTokenChange": 0.4849,
+      "passed": true
+    },
+    {
+      "id": "landing-page",
+      "query": "Je prépare une landing page premium pour convertir un public cible, avec une vraie direction visuelle et un contenu convaincant.",
+      "searchTopCapabilityIds": [
+        "taste-skill",
+        "landing-page",
+        "taste-skill-imagegen-frontend-web"
+      ],
+      "selectedCapabilityId": "elaya-design-landing-page-design",
+      "selectedPath": "SKILL.md",
+      "selectedHeading": "A1. Intake",
+      "entrypointAssessment": "actionable-intake",
+      "baseline": {
+        "searchResultCharacters": 8323,
+        "loadedCharacters": 16899,
+        "totalMcpResponseCharacters": 25222,
+        "cliTokens": 25192
+      },
+      "progressive": {
+        "searchResultCharacters": 8323,
+        "capabilityInfoCharacters": 7012,
+        "loadedCharacters": 1432,
+        "totalMcpResponseCharacters": 16767,
+        "cliTokens": 32151
+      },
+      "loadedCharacterReduction": 0.9153,
+      "mcpResponseCharacterReduction": 0.3352,
+      "cliTokenChange": 0.2762,
+      "passed": true
+    }
+  ]
+}
