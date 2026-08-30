@@ -307,36 +307,50 @@ function renderToolRows(): string {
   ).join("");
 }
 
-function renderUpstreamRows(registry: CapabilityRegistry, copy: DashboardCopy): string {
-  const gateway = new UpstreamMcpGateway(registry);
-  const upstreams = gateway.listUpstreams();
-
+function renderUpstreamRows(upstreams: DashboardData["upstreams"], copy: DashboardCopy): string {
   if (upstreams.length === 0) {
-    return `<tr><td colspan="5">${escapeHtml(copy.noUpstreams)}</td></tr>`;
+    return `<tr><td colspan="7">${escapeHtml(copy.noUpstreams)}</td></tr>`;
   }
 
   return upstreams
-    .map(
-      (upstream) => `<tr>
+    .map((upstream) => {
+      const availability = upstream.reachable === true
+        ? renderStatusChip("reachable", "ok")
+        : upstream.reachable === false
+          ? renderStatusChip("unavailable", "err")
+          : renderStatusChip("unchecked", "info");
+      const missingEnv = upstream.missingEnv.length > 0
+        ? `<span class="upstream-note mono">${escapeHtml(upstream.missingEnv.join(", "))}</span>`
+        : "";
+      const lastError = upstream.lastError
+        ? `<span class="upstream-note">${escapeHtml(upstream.lastError.message)}</span>`
+        : "";
+      const checked = upstream.lastCheckedAt
+        ? `<time class="upstream-note" datetime="${escapeAttribute(upstream.lastCheckedAt)}">${escapeHtml(upstream.lastCheckedAt)}</time>`
+        : `<span class="upstream-note">${escapeHtml(copy.never)}</span>`;
+
+      return `<tr>
         <td class="mono"><a href="#capability-${escapeAttribute(anchorId(upstream.capabilityId))}">${escapeHtml(upstream.capabilityId)}</a></td>
         <td><span class="chip info plain">${escapeHtml(upstream.transport)}</span></td>
-        <td>${renderStatusChip(upstream.status)}</td>
+        <td><div class="upstream-cell">${renderStatusChip(upstream.status)}${missingEnv}</div></td>
+        <td><div class="upstream-cell">${availability}${lastError}</div></td>
+        <td><div class="upstream-cell"><strong>${upstream.latencyMs === undefined ? "—" : `${upstream.latencyMs} ms`}</strong>${checked}</div></td>
+        <td><div class="upstream-cell">${renderStatusChip(upstream.cacheStatus, upstream.cacheStatus === "fresh" ? "ok" : upstream.cacheStatus === "stale" ? "warn" : "info")}<span class="upstream-note">${upstream.cachedToolCount} tools</span></div></td>
         <td class="mono wrap">${escapeHtml(upstream.url)}</td>
-        <td>${upstream.missingEnv.map((name) => `<code>${escapeHtml(name)}</code>`).join(", ") || `<span class="muted">n/a</span>`}</td>
-      </tr>`,
-    )
+      </tr>`;
+    })
     .join("");
 }
 
-function renderStatusChip(status: string): string {
-  const variant = status === "ready" ? "ok" : status === "missing-env" ? "warn" : "err";
+function renderStatusChip(status: string, explicitVariant?: "ok" | "warn" | "err" | "info"): string {
+  const variant = explicitVariant || (status === "ready" ? "ok" : status === "missing-env" ? "warn" : "err");
   return `<span class="chip ${variant}">${escapeHtml(status)}</span>`;
 }
 
 function renderStats(data: DashboardData, copy: DashboardCopy): string {
   const imported = data.capabilities.filter((capability) => capability.origin).length;
   const binaries = data.capabilities.flatMap((capability) => capability.files).filter((file) => file.binary).length;
-  const alerts = data.upstreams.filter((upstream) => upstream.status !== "ready").length;
+  const alerts = data.upstreams.filter((upstream) => upstream.status !== "ready" || upstream.reachable === false).length;
 
   return `<div class="stats">
     <div class="stat"><div class="s-ic"><i class="ph ph-circles-three-plus" aria-hidden="true"></i><span class="trend">${escapeHtml(copy.stats.imported(imported))}</span></div><span class="v">${data.capabilities.length}</span><span class="l">${escapeHtml(copy.stats.capabilities)}</span></div>
@@ -493,10 +507,14 @@ function renderReviewRows(capabilities: Capability[], copy: DashboardCopy): stri
 }
 
 
-export function renderDashboard(registry: CapabilityRegistry, language: DashboardLanguage = "en", links: DashboardLinks = {}): string {
+export function renderDashboard(
+  registry: CapabilityRegistry,
+  language: DashboardLanguage = "en",
+  links: DashboardLinks = {},
+  upstreams = new UpstreamMcpGateway(registry).listUpstreams(),
+): string {
   const capabilities = registry.listCapabilities();
   const resources = registry.listResources();
-  const upstreams = new UpstreamMcpGateway(registry).listUpstreams();
   const data = { capabilities, resources, upstreams };
   const copy = DASHBOARD_COPY[language];
 
@@ -622,8 +640,8 @@ ${DASHBOARD_STYLES}
       <section class="panel" style="padding:0px;">
         <div class="tbl-wrap flush">
           <table class="tbl">
-            <thead><tr><th>${escapeHtml(copy.upstreamHeaders.capability)}</th><th>${escapeHtml(copy.upstreamHeaders.transport)}</th><th>${escapeHtml(copy.upstreamHeaders.status)}</th><th>${escapeHtml(copy.upstreamHeaders.url)}</th><th>${escapeHtml(copy.upstreamHeaders.missingEnv)}</th></tr></thead>
-            <tbody>${renderUpstreamRows(registry, copy)}</tbody>
+            <thead><tr><th>${escapeHtml(copy.upstreamHeaders.capability)}</th><th>${escapeHtml(copy.upstreamHeaders.transport)}</th><th>${escapeHtml(copy.upstreamHeaders.configuration)}</th><th>${escapeHtml(copy.upstreamHeaders.availability)}</th><th>${escapeHtml(copy.upstreamHeaders.latency)}</th><th>${escapeHtml(copy.upstreamHeaders.cache)}</th><th>${escapeHtml(copy.upstreamHeaders.endpoint)}</th></tr></thead>
+            <tbody id="upstreamRows">${renderUpstreamRows(upstreams, copy)}</tbody>
           </table>
         </div>
       </section>

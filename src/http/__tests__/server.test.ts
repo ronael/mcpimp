@@ -81,6 +81,45 @@ describe("Hono server", () => {
     });
   });
 
+  it("exposes the shared upstream runtime state after tool discovery", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(upstreamFixturesRoot);
+    const fetcher = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      return Response.json({
+        jsonrpc: "2.0",
+        id: body.id,
+        result: { tools: [{ name: "inspect", description: "Inspect upstream" }] },
+      });
+    });
+    const app = createServer(registry, { upstream: { fetch: fetcher, toolListTtlMs: 60_000 } });
+
+    const before: any = await (await app.request("/upstreams")).json();
+    expect(before.upstreams).toEqual(expect.arrayContaining([
+      expect.objectContaining({ capabilityId: "crm-connector", reachable: null, cacheStatus: "empty" }),
+    ]));
+
+    await app.request("/message", {
+      method: "POST",
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+    });
+
+    const response = await app.request("/upstreams");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    await expect(response.json()).resolves.toMatchObject({
+      policy: { requestTimeoutMs: 5_000, toolListTtlMs: 60_000, staleOnError: true },
+      upstreams: expect.arrayContaining([
+        expect.objectContaining({
+          capabilityId: "crm-connector",
+          reachable: true,
+          cacheStatus: "fresh",
+          cachedToolCount: 1,
+          latencyMs: expect.any(Number),
+          lastCheckedAt: expect.any(String),
+        }),
+      ]),
+    });
+  });
+
   it("supports MCP 2026 discovery and tool calls without initialize", async () => {
     const app = await createApp();
     const metadata = {
@@ -485,6 +524,7 @@ describe("Hono server", () => {
     expect(html).toContain("/health");
     expect(html).toContain("/message");
     expect(html).toContain("/activity");
+    expect(html).toContain("/upstreams");
     expect(html).toContain('href="#activity"');
     expect(html).toContain('id="activityRows"');
     expect(html).toContain('id="activityClientFilter"');
@@ -496,6 +536,10 @@ describe("Hono server", () => {
     expect(html).toContain('id="activityExportNdjson"');
     expect(html).toContain("buildActivityQuery");
     expect(html).toContain("openActivityDrawer");
+    expect(html).toContain("refreshUpstreams");
+    expect(html).toContain('id="upstreamRows"');
+    expect(html).toContain("Availability");
+    expect(html).toContain("Tool cache");
     expect(html).toContain('role="dialog"');
     const inlineScript = html.match(/<script>\s*([\s\S]*?)<\/script>/)?.[1];
     expect(inlineScript).toBeDefined();

@@ -14,7 +14,7 @@ import {
 import { createMcpHandler, MODERN_PROTOCOL_VERSION, SERVER_INFO } from "../mcp/handler";
 import { formatSseEvent, jsonRpcFailure, type JsonRpcRequest, type JsonRpcResponse } from "../mcp/protocol";
 import { MCP_TOOLS } from "../mcp/tools";
-import { UpstreamMcpGateway } from "../mcp/upstream";
+import { UpstreamMcpGateway, type UpstreamGatewayOptions } from "../mcp/upstream";
 import { catalogFingerprint } from "../registry/fingerprint";
 import type { CapabilityRegistry } from "../registry/types";
 import { renderDashboard } from "./dashboard";
@@ -82,6 +82,7 @@ export interface ServerOptions {
   activityPersistence?: "process-memory" | "process-memory+ndjson";
   onActivity?: (event: McpActivityEvent) => void;
   now?: () => Date;
+  upstream?: UpstreamGatewayOptions;
   runtime?: {
     kind: "node" | "worker" | "unknown";
     pid?: number;
@@ -134,7 +135,7 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
         ? { result: { kind: "upstream-response" } }
         : { error: { code: -32000, message: "Upstream MCP request failed" } }),
     });
-  });
+  }, options.upstream);
   const handleMcpMessage = createMcpHandler(registry, upstreamGateway);
   const sessions = new Map<string, SseSession>();
   const encoder = new TextEncoder();
@@ -269,6 +270,11 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
     return c.json({ events, facets: activityLog.facets(), persistence });
   });
 
+  app.get("/upstreams", (c) => {
+    c.header("Cache-Control", "no-store");
+    return c.json({ policy: upstreamGateway.policy(), upstreams: upstreamGateway.listUpstreams() });
+  });
+
   app.get("/sse", (c) => {
     const sessionId = crypto.randomUUID();
     const client = c.req.header("user-agent") || "unknown client";
@@ -377,11 +383,11 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   });
 
   app.get("/dashboard", (c) => {
-    return c.html(renderDashboard(registry, "en", dashboardLinks("en", options.staticSite)));
+    return c.html(renderDashboard(registry, "en", dashboardLinks("en", options.staticSite), upstreamGateway.listUpstreams()));
   });
 
   app.get("/fr/dashboard", (c) => {
-    return c.html(renderDashboard(registry, "fr", dashboardLinks("fr", options.staticSite)));
+    return c.html(renderDashboard(registry, "fr", dashboardLinks("fr", options.staticSite), upstreamGateway.listUpstreams()));
   });
 
   return app;
