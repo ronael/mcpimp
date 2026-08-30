@@ -120,7 +120,7 @@ async function readManifest(root: string, namespace: string, slug: string): Prom
   }
 }
 
-async function managedCapabilities(root: string, sourceId: string): Promise<SourceManifest[]> {
+async function scanManagedCapabilities(root: string): Promise<SourceManifest[]> {
   const base = capabilitiesRoot(root);
   const manifests: SourceManifest[] = [];
   const namespaces = await readdir(base, { withFileTypes: true }).catch(() => []);
@@ -136,7 +136,7 @@ async function managedCapabilities(root: string, sourceId: string): Promise<Sour
       if (!slugEntry.isDirectory() || IGNORED_NAMES.has(slugEntry.name) || slugEntry.name.startsWith(".")) continue;
       const slug = assertSafeSegment(slugEntry.name, "slug");
       const manifest = await readManifest(root, namespace, slug).catch(() => undefined);
-      if (!manifest || manifest.sourceId !== sourceId) continue;
+      if (!manifest) continue;
       try {
         assertManifestIdentity(manifest, namespace, slug);
       } catch {
@@ -458,6 +458,20 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
 
   const report: SyncReport = { entries: [], catalogCandidates: [], duplicateSources: [], errors: [] };
   const runs: SourceRun[] = [];
+  const managed = await scanManagedCapabilities(root);
+  const managedBySource = new Map<string, SourceManifest[]>();
+  const managedByCatalog = new Map<string, SourceManifest[]>();
+  for (const manifest of managed) {
+    const manifests = managedBySource.get(manifest.sourceId) || [];
+    manifests.push(manifest);
+    managedBySource.set(manifest.sourceId, manifests);
+    const catalogId = manifest.discoverySource?.name;
+    if (catalogId) {
+      const catalogManifests = managedByCatalog.get(catalogId) || [];
+      catalogManifests.push(manifest);
+      managedByCatalog.set(catalogId, catalogManifests);
+    }
+  }
   const claimedRepositories = new Map(
     sources
       .filter((source): source is Extract<SourceDefinition, { type: "github" }> => source.type === "github")
@@ -476,9 +490,13 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
     }
 
     try {
-      for (const delegated of await catalog.discoverSources(source as Extract<SourceDefinition, { type: "web-catalog" }>)) {
+      const delegatedSources = await catalog.discoverSources(source as Extract<SourceDefinition, { type: "web-catalog" }>);
+      const delegatedState = new Map<string, { allowed: boolean; coveredBy?: string }>();
+
+      for (const delegated of delegatedSources) {
         const repository = (delegated.definition as { repository?: string }).repository || delegated.definition.id;
         const coveredBy = claimedRepositories.get(repository.toLowerCase());
+        delegatedState.set(delegated.definition.id, { allowed: delegated.allowed, coveredBy });
         if (coveredBy) {
           report.duplicateSources.push({ sourceId: source.id, repository, coveredBy });
           continue;
@@ -495,6 +513,29 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
 
         claimedRepositories.set(repository.toLowerCase(), delegated.definition.id);
         runs.push({ definition: delegated.definition, discoverySource: delegated.discoverySource });
+      }
+
+      for (const manifest of managedByCatalog.get(source.id) || []) {
+        const state = delegatedState.get(manifest.sourceId);
+        if (state?.allowed && !state.coveredBy) continue;
+
+        const reason = !state
+          ? `delegated repository is no longer published by catalogue ${source.id}; existing local content was kept`
+          : state.coveredBy
+            ? `delegated repository is now covered by declared source ${state.coveredBy}; existing local content was kept`
+            : `delegated repository is no longer allowed by catalogue ${source.id}; existing local content was kept`;
+        const status: SyncStatus = !state ? "removed-upstream" : "unavailable";
+        report.entries.push({
+          capabilityId: manifest.capability,
+          sourceId: manifest.sourceId,
+          status,
+          applied: false,
+          policy: manifest.update || updatePolicyOf(source),
+          previousRevision: manifest.commit || manifest.revision?.value,
+          reason,
+          overrideConflicts: await overrideConflicts(root, manifest.namespace, manifest.slug, manifest),
+        });
+        if (status === "unavailable") report.errors.push({ sourceId: manifest.sourceId, message: reason });
       }
     } catch (error) {
       report.errors.push({
@@ -529,7 +570,7 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
       continue;
     }
 
-    const existing = await managedCapabilities(root, source.id);
+    const existing = managedBySource.get(source.id) || [];
     const discoveredIds = new Set(capabilities.map((capability) => capability.capabilityId));
     const replacements = new Map(
       capabilities

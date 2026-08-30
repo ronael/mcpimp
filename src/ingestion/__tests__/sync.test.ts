@@ -150,6 +150,47 @@ class MemoryCapabilityAdapter implements ContentSourceAdapter<any> {
   }
 }
 
+class CatalogGitHubAdapter implements ContentSourceAdapter<any> {
+  readonly type = "github";
+
+  async getRevision(): Promise<SourceRevision> {
+    return { kind: "git-commit", value: COMMIT, fetchedAt: new Date().toISOString() };
+  }
+
+  async discover(source: GitHubSourceDefinition): Promise<DiscoveredCapability[]> {
+    const namespace = source.namespace || "catalog";
+    const files: DiscoveredFileRef[] = [{
+      path: "SKILL.md",
+      bytes: 46,
+      binary: false,
+      sha: "catalog-tool-skill",
+      url: `https://example.com/${source.repository}/SKILL.md`,
+    }];
+
+    return [{
+      namespace,
+      slug: "tool",
+      capabilityId: capabilityIdFor(namespace, "tool"),
+      components: { skill: true, mcp: false },
+      files,
+      contentHash: hashFileSet(files),
+      skippedAssets: [],
+      origin: {
+        type: "github",
+        sourceId: source.id,
+        repository: source.repository,
+        path: "skills/tool",
+        commit: COMMIT,
+        contentHash: hashFileSet(files),
+      },
+    }];
+  }
+
+  async fetch(): Promise<FetchedFile[]> {
+    return [{ path: "SKILL.md", bytes: bytesOf("---\nname: Catalog tool\n---\n\n# Catalog tool") }];
+  }
+}
+
 let root: string;
 
 beforeEach(async () => {
@@ -580,6 +621,62 @@ describe("syncSources", () => {
     expect(report.duplicateSources).toEqual([
       { sourceId: "design-catalog", repository: "acme/ui-skills", coveredBy: "acme" },
     ]);
+  });
+
+  it("reports capabilities whose delegated repository disappeared from a web catalogue", async () => {
+    let catalogHtml = '<a href="https://github.com/acme/catalog-tool">Catalog tool</a>';
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(catalogHtml)));
+    const source: SourceDefinitionBase = {
+      id: "design-catalog",
+      type: "web-catalog",
+      url: "https://catalog.example/resources",
+      namespace: "catalog",
+      allowedRepositories: ["acme/catalog-tool"],
+    } as SourceDefinitionBase;
+    const adapter = new CatalogGitHubAdapter();
+
+    await run([source], { apply: true, contentAdapters: [adapter] });
+    catalogHtml = "<p>No repositories currently published.</p>";
+    const report = await run([source], { contentAdapters: [adapter] });
+
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      capabilityId: "catalog-tool",
+      sourceId: "design-catalog:acme/catalog-tool",
+      status: "removed-upstream",
+      reason: expect.stringContaining("no longer published by catalogue design-catalog"),
+    }));
+    await expect(
+      readFile(join(root, "catalog/capabilities/catalog/tool/upstream/SKILL.md"), "utf-8"),
+    ).resolves.toContain("Catalog tool");
+  });
+
+  it("reports an existing delegated source removed from allowedRepositories", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response('<a href="https://github.com/acme/catalog-tool">Catalog tool</a>')),
+    );
+    const allowed: SourceDefinitionBase = {
+      id: "design-catalog",
+      type: "web-catalog",
+      url: "https://catalog.example/resources",
+      namespace: "catalog",
+      allowedRepositories: ["acme/catalog-tool"],
+    } as SourceDefinitionBase;
+    const blocked = { ...allowed, allowedRepositories: [] } as SourceDefinitionBase;
+    const adapter = new CatalogGitHubAdapter();
+
+    await run([allowed], { apply: true, contentAdapters: [adapter] });
+    const report = await run([blocked], { contentAdapters: [adapter] });
+
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      capabilityId: "catalog-tool",
+      sourceId: "design-catalog:acme/catalog-tool",
+      status: "unavailable",
+      reason: expect.stringContaining("no longer allowed by catalogue design-catalog"),
+    }));
+    expect(report.errors).toContainEqual(expect.objectContaining({
+      sourceId: "design-catalog:acme/catalog-tool",
+    }));
   });
 
   it("reports an unavailable source without aborting the run", async () => {
