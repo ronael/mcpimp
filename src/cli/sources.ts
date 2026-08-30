@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { loadDotenv } from "../env/load-dotenv";
 import { loadSourceDefinitions } from "../ingestion/definitions";
 import { syncSources, type SyncEntry, type SyncReport } from "../ingestion/sync";
+import { persistSourceHealthRun } from "./source-health-core";
 
 /**
  * `pnpm sources:sync [--apply] [target…]`
@@ -115,6 +116,7 @@ if (sources.length === 0) {
 }
 
 const report = await syncSources({ root, sources, apply, targets });
+await persistSourceHealthRun({ root, sources, targets, report });
 
 if (json) {
   console.log(JSON.stringify(report, null, 2));

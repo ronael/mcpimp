@@ -386,6 +386,14 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
      télécharger les fichiers, écrire upstream/, réécrire SOURCE.json</pre>
       </div>
 
+      <div class="callout c-acid">
+        <i class="ph ph-pulse" aria-hidden="true"></i>
+        <div>
+          <div class="c-t">La santé des sources est persistée après chaque contrôle</div>
+          <p>Les dry-runs, applications et échecs mettent à jour atomiquement <code>logs/source-health.json</code>. Le dashboard local et <code>GET /sources</code> le relisent sans redémarrage et séparent dernier contrôle, dernière synchro appliquée, révisions locale/disponible, erreurs et changements en attente.</p>
+        </div>
+      </div>
+
       <div class="callout c-cyan">
         <i class="ph ph-lightning" aria-hidden="true"></i>
         <div>

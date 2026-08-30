@@ -244,15 +244,21 @@ fichiers et logs.
 
 ### P2.1 — santé des sources et upstreams
 
-Socle upstream livré : `tools/list` isole chaque serveur externe, applique un
+P2.1 livré : chaque `sources:sync` persiste atomiquement le dernier contrôle
+dans `logs/source-health.json`; `GET /sources` et le dashboard distinguent la
+dernière vérification, la dernière synchronisation appliquée, les révisions
+locale/disponible, les erreurs neutralisées et les changements en attente. Un
+contrôle ciblé préserve l’état connu des autres sources. Côté upstream,
+`tools/list` isole chaque serveur externe, applique un
 timeout explicite de 5 secondes et conserve pendant 60 secondes la dernière
 liste de tools valide. Un échec de rafraîchissement sert ce cache en état
 `stale` sans masquer les tools locaux. L’endpoint `GET /upstreams` et le
 dashboard exposent disponibilité, latence, dernière vérification, catégorie
 d’erreur neutralisée, expiration et invalidation du cache.
 
-- Afficher dernière synchronisation, révision disponible, erreurs et mises à
-  jour en attente par source.
+Critère de sortie atteint : les sources et upstreams peuvent être diagnostiqués
+depuis les interfaces locales sans recouper manuellement commandes, manifests
+et logs.
 
 ### P2.2 — workflow de mise à jour
 

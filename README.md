@@ -221,6 +221,13 @@ excludes catalogue repositories already owned by a declared source, and reports
 same-path collisions between `upstream/` and `overrides/` as identical or
 divergent. It never deletes a disappeared capability automatically.
 
+Every check, including a read-only run or a failed run, atomically updates
+`logs/source-health.json`. The local server reloads this ignored runtime file on
+each `GET /sources` request, so the dashboard can show last check, last applied
+sync, local and available revisions, neutralized errors, and pending changes
+without a restart. A targeted source check merges only that source into the
+snapshot; it does not erase the latest known state of other sources.
+
 Imported content is stored as follows:
 
 ```txt

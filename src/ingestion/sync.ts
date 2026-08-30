@@ -18,6 +18,7 @@ import {
   type DiscoveredCapability,
   type SourceDefinition,
   type SourceDefinitionBase,
+  type SourceRevision,
 } from "./types";
 import { WebCatalogSourceAdapter } from "./web-catalog";
 
@@ -68,6 +69,13 @@ export interface SyncEntry {
 
 export interface SyncReport {
   entries: SyncEntry[];
+  sourceChecks: {
+    sourceId: string;
+    sourceType: string;
+    status: "success" | "error";
+    revision?: string;
+    checkedAt: string;
+  }[];
   /** Repositories a catalogue exposed but that are not allowed for import. */
   catalogCandidates: { sourceId: string; repository: string; url: string }[];
   /** Catalogue repositories already owned by another declared source. */
@@ -456,7 +464,7 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
   const adaptersByType = new Map(contentAdapters.map((adapter) => [adapter.type, adapter]));
   const catalog = new WebCatalogSourceAdapter();
 
-  const report: SyncReport = { entries: [], catalogCandidates: [], duplicateSources: [], errors: [] };
+  const report: SyncReport = { entries: [], sourceChecks: [], catalogCandidates: [], duplicateSources: [], errors: [] };
   const runs: SourceRun[] = [];
   const managed = await scanManagedCapabilities(root);
   const managedBySource = new Map<string, SourceManifest[]>();
@@ -490,7 +498,16 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
     }
 
     try {
-      const delegatedSources = await catalog.discoverSources(source as Extract<SourceDefinition, { type: "web-catalog" }>);
+      const catalogSource = source as Extract<SourceDefinition, { type: "web-catalog" }>;
+      const revision = await catalog.getRevision(catalogSource);
+      const delegatedSources = await catalog.discoverSources(catalogSource, revision);
+      report.sourceChecks.push({
+        sourceId: source.id,
+        sourceType: source.type,
+        status: "success",
+        revision: revision.value,
+        checkedAt: revision.fetchedAt,
+      });
       const delegatedState = new Map<string, { allowed: boolean; coveredBy?: string }>();
 
       for (const delegated of delegatedSources) {
@@ -538,6 +555,12 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
         if (status === "unavailable") report.errors.push({ sourceId: manifest.sourceId, message: reason });
       }
     } catch (error) {
+      report.sourceChecks.push({
+        sourceId: source.id,
+        sourceType: source.type,
+        status: "error",
+        checkedAt: new Date().toISOString(),
+      });
       report.errors.push({
         sourceId: source.id,
         message: error instanceof Error ? error.message : "unknown catalogue error",
@@ -553,11 +576,25 @@ export async function syncSources(options: SyncOptions): Promise<SyncReport> {
     const policy = updatePolicyOf(source);
 
     let capabilities: DiscoveredCapability[];
+    let revision: SourceRevision | undefined;
     try {
-      const revision = await adapter.getRevision(source);
+      revision = await adapter.getRevision(source);
       capabilities = await adapter.discover(source, revision);
+      report.sourceChecks.push({
+        sourceId: source.id,
+        sourceType: source.type,
+        status: "success",
+        revision: revision.value,
+        checkedAt: revision.fetchedAt,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "unknown source error";
+      report.sourceChecks.push({
+        sourceId: source.id,
+        sourceType: source.type,
+        status: "error",
+        ...(revision ? { revision: revision.value, checkedAt: revision.fetchedAt } : { checkedAt: new Date().toISOString() }),
+      });
       report.errors.push({ sourceId: source.id, message });
       report.entries.push({
         capabilityId: `${source.id}:*`,
