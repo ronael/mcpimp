@@ -131,6 +131,9 @@ tr.caprow:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
 .chip.plain::before{display:none}
 .upstream-cell{display:flex;align-items:flex-start;gap:5px;flex-direction:column;min-width:108px}
 .upstream-note{display:block;max-width:220px;color:var(--muted);font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.source-revisions{display:grid;gap:4px;min-width:110px}
+.source-revisions span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.source-revisions b{color:var(--muted);font:600 9px var(--mono)}
 .method{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.04em}
 .method.get{color:var(--acid);background:rgba(201,255,61,.08);border:1px solid rgba(201,255,61,.3)}
 .method.post{color:var(--cyan);background:rgba(99,230,255,.08);border:1px solid rgba(99,230,255,.3)}

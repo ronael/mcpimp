@@ -224,6 +224,13 @@ describe("syncSources", () => {
     const report = await run([memorySource()], { apply: true, contentAdapters: [adapter] });
 
     expect(report.entries).toMatchObject([{ capabilityId: "mem-skill-only", status: "new", applied: true }]);
+    expect(report.sourceChecks).toEqual([expect.objectContaining({
+      sourceId: "memory",
+      sourceType: "memory",
+      status: "success",
+      revision: COMMIT,
+      checkedAt: expect.any(String),
+    })]);
 
     const registry = await FileSystemCapabilityRegistry.scan(join(root, "catalog/capabilities"));
     expect(registry.getCapability("mem-skill-only")).toMatchObject({

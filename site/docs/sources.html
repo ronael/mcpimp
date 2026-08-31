@@ -393,6 +393,14 @@ ui-skills/ui-skills-root/…        →  <span class="jp">ui-skills-root</span> 
      download files, write upstream/, rewrite SOURCE.json</pre>
       </div>
 
+      <div class="callout c-acid">
+        <i class="ph ph-pulse" aria-hidden="true"></i>
+        <div>
+          <div class="c-t">Source health is persisted after every check</div>
+          <p>Dry-runs, applied runs, and failed runs atomically update <code>logs/source-health.json</code>. The local dashboard and <code>GET /sources</code> reload it without a server restart and keep last check, last applied sync, local/available revisions, errors, and pending changes separate.</p>
+        </div>
+      </div>
+
       <div class="callout c-cyan">
         <i class="ph ph-lightning" aria-hidden="true"></i>
         <div>

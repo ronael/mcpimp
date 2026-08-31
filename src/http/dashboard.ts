@@ -1,5 +1,6 @@
 import { MCP_TOOLS } from "../mcp/tools";
 import { UpstreamMcpGateway } from "../mcp/upstream";
+import { emptySourceHealthSnapshot, type SourceHealthSnapshot } from "../ingestion/source-health";
 import type { Capability, CapabilityRegistry } from "../registry/types";
 import { renderDashboardScript } from "./dashboard-client-script";
 import {
@@ -27,6 +28,7 @@ interface DashboardData {
   capabilities: Capability[];
   resources: ReturnType<CapabilityRegistry["listResources"]>;
   upstreams: ReturnType<UpstreamMcpGateway["listUpstreams"]>;
+  sourceHealth: SourceHealthSnapshot;
 }
 
 function renderReferenceSources(capability: Capability, copy: DashboardCopy): string {
@@ -230,6 +232,7 @@ function renderMobileNav(copy: DashboardCopy): string {
     <a href="#connect" data-nav="connect">${escapeHtml(copy.nav.connect)}</a>
     <a href="#capabilities" data-nav="capabilities">${escapeHtml(copy.nav.capabilities)}</a>
     <a href="#review" data-nav="review">${escapeHtml(copy.nav.review)}</a>
+    <a href="#sources" data-nav="sources">${escapeHtml(copy.nav.sources)}</a>
     <a href="#upstreams" data-nav="upstreams">${escapeHtml(copy.nav.upstreams)}</a>
     <a href="#activity" data-nav="activity">${escapeHtml(copy.nav.activity)}</a>
     <a href="#tools" data-nav="tools">${escapeHtml(copy.nav.tools)}</a>
@@ -269,6 +272,7 @@ function renderSidebar(data: DashboardData, copy: DashboardCopy, language: Dashb
       <a href="#connect" data-nav="connect"><i class="ph ph-plugs" aria-hidden="true"></i>${escapeHtml(copy.nav.connect)}</a>
       <a href="#capabilities" data-nav="capabilities"><i class="ph ph-circles-three-plus" aria-hidden="true"></i>${escapeHtml(copy.nav.capabilities)}<span class="cnt">${data.capabilities.length}</span></a>
       <a href="#review" data-nav="review"><i class="ph ph-seal-check" aria-hidden="true"></i>${escapeHtml(copy.nav.review)}<span class="cnt">${reviewCount}</span></a>
+      <a href="#sources" data-nav="sources"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i>${escapeHtml(copy.nav.sources)}<span class="cnt">${data.sourceHealth.sources.length}</span></a>
       <a href="#upstreams" data-nav="upstreams"><i class="ph ph-network" aria-hidden="true"></i>${escapeHtml(copy.nav.upstreams)}<span class="cnt">${data.upstreams.length}</span></a>
       <a href="#activity" data-nav="activity"><i class="ph ph-pulse" aria-hidden="true"></i>${escapeHtml(copy.nav.activity)}<span class="live-dot" aria-hidden="true"></span></a>
       <a href="#tools" data-nav="tools"><i class="ph ph-wrench" aria-hidden="true"></i>${escapeHtml(copy.nav.tools)}<span class="cnt">${MCP_TOOLS.length + copy.endpoints.length}</span></a>
@@ -506,16 +510,54 @@ function renderReviewRows(capabilities: Capability[], copy: DashboardCopy): stri
     .join("");
 }
 
+function sourceRevisionList(values: string[] | undefined): string {
+  if (!values?.length) return "—";
+  return values
+    .map((value) => `<code title="${escapeAttribute(value)}">${escapeHtml(value.slice(0, 12))}</code>`)
+    .join(", ");
+}
+
+function renderSourceHealthRows(snapshot: SourceHealthSnapshot, copy: DashboardCopy): string {
+  if (snapshot.sources.length === 0) {
+    return `<tr><td colspan="7">${escapeHtml(copy.sourceHealthEmpty)}</td></tr>`;
+  }
+
+  return snapshot.sources.map((source) => {
+    const statusVariant = source.status === "healthy"
+      ? "ok"
+      : source.status === "pending"
+        ? "warn"
+        : source.status === "error"
+          ? "err"
+          : "info";
+    const pending = source.errors.length > 0
+      ? source.errors.map((error) => `<span class="upstream-note">${escapeHtml(error)}</span>`).join("")
+      : source.pending.total > 0
+        ? `<strong>${source.pending.total}</strong><span class="upstream-note">+${source.pending.new} ~${source.pending.updates} -${source.pending.removals} →${source.pending.renames}</span>`
+        : `<span class="muted">—</span>`;
+    return `<tr>
+      <td class="mono">${escapeHtml(source.sourceId)}</td>
+      <td><span class="chip info plain">${escapeHtml(source.sourceType || "unknown")}</span></td>
+      <td>${renderStatusChip(source.status, statusVariant)}</td>
+      <td><time class="upstream-note"${source.lastCheckedAt ? ` datetime="${escapeAttribute(source.lastCheckedAt)}"` : ""}>${escapeHtml(source.lastCheckedAt || copy.never)}</time></td>
+      <td><time class="upstream-note"${source.lastSyncedAt ? ` datetime="${escapeAttribute(source.lastSyncedAt)}"` : ""}>${escapeHtml(source.lastSyncedAt || copy.never)}</time></td>
+      <td><div class="source-revisions"><span><b>L</b>${sourceRevisionList(source.localRevisions)}</span><span><b>A</b>${sourceRevisionList(source.availableRevisions)}</span></div></td>
+      <td><div class="upstream-cell">${pending}</div></td>
+    </tr>`;
+  }).join("");
+}
+
 
 export function renderDashboard(
   registry: CapabilityRegistry,
   language: DashboardLanguage = "en",
   links: DashboardLinks = {},
   upstreams = new UpstreamMcpGateway(registry).listUpstreams(),
+  sourceHealth = emptySourceHealthSnapshot(),
 ): string {
   const capabilities = registry.listCapabilities();
   const resources = registry.listResources();
-  const data = { capabilities, resources, upstreams };
+  const data = { capabilities, resources, upstreams, sourceHealth };
   const copy = DASHBOARD_COPY[language];
 
   return `<!doctype html>
@@ -624,6 +666,24 @@ ${DASHBOARD_STYLES}
           <table class="tbl review-table">
             <thead><tr><th>${escapeHtml(copy.reviewHeaders.capability)}</th><th>${escapeHtml(copy.reviewHeaders.source)}</th><th>${escapeHtml(copy.reviewHeaders.status)}</th><th>${escapeHtml(copy.reviewHeaders.currentHash)}</th><th>${escapeHtml(copy.reviewHeaders.reviewedHash)}</th><th>${escapeHtml(copy.reviewHeaders.action)}</th></tr></thead>
             <tbody id="reviewRows">${renderReviewRows(capabilities, copy)}</tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" id="sources" data-view="sources">
+      <div class="v-head">
+        <div>
+          <div class="kicker">${escapeHtml(copy.sourceHealthKicker)}</div>
+          <h1>${escapeHtml(copy.nav.sources)}</h1>
+          <p class="sub">${copy.sourceHealthIntro}</p>
+        </div>
+      </div>
+      <section class="panel" style="padding:0px;">
+        <div class="tbl-wrap flush">
+          <table class="tbl">
+            <thead><tr><th>${escapeHtml(copy.sourceHealthHeaders.source)}</th><th>${escapeHtml(copy.sourceHealthHeaders.type)}</th><th>${escapeHtml(copy.sourceHealthHeaders.status)}</th><th>${escapeHtml(copy.sourceHealthHeaders.checked)}</th><th>${escapeHtml(copy.sourceHealthHeaders.synced)}</th><th>${escapeHtml(copy.sourceHealthHeaders.revisions)}</th><th>${escapeHtml(copy.sourceHealthHeaders.pending)}</th></tr></thead>
+            <tbody id="sourceRows">${renderSourceHealthRows(sourceHealth, copy)}</tbody>
           </table>
         </div>
       </section>

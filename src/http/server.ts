@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { emptySourceHealthSnapshot, type SourceHealthSnapshot } from "../ingestion/source-health";
 import {
   activityClient,
   activityOutcome,
@@ -83,6 +84,7 @@ export interface ServerOptions {
   onActivity?: (event: McpActivityEvent) => void;
   now?: () => Date;
   upstream?: UpstreamGatewayOptions;
+  sourceHealth?: () => Promise<SourceHealthSnapshot>;
   runtime?: {
     kind: "node" | "worker" | "unknown";
     pid?: number;
@@ -142,6 +144,7 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
   const now = options.now || (() => new Date());
   let startedAt = options.runtime?.kind === "worker" ? undefined : now();
   const catalogRevision = catalogFingerprint(registry);
+  const sourceHealth = options.sourceHealth || (async () => emptySourceHealthSnapshot());
 
   function runtimeStartedAt(): Date {
     startedAt ||= now();
@@ -275,6 +278,11 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
     return c.json({ policy: upstreamGateway.policy(), upstreams: upstreamGateway.listUpstreams() });
   });
 
+  app.get("/sources", async (c) => {
+    c.header("Cache-Control", "no-store");
+    return c.json(await sourceHealth());
+  });
+
   app.get("/sse", (c) => {
     const sessionId = crypto.randomUUID();
     const client = c.req.header("user-agent") || "unknown client";
@@ -382,12 +390,24 @@ export function createServer(registry: CapabilityRegistry, options: ServerOption
     return c.body(null, 202);
   });
 
-  app.get("/dashboard", (c) => {
-    return c.html(renderDashboard(registry, "en", dashboardLinks("en", options.staticSite), upstreamGateway.listUpstreams()));
+  app.get("/dashboard", async (c) => {
+    return c.html(renderDashboard(
+      registry,
+      "en",
+      dashboardLinks("en", options.staticSite),
+      upstreamGateway.listUpstreams(),
+      await sourceHealth(),
+    ));
   });
 
-  app.get("/fr/dashboard", (c) => {
-    return c.html(renderDashboard(registry, "fr", dashboardLinks("fr", options.staticSite), upstreamGateway.listUpstreams()));
+  app.get("/fr/dashboard", async (c) => {
+    return c.html(renderDashboard(
+      registry,
+      "fr",
+      dashboardLinks("fr", options.staticSite),
+      upstreamGateway.listUpstreams(),
+      await sourceHealth(),
+    ));
   });
 
   return app;

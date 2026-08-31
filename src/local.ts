@@ -3,18 +3,22 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { CAPABILITIES_DIR } from "./core/paths";
 import { loadDotenv } from "./env/load-dotenv";
+import { loadSourceDefinitions } from "./ingestion/definitions";
+import { withSourceDefinitions } from "./ingestion/source-health";
 import type { StaticSiteProvider } from "./http/server";
 import { createServer } from "./http/server";
 import type { McpActivityEvent } from "./mcp/activity";
 import { FileSystemCapabilityRegistry } from "./registry/filesystem";
 import { ActivityFileWriter, activityFileOptionsFromEnv } from "./local/activity-file";
 import { closeServer, startupErrorMessage } from "./local/lifecycle";
+import { readSourceHealthSnapshot } from "./local/source-health-file";
 
 await loadDotenv();
 
 const port = Number(process.env.PORT || 3901);
 const root = resolve(process.env.MCPIMP_ROOT || process.cwd());
 const registry = await FileSystemCapabilityRegistry.scan(join(root, CAPABILITIES_DIR));
+const sourceDefinitions = await loadSourceDefinitions(root);
 const siteRoot = join(root, "site");
 const activityFileOptions = activityFileOptionsFromEnv(root);
 const activityWriter = await ActivityFileWriter.open({
@@ -67,11 +71,26 @@ function logActivity(event: McpActivityEvent) {
   console.log(`[MCP] ${event.status} ${event.client} ${event.method}${target} ${event.durationMs}ms`);
 }
 
+let sourceHealthReadError: string | undefined;
+async function sourceHealth() {
+  try {
+    const snapshot = withSourceDefinitions(await readSourceHealthSnapshot(root), sourceDefinitions);
+    sourceHealthReadError = undefined;
+    return snapshot;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown source health read error";
+    if (message !== sourceHealthReadError) console.error(`Could not read source health: ${message}`);
+    sourceHealthReadError = message;
+    return withSourceDefinitions(undefined, sourceDefinitions);
+  }
+}
+
 const app = createServer(registry, {
   staticSite,
   dashboardHome: true,
   onActivity: logActivity,
   activityPersistence: "process-memory+ndjson",
+  sourceHealth,
   runtime: {
     kind: "node",
     pid: process.pid,

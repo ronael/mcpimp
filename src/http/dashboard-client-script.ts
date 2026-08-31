@@ -27,6 +27,7 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   const activityExportJson = document.querySelector("#activityExportJson");
   const activityExportNdjson = document.querySelector("#activityExportNdjson");
   const upstreamRows = document.querySelector("#upstreamRows");
+  const sourceRows = document.querySelector("#sourceRows");
   const activityFilters = [activityClientFilter, activityMethodFilter, activityToolFilter, activityStatusFilter, activityPeriodFilter].filter(Boolean);
   const reviewCopyButtons = [...document.querySelectorAll("[data-review-command]")];
   const activityCopy = ${JSON.stringify({
@@ -43,12 +44,13 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   const activityDate = new Intl.DateTimeFormat(${JSON.stringify(copy.htmlLang)}, { dateStyle: "short", timeStyle: "medium" });
   const reviewCopy = ${JSON.stringify({ idle: copy.reviewCopyCommand, copied: copy.reviewCopied })};
   const noUpstreams = ${JSON.stringify(copy.noUpstreams)};
+  const noSources = ${JSON.stringify(copy.sourceHealthEmpty)};
   let drawerTrigger = null;
   let query = "";
   let origin = "all";
 
   function showView(id) {
-    const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "connect", "capabilities", "review", "upstreams", "activity", "tools"].includes(id) ? id : "overview";
+    const viewId = id && id.startsWith("capability-") ? "capabilities" : ["overview", "connect", "capabilities", "review", "sources", "upstreams", "activity", "tools"].includes(id) ? id : "overview";
     views.forEach((view) => view.classList.toggle("on", view.dataset.view === viewId));
     navLinks.forEach((link) => link.classList.toggle("act", link.dataset.nav === viewId));
   }
@@ -231,6 +233,90 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
       renderUpstreams(payload.upstreams);
     } catch {
       // Keep the last known state visible while the local endpoint is unavailable.
+    }
+  }
+
+  function sourceRevisionLine(label, values) {
+    const line = document.createElement("span");
+    const prefix = document.createElement("b");
+    prefix.textContent = label;
+    line.append(prefix);
+    if (!Array.isArray(values) || values.length === 0) {
+      line.append("—");
+      return line;
+    }
+    values.forEach((value, index) => {
+      if (index > 0) line.append(", ");
+      const revision = document.createElement("code");
+      revision.title = value;
+      revision.textContent = value.slice(0, 12);
+      line.append(revision);
+    });
+    return line;
+  }
+
+  function renderSources(sources) {
+    if (!sourceRows || !Array.isArray(sources)) return;
+    sourceRows.replaceChildren();
+    if (sources.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 7;
+      cell.textContent = noSources;
+      row.append(cell);
+      sourceRows.append(row);
+      return;
+    }
+    sources.forEach((source) => {
+      const row = document.createElement("tr");
+      row.append(activityCell(source.sourceId, "mono"));
+      const type = document.createElement("td");
+      type.append(upstreamChip(source.sourceType || "unknown", "info", true));
+      row.append(type);
+      const status = document.createElement("td");
+      status.append(upstreamChip(
+        source.status,
+        source.status === "healthy" ? "ok" : source.status === "pending" ? "warn" : source.status === "error" ? "err" : "info",
+      ));
+      row.append(status);
+      row.append(activityCell(source.lastCheckedAt ? activityDate.format(new Date(source.lastCheckedAt)) : ${JSON.stringify(copy.never)}));
+      row.append(activityCell(source.lastSyncedAt ? activityDate.format(new Date(source.lastSyncedAt)) : ${JSON.stringify(copy.never)}));
+
+      const revisions = document.createElement("td");
+      const revisionList = document.createElement("div");
+      revisionList.className = "source-revisions";
+      revisionList.append(sourceRevisionLine("L", source.localRevisions));
+      revisionList.append(sourceRevisionLine("A", source.availableRevisions));
+      revisions.append(revisionList);
+      row.append(revisions);
+
+      const outcome = upstreamCell();
+      if (source.errors?.length) {
+        source.errors.forEach((error) => outcome.content.append(upstreamNote(error)));
+      } else if (source.pending?.total) {
+        const total = document.createElement("strong");
+        total.textContent = String(source.pending.total);
+        outcome.content.append(total);
+        outcome.content.append(upstreamNote(
+          "+" + source.pending.new + " ~" + source.pending.updates + " -" + source.pending.removals + " r" + source.pending.renames,
+        ));
+      } else {
+        outcome.content.append("—");
+      }
+      row.append(outcome.cell);
+      sourceRows.append(row);
+    });
+  }
+
+  async function refreshSources() {
+    if (!sourceRows) return;
+    try {
+      const response = await fetch("/sources", { cache: "no-store" });
+      if (!response.ok) return;
+      const payload = await response.json();
+      renderSources(payload.sources);
+    } catch {
+      // Keep the last persisted snapshot visible during a local restart.
     }
   }
 
@@ -515,8 +601,10 @@ export function renderDashboardScript(copy: DashboardCopy, totalCapabilities: nu
   filterRows();
   refreshActivity();
   refreshUpstreams();
+  refreshSources();
   window.setInterval(refreshActivity, 3000);
   window.setInterval(refreshUpstreams, 5000);
+  window.setInterval(refreshSources, 5000);
 })();
 </script>`;
 }

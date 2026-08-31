@@ -8,6 +8,7 @@ export interface DashboardCopy {
     connect: string;
     capabilities: string;
     review: string;
+    sources: string;
     discovery: string;
     endpoints: string;
     tools: string;
@@ -89,6 +90,18 @@ export interface DashboardCopy {
     currentHash: string;
     reviewedHash: string;
     action: string;
+  };
+  sourceHealthKicker: string;
+  sourceHealthIntro: string;
+  sourceHealthEmpty: string;
+  sourceHealthHeaders: {
+    source: string;
+    type: string;
+    status: string;
+    checked: string;
+    synced: string;
+    revisions: string;
+    pending: string;
   };
   distributionTitle: string;
   distributionMeta: string;
@@ -188,6 +201,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       connect: "Connect an agent",
       capabilities: "Capabilities",
       review: "Review",
+      sources: "Sources",
       discovery: "Discovery",
       endpoints: "Endpoints",
       tools: "Tools",
@@ -208,6 +222,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       { method: "POST", path: "/message", description: "JSON RPC MCP endpoint for tools and resources." },
       { method: "GET", path: "/activity", description: "Recent MCP activity without arguments, secrets, or response contents." },
       { method: "GET", path: "/upstreams", description: "Current upstream availability, latency, and tool cache state." },
+      { method: "GET", path: "/sources", description: "Last persisted source check, revisions, errors, and pending updates." },
       { method: "GET", path: "/dashboard", description: "Human debug HTML view for inspecting the registry." },
       { method: "GET", path: "/fr/dashboard", description: "French version of the dashboard." },
     ],
@@ -278,6 +293,18 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       currentHash: "Current hash",
       reviewedHash: "Reviewed hash",
       action: "Review command",
+    },
+    sourceHealthKicker: "Source synchronization",
+    sourceHealthIntro: "Latest persisted dry-run or apply result. Running a check never applies pending changes unless <code>--apply</code> is explicit.",
+    sourceHealthEmpty: "No source health is available in this runtime.",
+    sourceHealthHeaders: {
+      source: "Source",
+      type: "Type",
+      status: "Status",
+      checked: "Last check",
+      synced: "Last sync",
+      revisions: "Local / available",
+      pending: "Pending / errors",
     },
     distributionTitle: "Distribution",
     distributionMeta: "origin · type",
@@ -380,6 +407,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       connect: "Connecter un agent",
       capabilities: "Capabilities",
       review: "Revue",
+      sources: "Sources",
       discovery: "Découverte",
       endpoints: "Endpoints",
       tools: "Tools",
@@ -400,6 +428,7 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       { method: "POST", path: "/message", description: "Endpoint JSON RPC MCP pour tools et resources." },
       { method: "GET", path: "/activity", description: "Activité MCP récente sans arguments, secrets ni contenu des réponses." },
       { method: "GET", path: "/upstreams", description: "Disponibilité, latence et état du cache des tools upstream." },
+      { method: "GET", path: "/sources", description: "Dernier contrôle persisté, révisions, erreurs et mises à jour en attente." },
       { method: "GET", path: "/dashboard", description: "Vue HTML de debug humain pour inspecter le registry." },
       { method: "GET", path: "/fr/dashboard", description: "Version française du dashboard." },
     ],
@@ -470,6 +499,18 @@ export const DASHBOARD_COPY: Record<DashboardLanguage, DashboardCopy> = {
       currentHash: "Hash courant",
       reviewedHash: "Hash revu",
       action: "Commande de revue",
+    },
+    sourceHealthKicker: "Synchronisation des sources",
+    sourceHealthIntro: "Dernier dry-run ou apply persisté. Un contrôle n'applique jamais les changements en attente sans <code>--apply</code> explicite.",
+    sourceHealthEmpty: "Aucun état de source disponible dans ce runtime.",
+    sourceHealthHeaders: {
+      source: "Source",
+      type: "Type",
+      status: "Statut",
+      checked: "Dernier contrôle",
+      synced: "Dernière synchro",
+      revisions: "Locale / disponible",
+      pending: "En attente / erreurs",
     },
     distributionTitle: "Répartition",
     distributionMeta: "origine · type",

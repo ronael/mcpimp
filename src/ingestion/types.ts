@@ -137,7 +137,7 @@ export interface DelegatedSource {
 export interface DiscoverySourceAdapter<D extends SourceDefinitionBase = SourceDefinitionBase> {
   readonly type: string;
   getRevision(source: D): Promise<SourceRevision>;
-  discoverSources(source: D): Promise<DelegatedSource[]>;
+  discoverSources(source: D, revision?: SourceRevision): Promise<DelegatedSource[]>;
 }
 
 export function updatePolicyOf(source: SourceDefinitionBase): UpdatePolicy {

@@ -120,6 +120,41 @@ describe("Hono server", () => {
     });
   });
 
+  it("exposes persisted source health through the API and dashboard", async () => {
+    const registry = await FileSystemCapabilityRegistry.scan(fixturesRoot);
+    const app = createServer(registry, {
+      sourceHealth: async () => ({
+        version: 1,
+        generatedAt: "2026-08-31T10:00:00.000Z",
+        sources: [{
+          sourceId: "design-source",
+          sourceType: "github",
+          status: "pending",
+          lastCheckedAt: "2026-08-31T10:00:00.000Z",
+          lastSyncedAt: "2026-08-30T10:00:00.000Z",
+          localRevisions: ["local-revision"],
+          availableRevisions: ["available-revision"],
+          pending: { total: 2, new: 1, updates: 1, removals: 0, renames: 0 },
+          errors: [],
+        }],
+      }),
+    });
+
+    const response = await app.request("/sources");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    await expect(response.json()).resolves.toMatchObject({
+      generatedAt: "2026-08-31T10:00:00.000Z",
+      sources: [expect.objectContaining({ sourceId: "design-source", status: "pending" })],
+    });
+
+    const html = await (await app.request("/dashboard#sources")).text();
+    expect(html).toContain('href="#sources"');
+    expect(html).toContain('id="sourceRows"');
+    expect(html).toContain("design-source");
+    expect(html).toContain("available-revision");
+    expect(html).toContain("refreshSources");
+  });
+
   it("supports MCP 2026 discovery and tool calls without initialize", async () => {
     const app = await createApp();
     const metadata = {

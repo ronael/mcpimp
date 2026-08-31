@@ -71,10 +71,10 @@ export class WebCatalogSourceAdapter implements DiscoverySourceAdapter<WebCatalo
     };
   }
 
-  async discoverSources(source: WebCatalogSourceDefinition): Promise<DelegatedSource[]> {
+  async discoverSources(source: WebCatalogSourceDefinition, knownRevision?: SourceRevision): Promise<DelegatedSource[]> {
     const html = await this.loadPage(source);
     const allowed = source.allowedRepositories || [];
-    const revision = await this.getRevision(source);
+    const revision = knownRevision || await this.getRevision(source);
 
     return extractRepositories(html).map((repository) => {
       const definition: GitHubSourceDefinition = {
