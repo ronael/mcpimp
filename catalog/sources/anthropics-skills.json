@@ -1,0 +1,11 @@
+{
+  "id": "anthropics-skills",
+  "type": "github",
+  "repository": "anthropics/skills",
+  "ref": "main",
+  "roots": ["skills/frontend-design"],
+  "namespace": "anthropics",
+  "update": "review",
+  "include": ["frontend-design"],
+  "notes": "Curated import of Anthropic's Frontend Design skill. Discovered via https://aiuxplayground.com/skills/frontend-design; canonical content and licence terms come from the upstream GitHub repository."
+}

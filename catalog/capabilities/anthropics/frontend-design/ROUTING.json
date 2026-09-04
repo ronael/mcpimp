@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "role": "generalist",
+  "taskModes": ["create", "redesign"],
+  "useWhen": [
+    "create a distinctive production-grade frontend",
+    "choose an intentional visual direction, typography, palette and layout",
+    "explicit Anthropic Frontend Design invocation"
+  ],
+  "avoidWhen": [
+    "existing design system must remain authoritative",
+    "pure accessibility or motion performance correction",
+    "backend or domain architecture"
+  ],
+  "conflictsWith": [
+    "hallmark",
+    "elaya-design-landing-page-design",
+    "taste-skill",
+    "ui-ux-pro-max"
+  ],
+  "complements": [
+    "ui-skills-fixing-accessibility",
+    "ui-skills-fixing-motion-performance"
+  ]
+}

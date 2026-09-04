@@ -1,0 +1,38 @@
+{
+  "type": "github",
+  "sourceId": "anthropics-skills",
+  "repository": "anthropics/skills",
+  "path": "skills/frontend-design",
+  "ref": "main",
+  "commit": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
+  "url": "https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/frontend-design",
+  "revision": {
+    "kind": "git-commit",
+    "value": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f"
+  },
+  "contentHash": "sha256:6469ea012bb44ded4872e06362bb6273737224a87f9afde877a21195013c04b9",
+  "skillKind": "portable",
+  "skillTraits": [],
+  "skippedAssets": [],
+  "capability": "anthropics-frontend-design",
+  "namespace": "anthropics",
+  "slug": "frontend-design",
+  "update": "review",
+  "lastSyncedAt": "2026-09-04T21:13:58.746Z",
+  "files": [
+    {
+      "path": "LICENSE.txt",
+      "bytes": 10174,
+      "binary": false,
+      "sha": "f433b1a53f5b830a205fd2df78e2b34974656c7b",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "path": "SKILL.md",
+      "bytes": 9390,
+      "binary": false,
+      "sha": "a5333457c414d20d625f307df945842c0952ecc3",
+      "sha256": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3"
+    }
+  ]
+}

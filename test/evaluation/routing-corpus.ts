@@ -3,6 +3,22 @@ import type { RoutingEvaluationCase } from "../../src/registry/routing-evaluatio
 /** Versioned business expectations for deterministic capability composition. */
 export const ROUTING_EVALUATION_CORPUS: RoutingEvaluationCase[] = [
   {
+    id: "anthropic-frontend-design-explicit",
+    task: "Use Anthropic Frontend Design to create a distinctive production-grade frontend",
+    taskMode: "create",
+    expectedPrimaryId: "anthropics-frontend-design",
+    forbiddenCapabilityIds: ["hallmark", "taste-skill", "ui-ux-pro-max"],
+    critical: true,
+  },
+  {
+    id: "design-taste-frontend-explicit",
+    task: "Use Design Taste Frontend for the visual direction of this landing page redesign",
+    taskMode: "redesign",
+    expectedPrimaryId: "taste-skill",
+    forbiddenCapabilityIds: ["anthropics-frontend-design", "hallmark", "ui-ux-pro-max"],
+    critical: true,
+  },
+  {
     id: "structural-landing",
     task: "Create an anti-generic landing page with strong visual structure and varied sections",
     taskMode: "create",
