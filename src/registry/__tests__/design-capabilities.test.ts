@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { FileSystemCapabilityRegistry } from "../filesystem";
 import { extractLinkedCapabilityPaths } from "../markdown-links";
+import { resolveCapabilities } from "../routing";
 import { rankMarkdownSections } from "../section-search";
 import { createMcpHandler } from "../../mcp/handler";
 import { HEADING_EVALUATION_CORPUS } from "../../../test/evaluation/heading-corpus";
@@ -43,6 +44,55 @@ describe("design capability catalog", () => {
       license: { spdxId: "MIT" },
     });
     expect(byName.has("ui-ux-pro-max-skill-design-system")).toBe(false);
+  });
+
+  it("keeps the requested frontend design skills identifiable and source-backed", () => {
+    const frontendDesign = registry.getCapability("anthropics-frontend-design");
+    expect(frontendDesign).toMatchObject({
+      name: "frontend-design",
+      namespace: "anthropics",
+      slug: "frontend-design",
+      components: { skill: true, mcp: false },
+      origin: {
+        repository: "anthropics/skills",
+        path: "skills/frontend-design",
+      },
+    });
+    expect(frontendDesign?.files.find((file) => file.path === "SKILL.md")?.text)
+      .toContain("# Frontend Design");
+    expect(frontendDesign?.files.find((file) => file.path === "LICENSE.txt")?.text)
+      .toContain("Apache License");
+    expect(frontendDesign?.routing).toMatchObject({
+      role: "generalist",
+      taskModes: ["create", "redesign"],
+      conflictsWith: expect.arrayContaining(["taste-skill", "hallmark"]),
+    });
+
+    const designTaste = registry.getCapability("taste-skill");
+    expect(designTaste).toMatchObject({
+      name: "design-taste-frontend",
+      namespace: "taste-skill",
+      slug: "taste-skill",
+      components: { skill: true, mcp: false },
+      origin: {
+        repository: "leonxlnx/taste-skill",
+        path: "skills/taste-skill",
+      },
+    });
+
+    expect(
+      registry.search("distinctive intentional frontend visual identity", { limit: 10 })
+        .some((result) => result.capabilityId === "anthropics-frontend-design"),
+    ).toBe(true);
+    expect(
+      registry.search("design taste frontend landing portfolio redesign", { limit: 10 })
+        .some((result) => result.capabilityId === "taste-skill"),
+    ).toBe(true);
+
+    expect(resolveCapabilities(registry, {
+      task: "Use Anthropic Frontend Design to create a distinctive frontend",
+      taskMode: "create",
+    }).primary?.id).toBe("anthropics-frontend-design");
   });
 
   it("finds the real UI/UX capabilities through representative queries", async () => {

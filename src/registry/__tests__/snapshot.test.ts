@@ -16,6 +16,7 @@ const CATALOG_ROOT = resolve("catalog/capabilities");
  * is an explicit, deliberate API change.
  */
 const PUBLIC_IDS = [
+  "anthropics-frontend-design",
   "design-system-resources",
   "elaya-design-landing-page-design",
   "frontend-architecture",
